@@ -65,7 +65,7 @@ pnpm dev                        # http://localhost:3000
 
 ```bash
 # 백엔드와 프론트가 떠 있어야 한다
-pnpm e2e          # 13개, 약 33초
+pnpm e2e          # 15개, 약 1분
 pnpm e2e:ui       # UI 모드
 ```
 

@@ -86,7 +86,7 @@ AI가 제시한 조문 인용이 실제 원문에 존재하는 문자열인지 s
 | Backend | FastAPI · Pydantic · LangChain · asyncpg |
 | Data | Supabase (PostgreSQL + Auth) · 법제처 OPEN API |
 | AI | OpenAI (gpt-4o) · Chroma (벡터 검색) |
-| Test | pytest 320 · Playwright E2E 13 |
+| Test | pytest 341 · Playwright E2E 15 |
 
 기본 모델이 `gpt-4o`인 이유는 측정 결과다. `gpt-4o-mini`는 같은 데이터셋에서
 Q4 재현율 60%로 요구사항(≥90%)을 충족하지 못했다.
@@ -130,6 +130,8 @@ Postgres·Supabase 연동과 배포는 [`backend/README.md`](backend/README.md)�
 | [06 데이터 모델](docs/규제변화_AI도우미_MD_문서/06_데이터_모델_ERD.md) | 스키마와 제약 |
 | [07 RAG 설계](docs/규제변화_AI도우미_MD_문서/07_RAG_설계서.md) | 수집·청킹·검색 |
 | [08 배포·운영](docs/규제변화_AI도우미_MD_문서/08_배포_운영_가이드.md) | 배포와 장애 대응 |
+| [09 결과 보고서](docs/규제변화_AI도우미_MD_문서/09_프로젝트_결과_보고서.md) | 구현 결과, 겪은 문제와 해결, 한계 |
+| [10 발표 시나리오](docs/규제변화_AI도우미_MD_문서/10_발표_Demo_시나리오.md) | 5분 데모 구성 |
 
 문서가 구현과 어긋나지 않도록 [테스트로 고정](backend/tests/test_docs_sync.py)했다.
 API를 바꾸고 명세서를 안 고치면 테스트가 깨진다.
