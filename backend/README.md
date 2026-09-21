@@ -46,7 +46,8 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 | `app/validator/` | C6. 인용·금지필드·HOLD 검증 | FR-020~022 |
 | `app/services/analysis_service.py` | C3~C6 orchestration + 결과 조립 | 04 §5-2 |
 | `app/api/` | FastAPI 라우터·스키마·인증·에러 계약 | AP-06, ER-001~008 |
-| `app/repositories/` | 저장소 인터페이스 + 인메모리 구현 (W3에서 Supabase로 교체) | NFR-011 |
+| `app/repositories/` | 저장소 Protocol + 인메모리/Postgres 구현 | NFR-011 |
+| `migrations/` | DB 스키마·RLS. 도메인 규칙을 제약으로 이중화 | BR-003, BR-007, FR-003 |
 | `app/services/analysis_runner.py` | 분석 orchestration: 수집 → 분석 → 저장 | 04 §5-2 |
 | `evaluation/` | 평가 데이터셋·지표·리포트 ([README](evaluation/README.md)) | 기획서 §11 |
 
@@ -93,12 +94,43 @@ open http://127.0.0.1:8000/docs
 NFR-006(장시간 무응답 UI 금지)을 어기므로, 202로 `analysis_id`를 먼저 주고
 프론트가 상태를 폴링하는 구조다.
 
+### 저장소
+
+```bash
+# 인메모리 (기본) — 재시작 시 소실
+.venv/bin/python -m uvicorn app.main:app --port 8000
+
+# Postgres
+createdb regradar
+psql -d regradar -f migrations/001_initial_schema.sql
+STORAGE=postgres DATABASE_URL=postgresql://127.0.0.1:5432/regradar \
+  .venv/bin/python -m uvicorn app.main:app --port 8000
+```
+
+Supabase도 Postgres이므로 같은 마이그레이션을 쓴다. 상세는
+`docs/규제변화_AI도우미_MD_문서/06_데이터_모델_ERD.md`.
+
 ### 인증
 
-현재 `AUTH_MODE=dev`이며 `X-User-Id` 헤더를 그대로 신뢰한다. **로컬 전용**이다.
-`APP_ENV=production` + `AUTH_MODE=dev` 조합은 앱 기동 자체를 거부한다.
-W3에서 Supabase JWT 검증으로 교체하며, 라우터는 `CurrentUser`에만 의존하므로
-교체가 라우터로 번지지 않는다.
+| 모드 | 방식 | 용도 |
+|---|---|---|
+| `AUTH_MODE=dev` | `X-User-Id` 헤더 | 로컬 전용 |
+| `AUTH_MODE=supabase` | `Authorization: Bearer <JWT>` | 운영 |
+
+`APP_ENV=production` + `AUTH_MODE=dev` 조합은 앱 기동 자체를 거부한다 — dev 모드는
+헤더를 그대로 믿으므로 운영에서는 인증이 없는 것과 같다.
+
+### 저장소 테스트
+
+`tests/test_repositories.py`는 **같은 테스트를 인메모리와 Postgres 양쪽에** 돌린다.
+구현마다 다른 테스트를 쓰면 미묘한 동작 차이가 숨는다. Postgres가 없으면 해당
+케이스는 사유를 밝히고 건너뛴다.
+
+```bash
+createdb regradar_test
+psql -d regradar_test -f migrations/001_initial_schema.sql
+.venv/bin/python -m pytest tests/test_repositories.py -q
+```
 
 ## 평가 실측 (2026-09-21 · 15케이스)
 

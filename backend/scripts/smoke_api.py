@@ -1,6 +1,6 @@
 """API E2E 스모크 — 실행 중인 서버에 실제 요청을 보낸다.
 
-    .venv/bin/python -m uvicorn app.main:app --port 8811 &
+    .venv/bin/python -m uvicorn app.main:app --port 8000 &
     .venv/bin/python scripts/smoke_api.py
 """
 
@@ -9,7 +9,7 @@ import time
 
 import httpx
 
-BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8811/api/v1"
+BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000/api/v1"
 USER = "demo-hr"
 
 PROFILE = {

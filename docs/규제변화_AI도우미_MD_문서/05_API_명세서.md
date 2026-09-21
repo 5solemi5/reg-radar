@@ -51,11 +51,13 @@ Base URL: `/api/v1`
 
 ## 2. 인증
 
-| 항목 | 현재 (W2) | 계획 (W4) |
+| 모드 | 방식 | 용도 |
 |---|---|---|
-| 방식 | `X-User-Id` 헤더 | `Authorization: Bearer <Supabase JWT>` |
-| 설정 | `AUTH_MODE=dev` | `AUTH_MODE=supabase` |
-| 용도 | **로컬 개발 전용** | 운영 |
+| `AUTH_MODE=supabase` | `Authorization: Bearer <Supabase JWT>` | 운영 |
+| `AUTH_MODE=dev` | `X-User-Id` 헤더 | **로컬 개발 전용** |
+
+Supabase 모드는 HS256 서명, 만료, `audience=authenticated`, `sub` 존재를 모두
+검증한다. 만료된 토큰은 다른 실패와 구분해 "세션이 만료되었습니다"로 응답한다.
 
 `APP_ENV=production`과 `AUTH_MODE=dev`를 함께 쓰면 애플리케이션이 기동을 거부한다.
 dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없는 것과 같기 때문이다.
@@ -104,6 +106,7 @@ dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없�
 ```json
 {
   "status": "ok", "env": "local", "auth_mode": "dev",
+  "storage": "postgres", "database_connected": true,
   "law_api_configured": true, "llm_configured": true, "llm_model": "gpt-4o"
 }
 ```
@@ -298,8 +301,6 @@ RAG 미연결 상태에서는 `reference_evidence`가 빈 배열이다. 이는 �
 
 | 항목 | 상태 | 예정 |
 |---|---|---|
-| Supabase JWT 인증 | dev 모드 | W4 |
-| 영속 저장 | 인메모리 (재시작 시 소실) | W4 |
 | RAG 참고자료 | 항상 빈 배열 | W5 |
 | 보류 재판정 (FR-008) | 도메인 모델만 존재. 화면은 프로필 수정으로 유도 | W4 |
 | 분석 이력 비교 (UC-11) | 미구현 | W6 |

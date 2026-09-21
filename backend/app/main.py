@@ -7,6 +7,7 @@ modular monolith: Application Service와 AI Core를 한 프로세스 안에 두�
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.errors import ApiError, api_error_handler, unhandled_error_handler
 from app.api.routers import analyses, health, profile, results
 from app.core.config import Settings, get_settings
+from app.repositories.db import get_database
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +38,23 @@ def configure_logging(settings: Settings) -> None:
     )
 
 
+def build_lifespan(settings: Settings):
+    """DB 커넥션 풀을 앱 수명에 맞춘다."""
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        database = get_database(settings)
+        if settings.postgres_enabled:
+            # 여기서 실패하면 기동을 막는다. DB 없이 뜬 서버는 모든 저장 요청을
+            # 실패시키므로, 조용히 뜨는 것보다 시작을 거부하는 편이 낫다.
+            await database.connect()
+        yield
+        if database.is_connected:
+            await database.disconnect()
+
+    return lifespan
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings)
@@ -47,7 +66,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "production에서 auth_mode=dev는 허용되지 않습니다. AUTH_MODE=supabase로 설정하세요."
         )
 
+    if settings.storage == "postgres" and not settings.database_url:
+        raise RuntimeError("STORAGE=postgres에는 DATABASE_URL이 필요합니다.")
+
     app = FastAPI(
+        lifespan=build_lifespan(settings),
         title="규제 변화 AI 도우미 API",
         description=DESCRIPTION,
         version="0.2.0",
@@ -73,8 +96,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(results.router, prefix=prefix)
 
     logger.info(
-        "앱 기동 env=%s auth=%s law_api=%s llm=%s",
-        settings.app_env, settings.auth_mode,
+        "앱 기동 env=%s auth=%s storage=%s law_api=%s llm=%s",
+        settings.app_env, settings.auth_mode, settings.storage,
         settings.law_api_enabled, settings.llm_enabled,
     )
     return app

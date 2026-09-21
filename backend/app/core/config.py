@@ -40,7 +40,18 @@ class Settings(BaseSettings):
     pinecone_index: str = "reg-radar"
     rag_top_k: int = 5
 
-    # --- Supabase / 인증 (W3에서 실제 연동) ---
+    # --- 저장소 ---
+    # memory: 인메모리. 프로세스 재시작 시 소실되며 로컬 실험용이다.
+    # postgres: Supabase 또는 로컬 Postgres.
+    storage: Literal["memory", "postgres"] = "memory"
+    database_url: str = Field(
+        "", description="postgresql://user:pass@host:5432/db · Supabase는 Connection string"
+    )
+    db_pool_min: int = 1
+    db_pool_max: int = 10
+    db_command_timeout: float = 30.0
+
+    # --- Supabase / 인증 ---
     supabase_url: str = ""
     supabase_service_key: str = ""
     supabase_jwt_secret: str = ""
@@ -70,6 +81,10 @@ class Settings(BaseSettings):
     @property
     def law_api_enabled(self) -> bool:
         return bool(self.law_api_oc)
+
+    @property
+    def postgres_enabled(self) -> bool:
+        return self.storage == "postgres" and bool(self.database_url)
 
 
 @lru_cache

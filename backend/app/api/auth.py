@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
+import jwt
 from fastapi import Depends, Header, Request
 
 from app.api.errors import UnauthorizedError
@@ -40,18 +41,19 @@ def _dev_user(settings: Settings, x_user_id: str | None) -> CurrentUser:
 
 
 def _supabase_user(settings: Settings, token: str | None) -> CurrentUser:
+    """Supabase가 발급한 JWT를 검증한다.
+
+    서명 검증을 건너뛰면(`verify_signature=False`) 누구나 아무 sub를 넣어
+    남의 데이터를 읽을 수 있다. 알고리즘도 고정한다 — 토큰이 알고리즘을
+    고르게 두면 `alg: none` 공격에 열린다.
+    """
     if not token:
         raise UnauthorizedError()
     if not settings.supabase_jwt_secret:
+        # 비밀키가 없는데 통과시키면 인증이 없는 것과 같다. 열지 않고 막는다.
         raise UnauthorizedError(
             "인증 설정이 완료되지 않았습니다.", detail="SUPABASE_JWT_SECRET 없음"
         )
-    try:
-        import jwt  # PyJWT — W3에서 의존성 추가
-    except ImportError as exc:  # pragma: no cover
-        raise UnauthorizedError(
-            "인증 모듈을 사용할 수 없습니다.", detail="PyJWT 미설치"
-        ) from exc
 
     try:
         claims = jwt.decode(
@@ -59,8 +61,12 @@ def _supabase_user(settings: Settings, token: str | None) -> CurrentUser:
             settings.supabase_jwt_secret,
             algorithms=["HS256"],
             audience="authenticated",
+            options={"require": ["sub", "exp"]},
         )
-    except Exception as exc:
+    except jwt.ExpiredSignatureError as exc:
+        # ER-007. 만료는 재로그인으로 풀리는 상태이므로 구분해 알려준다.
+        raise UnauthorizedError("세션이 만료되었습니다. 다시 로그인해 주세요.") from exc
+    except jwt.InvalidTokenError as exc:
         logger.info("JWT 검증 실패: %s", type(exc).__name__)
         raise UnauthorizedError(detail=type(exc).__name__) from exc
 
