@@ -1,0 +1,68 @@
+# Render 배포 설정 (무료 티어)
+#
+# Railway 대신 무료로 운영하기 위한 구성이다. 대가는 cold start다 — 15분간
+# 요청이 없으면 인스턴스가 잠들고, 다시 깨우는 데 30~60초가 걸린다.
+# 프론트엔드가 그 사실을 배너로 알린다(BackendWakingBanner).
+#
+# 분석은 202 응답 후 백그라운드에서 수십 초 돈다. Render 웹 서비스는 응답을
+# 보낸 뒤에도 프로세스가 살아 있으므로 그 작업이 잘리지 않는다. 서버리스를
+# 쓰지 않는 이유가 이것이다 (01 기획서 §12).
+
+services:
+  - type: web
+    name: reg-radar-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    healthCheckPath: /api/v1/health
+
+    # 마이그레이션은 배포 때마다 먼저 돈다. 적용 여부가 schema_migrations에
+    # 기록되므로 두 번 실행해도 안전하다.
+    preDeployCommand: python scripts/migrate.py
+
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: AUTH_MODE
+        value: supabase
+      - key: STORAGE
+        value: postgres
+      - key: LLM_MODEL
+        value: gpt-4o
+      - key: LLM_TEMPERATURE
+        value: "0.0"
+      - key: LOG_LEVEL
+        value: INFO
+
+      # 무료 배포에서는 끈다. Chroma는 로컬 디렉터리에 저장하는데 컨테이너가
+      # 다시 뜨면 사라지고, 영구 디스크는 유료다 (08 가이드 §5 선택 A).
+      # 이미지에 chromadb도 넣지 않았으므로 켜도 동작하지 않는다.
+      - key: RAG_ENABLED
+        value: "false"
+
+      # AI 호출 비용을 유한하게 묶는다. 가입이 열린 공개 배포에서 이것이 없으면
+      # '동시 1건' 제약만으로는 하루에 몇 번이든 돌릴 수 있다.
+      - key: DAILY_ANALYSIS_LIMIT_PER_USER
+        value: "5"
+      - key: DAILY_ANALYSIS_LIMIT_TOTAL
+        value: "50"
+
+      # 아래는 값을 여기 적지 않는다. Render 대시보드에서 직접 넣는다.
+      # 저장소가 공개라 커밋되는 파일에 비밀값이 들어가면 그대로 노출된다.
+      - key: DATABASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: LAW_API_OC
+        sync: false
+
+      # 프론트엔드 도메인이 정해진 뒤에 넣는다. 순서가 어긋나면 화면은 뜨는데
+      # API 호출이 전부 CORS로 막힌다.
+      - key: CORS_ORIGINS
+        sync: false

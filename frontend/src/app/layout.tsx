@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { AppHeader } from "@/components/app-header";
+import { BackendWakingBanner } from "@/components/backend-waking-banner";
 import { Providers } from "@/components/providers";
 
 import "./globals.css";
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko">
       <body className="min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
         <Providers>
+          <BackendWakingBanner />
           <AppHeader />
           <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
           <footer className="mx-auto max-w-5xl px-4 pb-10 text-xs text-slate-500 dark:text-slate-400">

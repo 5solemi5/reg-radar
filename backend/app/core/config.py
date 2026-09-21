@@ -43,6 +43,17 @@ class Settings(BaseSettings):
     vector_store: Literal["chroma", "pinecone"] = "chroma"
     # RAG를 끄면 참고자료 없이 분석한다. BR-005에 따라 정상 상태이며,
     # 인덱스를 아직 만들지 않은 환경에서 기본값으로 쓴다.
+    daily_analysis_limit_per_user: int = 10
+    """사용자 1명이 하루에 돌릴 수 있는 분석 수. 0이면 제한 없음.
+
+    '동시 1건' 제약(uq_analyses_one_active_per_user)은 중복 클릭을 막을 뿐
+    하루에 몇 번이든 돌리는 것을 막지 못한다. 가입이 열린 공개 배포에서는
+    그것이 곧 OpenAI 키를 열어 두는 것과 같다. 분석 1회가 약 6만 토큰이다.
+    """
+
+    daily_analysis_limit_total: int = 200
+    """전체 사용자 합산 일일 상한. 계정을 여러 개 만드는 경우를 막는다. 0이면 제한 없음."""
+
     decree_pairing_enabled: bool = True
     """위임된 하위법령 조문을 함께 조회할지 (ADR-025).
 

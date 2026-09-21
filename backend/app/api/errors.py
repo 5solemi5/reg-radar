@@ -78,6 +78,28 @@ class AnalysisInProgressError(ApiError):
         self.analysis_id = analysis_id
 
 
+class DailyLimitExceededError(ApiError):
+    """하루 분석 횟수 상한. 공개 배포에서 AI 호출 비용을 유한하게 묶는다.
+
+    '동시 1건' 제약은 중복 클릭만 막는다. 하루에 몇 번이든 돌리는 것은 막지
+    못하므로, 가입이 열린 배포에서는 그것만으로 부족하다.
+    """
+
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    code = "daily_limit_exceeded"
+    message = "오늘 실행할 수 있는 분석 횟수를 모두 사용했습니다. 내일 다시 시도해 주세요."
+
+    def __init__(self, *, scope: str, limit: int):
+        super().__init__(detail=f"scope={scope} limit={limit}")
+        self.scope = scope
+        self.limit = limit
+        if scope == "total":
+            self.message = (
+                "서비스 전체의 오늘 분석 한도에 도달했습니다. "
+                "비용을 제한하기 위한 데모 상한이며, 내일 다시 시도할 수 있습니다."
+            )
+
+
 class ReassessNotAllowedError(ApiError):
     """FR-008. 보류가 아니거나 근거가 없어 재판정할 수 없다."""
 

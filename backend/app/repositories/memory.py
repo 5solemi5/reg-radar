@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
+from datetime import datetime
 
 from app.adapters.law.models import LawSnapshot
 from app.domain.entities import (
@@ -60,12 +61,33 @@ class InMemoryProfileRepository:
         return profile
 
 
+
+class ActiveAnalysisExistsError(RuntimeError):
+    """진행 중인 분석이 이미 있다 (FR-003).
+
+    postgres의 uq_analyses_one_active_per_user와 같은 규칙이다. 애플리케이션이
+    먼저 막지만 동시 요청이 겹치면 코드만으로는 뚫리므로 저장소도 막는다.
+    """
+
+    def __init__(self, user_id: str) -> None:
+        super().__init__(f"이미 진행 중인 분석이 있습니다: user_id={user_id}")
+        self.user_id = user_id
+
+
 class InMemoryAnalysisRepository:
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
 
     async def create(self, analysis: Analysis) -> Analysis:
         async with self._store.lock:
+            # postgres에는 uq_analyses_one_active_per_user 부분 유니크 인덱스가 있다.
+            # 메모리 구현에 같은 규칙이 없으면 테스트가 '운영에서는 불가능한 상태'를
+            # 통과시킨다. 계약 테스트를 두 구현에 돌리다 실제로 드러났다.
+            if analysis.is_active and any(
+                a.user_id == analysis.user_id and a.is_active
+                for a in self._store.analyses.values()
+            ):
+                raise ActiveAnalysisExistsError(analysis.user_id)
             self._store.analyses[analysis.analysis_id] = analysis
         return analysis
 
@@ -85,6 +107,18 @@ class InMemoryAnalysisRepository:
         owned = [a for a in self._store.analyses.values() if a.user_id == user_id]
         owned.sort(key=lambda a: a.created_at, reverse=True)
         return owned[offset : offset + limit], len(owned)
+
+    async def count_since(self, since: datetime, *, user_id: str | None = None) -> int:
+        """일일 상한 계산용. 실패한 분석도 센다.
+
+        실패를 빼면 실패를 유도해 한도를 우회할 수 있다. 실패해도 LLM 호출은
+        이미 나간 뒤인 경우가 대부분이라 비용도 발생한 상태다.
+        """
+        return sum(
+            1
+            for a in self._store.analyses.values()
+            if a.created_at >= since and (user_id is None or a.user_id == user_id)
+        )
 
     async def find_active(self, user_id: str) -> Analysis | None:
         return next(

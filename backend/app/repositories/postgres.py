@@ -9,6 +9,7 @@ NFR-007: 사용자 데이터 쿼리는 전부 WHERE user_id = $n을 포함한다
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 import asyncpg
@@ -128,8 +129,9 @@ class PostgresAnalysisRepository:
         row = await self._db.fetchrow(
             """
             INSERT INTO analyses
-                (analysis_id, user_id, status, period_from, period_to, law_query, trace_id)
-            VALUES ($1::uuid, $2, $3::analysis_status, $4, $5, $6, $7::uuid)
+                (analysis_id, user_id, status, period_from, period_to, law_query,
+                 trace_id, created_at)
+            VALUES ($1::uuid, $2, $3::analysis_status, $4, $5, $6, $7::uuid, $8)
             RETURNING *
             """,
             analysis.analysis_id,
@@ -139,6 +141,10 @@ class PostgresAnalysisRepository:
             analysis.period_to,
             analysis.law_query,
             analysis.trace_id,
+            # DEFAULT now()에 맡기지 않는다. 도메인 객체가 들고 온 값을 무시하면
+            # 같은 객체를 저장했는데 구현에 따라 다른 값이 나온다. 계약 테스트가
+            # 실제로 그 차이를 잡았다.
+            analysis.created_at,
         )
         return self._to_domain(row)
 
@@ -209,6 +215,18 @@ class PostgresAnalysisRepository:
             )
             return [], int(total or 0)
         return [self._to_domain(r) for r in rows], int(rows[0]["total_count"])
+
+    async def count_since(self, since: datetime, *, user_id: str | None = None) -> int:
+        """일일 상한 계산용. 실패한 분석도 센다 (실패 유도로 한도를 우회하지 못하게)."""
+        if user_id is None:
+            return await self._db.fetchval(
+                "SELECT count(*) FROM analyses WHERE created_at >= $1", since
+            )
+        return await self._db.fetchval(
+            "SELECT count(*) FROM analyses WHERE created_at >= $1 AND user_id = $2",
+            since,
+            user_id,
+        )
 
     async def find_active(self, user_id: str) -> Analysis | None:
         row = await self._db.fetchrow(

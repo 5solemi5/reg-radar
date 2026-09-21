@@ -16,6 +16,7 @@ from app.api.deps import (
 )
 from app.api.errors import (
     AnalysisInProgressError,
+    DailyLimitExceededError,
     ErrorResponse,
     NotFoundError,
     ProfileRequiredError,
@@ -28,6 +29,7 @@ from app.api.schemas import (
     ResultListOut,
     ResultOut,
 )
+from app.core.config import Settings, get_settings
 from app.domain.entities import Analysis
 from app.domain.enums import ActionGrade, AnalysisStatus, Applicability
 from app.repositories.memory import (
@@ -71,6 +73,35 @@ async def _execute(runner, analysis: Analysis, profile, max_laws: int) -> None:
         await runner.fail(analysis, "분석 중 오류가 발생했습니다.")
 
 
+
+def _start_of_today() -> datetime:
+    """오늘 0시(UTC). 상한을 '최근 24시간'이 아니라 날짜로 끊는다.
+
+    슬라이딩 윈도우로 하면 사용자가 언제 한도가 풀리는지 알 수 없다.
+    '내일 다시 시도해 주세요'라고 말하려면 날짜 기준이어야 한다.
+    """
+    now = datetime.now(UTC)
+    return now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+async def _enforce_daily_limits(repo, settings: Settings, user_id: str) -> None:
+    since = _start_of_today()
+
+    if settings.daily_analysis_limit_per_user > 0:
+        used = await repo.count_since(since, user_id=user_id)
+        if used >= settings.daily_analysis_limit_per_user:
+            raise DailyLimitExceededError(
+                scope="user", limit=settings.daily_analysis_limit_per_user
+            )
+
+    if settings.daily_analysis_limit_total > 0:
+        used = await repo.count_since(since)
+        if used >= settings.daily_analysis_limit_total:
+            raise DailyLimitExceededError(
+                scope="total", limit=settings.daily_analysis_limit_total
+            )
+
+
 @router.post(
     "",
     response_model=AnalysisOut,
@@ -86,6 +117,7 @@ async def create_analysis(
     profile_repo: InMemoryProfileRepository = Depends(get_profile_repo),
     analysis_repo: InMemoryAnalysisRepository = Depends(get_analysis_repo),
     runner=Depends(get_analysis_runner),
+    settings: Settings = Depends(get_settings),
 ) -> AnalysisOut:
     """새 규제 분석을 시작한다.
 
@@ -101,6 +133,10 @@ async def create_analysis(
     active = await analysis_repo.find_active(user.user_id)
     if active is not None:
         raise AnalysisInProgressError(active.analysis_id)
+
+    # 위 제약은 '동시에 하나'일 뿐 하루에 몇 번이든 돌리는 것은 막지 못한다.
+    # 공개 배포에서는 그것이 곧 AI 호출 비용을 열어 두는 것과 같다.
+    await _enforce_daily_limits(analysis_repo, settings, user.user_id)
 
     analysis = await analysis_repo.create(
         Analysis(

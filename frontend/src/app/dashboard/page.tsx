@@ -88,7 +88,17 @@ function DashboardPageContent() {
         </div>
       </header>
 
-      {startError && !startError.isAnalysisInProgress && (
+      {/* 한도 소진은 고장이 아니라 설계된 상한이다. 빨간 오류로 보여주면
+          사용자가 뭔가 잘못한 것처럼 읽힌다. */}
+      {startError?.isDailyLimit && (
+        <StateMessage
+          tone="info"
+          title="오늘의 분석 한도를 모두 썼습니다"
+          description={`${startError.message} 이 서비스는 AI 호출 비용을 유한하게 묶기 위해 하루 실행 횟수를 제한합니다.`}
+        />
+      )}
+
+      {startError && !startError.isAnalysisInProgress && !startError.isDailyLimit && (
         <StateMessage tone="error" title="분석을 시작하지 못했습니다" description={startError.message} />
       )}
 

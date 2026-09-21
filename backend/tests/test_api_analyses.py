@@ -288,3 +288,68 @@ class TestCancel:
 
         # 취소 후에는 새 분석을 시작할 수 있다
         assert (await client.post("/api/v1/analyses", json={})).status_code == 202
+
+
+class TestDailyLimit:
+    """공개 배포에서 AI 호출 비용을 유한하게 묶는다.
+
+    '동시 1건' 제약(uq_analyses_one_active_per_user)은 중복 클릭만 막는다.
+    하루에 몇 번이든 돌리는 것은 막지 못하므로, 가입이 열린 배포에서는 그것이
+    곧 OpenAI 키를 열어 두는 것과 같다. 분석 1회가 약 6만 토큰이다.
+    """
+
+    @staticmethod
+    def _limit(app, *, per_user: int = 0, total: int = 0):
+        """상한만 바꾼다. conftest가 넣어 둔 테스트 설정(dev 인증·메모리 저장소)을
+        그대로 이어받아야 하므로 get_settings()를 새로 읽지 않는다."""
+        from app.core.config import get_settings
+
+        base = app.dependency_overrides[get_settings]()
+        patched = base.model_copy(
+            update={
+                "daily_analysis_limit_per_user": per_user,
+                "daily_analysis_limit_total": total,
+            }
+        )
+        app.dependency_overrides[get_settings] = lambda: patched
+
+    async def test_사용자_상한에_걸리면_429(self, app, client, with_profile, use_runner):
+        use_runner()
+        self._limit(app, per_user=2)
+
+        for _ in range(2):
+            assert (await client.post("/api/v1/analyses", json={})).status_code == 202
+
+        r = await client.post("/api/v1/analyses", json={})
+        assert r.status_code == 429
+        assert r.json()["error"]["code"] == "daily_limit_exceeded"
+
+    async def test_전체_상한은_계정을_바꿔도_걸린다(self, app, client, with_profile, use_runner):
+        """계정을 여러 개 만들어 우회하는 경우를 막는다."""
+        use_runner()
+        self._limit(app, per_user=0, total=1)
+
+        assert (await client.post("/api/v1/analyses", json={})).status_code == 202
+        r = await client.post("/api/v1/analyses", json={})
+        assert r.status_code == 429
+        assert "전체" in r.json()["error"]["message"]
+
+    async def test_상한이_0이면_제한하지_않는다(self, app, client, with_profile, use_runner):
+        """로컬 개발과 평가 실행은 상한 없이 돌아야 한다."""
+        use_runner()
+        self._limit(app, per_user=0, total=0)
+        for _ in range(3):
+            assert (await client.post("/api/v1/analyses", json={})).status_code == 202
+
+    async def test_사용자_상한은_남의_분석을_세지_않는다(
+        self, app, client, with_profile, use_runner, store
+    ):
+        from app.domain.entities import Analysis
+
+        use_runner()
+        self._limit(app, per_user=1, total=0)
+
+        other = Analysis(user_id="someone-else")
+        store.analyses[other.analysis_id] = other
+
+        assert (await client.post("/api/v1/analyses", json={})).status_code == 202

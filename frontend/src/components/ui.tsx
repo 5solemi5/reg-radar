@@ -88,24 +88,28 @@ export function StateMessage({
   title: string;
   description?: React.ReactNode;
   action?: React.ReactNode;
-  tone?: "neutral" | "error";
+  /** info는 '고장이 아니라 안내'다. 한도 소진처럼 설계된 상태에 쓴다. */
+  tone?: "neutral" | "error" | "info";
 }) {
   return (
     <div
       className={clsx(
         "rounded-xl border border-dashed p-8 text-center",
-        tone === "error"
-          ? "border-rose-300 bg-rose-50/60 dark:border-rose-900 dark:bg-rose-950/20"
-          : "border-slate-300 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-900/40",
+        tone === "error" &&
+          "border-rose-300 bg-rose-50/60 dark:border-rose-900 dark:bg-rose-950/20",
+        tone === "info" &&
+          "border-amber-300 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20",
+        tone === "neutral" &&
+          "border-slate-300 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-900/40",
       )}
       role={tone === "error" ? "alert" : undefined}
     >
       <p
         className={clsx(
           "font-medium",
-          tone === "error"
-            ? "text-rose-800 dark:text-rose-300"
-            : "text-slate-800 dark:text-slate-200",
+          tone === "error" && "text-rose-800 dark:text-rose-300",
+          tone === "info" && "text-amber-900 dark:text-amber-300",
+          tone === "neutral" && "text-slate-800 dark:text-slate-200",
         )}
       >
         {title}

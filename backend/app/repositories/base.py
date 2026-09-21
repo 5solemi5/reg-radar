@@ -10,6 +10,7 @@ NFR-007(데이터 격리): 사용자 데이터를 다루는 모든 조회는 use
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Protocol
 
 from app.adapters.law.models import LawSnapshot
@@ -36,6 +37,7 @@ class AnalysisRepository(Protocol):
         self, user_id: str, *, limit: int = 20, offset: int = 0
     ) -> tuple[list[Analysis], int]: ...
     async def find_active(self, user_id: str) -> Analysis | None: ...
+    async def count_since(self, since: datetime, *, user_id: str | None = None) -> int: ...
 
 
 class ResultRepository(Protocol):

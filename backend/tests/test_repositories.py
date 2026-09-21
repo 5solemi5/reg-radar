@@ -198,22 +198,18 @@ class TestAnalysisRepository:
         assert len(items) == 2
         assert total == 3
 
-    async def test_중복_실행_방지는_DB도_강제한다(self, repos):
+    async def test_중복_실행_방지는_저장소도_강제한다(self, repos):
         """FR-003. 애플리케이션이 find_active로 막지만, 동시 요청이 겹치면
-        코드만으로는 뚫린다. Postgres는 부분 유니크 인덱스로 한 번 더 막는다.
+        코드만으로는 뚫린다. 저장소가 마지막 방어선이다.
 
-        인메모리 구현에는 이 제약이 없다 — API 계층에서만 막힌다. 저장소를
-        교체해도 사용자가 보는 동작은 같지만, 방어 깊이는 다르다는 뜻이다.
+        postgres는 부분 유니크 인덱스로 막는다. 인메모리 구현에는 그 규칙이
+        없어 '운영에서는 불가능한 상태'를 테스트가 통과시키고 있었고, 계약
+        테스트를 양쪽에 돌리다 드러나 같은 규칙을 넣었다. 예외 타입은 구현마다
+        다르지만 '거부한다'는 계약은 같다.
         """
-        await repos["analysis"].create(Analysis(user_id="u1"))
-
-        if repos["kind"] == "postgres":
-            import asyncpg
-
-            with pytest.raises(asyncpg.exceptions.UniqueViolationError):
-                await repos["analysis"].create(Analysis(user_id="u1"))
-        else:
-            await repos["analysis"].create(Analysis(user_id="u1"))
+        await repos["analysis"].create(Analysis(user_id="u-dup"))
+        with pytest.raises(Exception):  # noqa: B017 — 구현마다 예외 타입이 다르다
+            await repos["analysis"].create(Analysis(user_id="u-dup"))
 
     async def test_히스토리에_남의_것이_섞이지_않는다(self, repos):
         await repos["analysis"].create(Analysis(user_id="u1"))
@@ -381,3 +377,102 @@ class TestSavedAndFeedback:
         found = await repos["feedback"].list_for_result(result.result_id, "u1")
         assert len(found) == 1
         assert found[0].correction_type == "wrong_applicability"
+
+
+class TestDailyUsageCount:
+    """일일 상한 계산. 두 저장소 구현이 같은 답을 내야 한다.
+
+    같은 계약 테스트를 memory/postgres 양쪽에 돌리는 것이 이 프로젝트에서
+    이미 버그 여럿을 잡아냈다. 이 테스트도 그랬다 — 메모리 구현에 '진행 중 분석은
+    하나' 규칙이 없어, 운영에서는 불가능한 상태를 테스트가 통과시키고 있었다.
+    """
+
+    @staticmethod
+    def _done(user_id: str, created_at):
+        """완료 상태로 만든다. 진행 중 분석은 사용자당 하나뿐이라 여러 건을
+        만들려면 완료 상태여야 한다. 일일 사용량도 완료·실패분을 센다."""
+        from app.domain.entities import Analysis
+        from app.domain.enums import AnalysisStatus
+
+        return Analysis(
+            user_id=user_id, created_at=created_at, status=AnalysisStatus.COMPLETED
+        )
+
+    async def test_기준시각_이후만_센다(self, repos):
+        from datetime import UTC, datetime, timedelta
+
+        now = datetime.now(UTC)
+        uid = f"u-since-{now.timestamp()}"
+        await repos["analysis"].create(self._done(uid, now - timedelta(days=2)))
+        await repos["analysis"].create(self._done(uid, now))
+
+        since = now - timedelta(hours=1)
+        assert await repos["analysis"].count_since(since, user_id=uid) == 1
+
+    async def test_사용자별과_전체가_다르다(self, repos):
+        from datetime import UTC, datetime, timedelta
+
+        now = datetime.now(UTC)
+        a, b = f"u-a-{now.timestamp()}", f"u-b-{now.timestamp()}"
+        since = now - timedelta(hours=1)
+        # 공용 DB라 다른 행이 있을 수 있다. 증분으로 본다.
+        before = await repos["analysis"].count_since(since)
+
+        await repos["analysis"].create(self._done(a, now))
+        await repos["analysis"].create(self._done(a, now))
+        await repos["analysis"].create(self._done(b, now))
+
+        assert await repos["analysis"].count_since(since, user_id=a) == 2
+        assert await repos["analysis"].count_since(since, user_id=b) == 1
+        assert await repos["analysis"].count_since(since) - before == 3
+
+    async def test_실패한_분석도_센다(self, repos):
+        """실패를 빼면 실패를 유도해 한도를 우회할 수 있다.
+
+        실패해도 LLM 호출은 이미 나간 뒤인 경우가 대부분이라 비용은 발생했다.
+        """
+        from datetime import UTC, datetime, timedelta
+
+        from app.domain.entities import Analysis
+        from app.domain.enums import AnalysisStatus
+
+        now = datetime.now(UTC)
+        uid = f"u-failed-{now.timestamp()}"
+        created = await repos["analysis"].create(Analysis(user_id=uid, created_at=now))
+        await repos["analysis"].update(
+            created.model_copy(update={"status": AnalysisStatus.FAILED})
+        )
+
+        since = now - timedelta(hours=1)
+        assert await repos["analysis"].count_since(since, user_id=uid) == 1
+
+
+class TestOneActiveAnalysisPerUser:
+    """FR-003. 저장소가 마지막 방어선이다.
+
+    API가 먼저 find_active로 막지만 동시 요청이 겹치면 코드만으로는 뚫린다.
+    postgres는 부분 유니크 인덱스로 막는데 메모리 구현에는 그 규칙이 없었다.
+    """
+
+    async def test_진행_중_분석이_있으면_두_번째는_거부된다(self, repos):
+        from datetime import UTC, datetime
+
+        from app.domain.entities import Analysis
+
+        uid = f"u-active-{datetime.now(UTC).timestamp()}"
+        await repos["analysis"].create(Analysis(user_id=uid))
+        with pytest.raises(Exception):  # noqa: B017 — 구현마다 예외 타입이 다르다
+            await repos["analysis"].create(Analysis(user_id=uid))
+
+    async def test_완료된_분석은_막지_않는다(self, repos):
+        from datetime import UTC, datetime
+
+        from app.domain.entities import Analysis
+        from app.domain.enums import AnalysisStatus
+
+        uid = f"u-done-{datetime.now(UTC).timestamp()}"
+        first = await repos["analysis"].create(Analysis(user_id=uid))
+        await repos["analysis"].update(
+            first.model_copy(update={"status": AnalysisStatus.COMPLETED})
+        )
+        await repos["analysis"].create(Analysis(user_id=uid))

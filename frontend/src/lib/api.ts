@@ -79,10 +79,39 @@ export class ApiError extends Error {
     return this.code === "analysis_in_progress";
   }
 
+  /** 일일 분석 한도 소진. 공개 배포의 비용 상한이라 오류가 아니라 정상 상태다. */
+  get isDailyLimit(): boolean {
+    return this.code === "daily_limit_exceeded";
+  }
+
   /** 로그인 화면으로 보내야 하는 상태 (ER-007). */
   get isUnauthorized(): boolean {
     return this.status === 401;
   }
+}
+
+
+/**
+ * 백엔드가 깨어나는 중인지 알리는 아주 작은 구독 채널.
+ *
+ * 전역 상태 라이브러리를 들이기에는 과하고, 이 신호가 필요한 곳은 최상위
+ * 배너 하나뿐이다.
+ */
+export type BackendState = "awake" | "waking";
+
+const SLOW_RESPONSE_MS = 3000;
+
+const backendListeners = new Set<(state: BackendState) => void>();
+
+function notifyBackendState(state: BackendState): void {
+  for (const listener of backendListeners) listener(state);
+}
+
+export function onBackendState(
+  listener: (state: BackendState) => void,
+): () => void {
+  backendListeners.add(listener);
+  return () => backendListeners.delete(listener);
 }
 
 async function request<T>(
@@ -91,6 +120,11 @@ async function request<T>(
   init?: RequestInit,
 ): Promise<T> {
   const auth = await authHeaders();
+
+  // 무료 호스팅(Render 등)은 일정 시간 요청이 없으면 인스턴스를 잠재운다.
+  // 깨어나는 데 30~60초가 걸리는데, 그동안 화면이 멈춰 있으면 사용자는 고장으로
+  // 읽는다. 오래 걸리는 중이라는 사실 자체를 알려 주는 편이 정직하다.
+  const slowTimer = setTimeout(() => notifyBackendState("waking"), SLOW_RESPONSE_MS);
 
   let response: Response;
   try {
@@ -110,6 +144,9 @@ async function request<T>(
       "서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인해 주세요.",
       0,
     );
+  } finally {
+    clearTimeout(slowTimer);
+    notifyBackendState("awake");
   }
 
   if (response.status === 204) return undefined as T;
