@@ -85,7 +85,7 @@ async def analyze_article(
     applicability = await map_applicability(runner, packet, extraction)
 
     # 코드가 확정할 수 있는 HOLD 사유를 LLM 판정 위에 덮어쓴다 (AP-03, AP-04, BR-003).
-    hold_reasons = deterministic_hold_reasons(packet, extraction)
+    hold_reasons = deterministic_hold_reasons(packet)
     applicability = apply_hold_policy(applicability, hold_reasons)
 
     # C5. 실무 영향 — 무관 항목에는 생성하지 않는다 (불필요한 서술 = 오탐 표면).

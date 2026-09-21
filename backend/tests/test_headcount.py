@@ -89,32 +89,40 @@ class TestHoldReasonIntegration:
 
     def test_인원이_있으면_규모_보류사유_없음(self):
         from app.ai.chains.c4_mapping import deterministic_hold_reasons
-        from app.domain.outputs import TargetExtractionOutput
 
-        reasons = deterministic_hold_reasons(self._packet(80), TargetExtractionOutput())
-        assert reasons == []
+        assert deterministic_hold_reasons(self._packet(80)) == []
 
     def test_인원이_미상이면_규모_보류사유_발생(self):
         from app.ai.chains.c4_mapping import deterministic_hold_reasons
-        from app.domain.outputs import TargetExtractionOutput
 
-        reasons = deterministic_hold_reasons(self._packet(None), TargetExtractionOutput())
+        reasons = deterministic_hold_reasons(self._packet(None))
         assert len(reasons) == 1
         assert "상시 10명 이상" in reasons[0]
 
-    def test_LLM이_size로_분류하지_않아도_보류가_잡힌다(self):
-        """정규식이 1차 방어선이므로 C3 라벨에 의존하지 않는다."""
-        from app.ai.chains.c4_mapping import deterministic_hold_reasons
-        from app.domain.outputs import TargetExtractionOutput
+    def test_규모기준이_없는_조문은_인원_미상이어도_보류하지_않는다(self):
+        """실측 회귀(E06): 근로기준법 제54조(휴게)는 규모 조건이 없는데
+        '상시근로자 수 미상'을 이유로 보류하는 오답이 나왔다.
+        원문에 기준이 없으면 LLM이 size 조건을 만들어내도 보류하지 않는다.
+        """
+        import datetime as dt
 
-        extraction = TargetExtractionOutput(
-            conditions=[
-                {
-                    "description": "취업규칙 작성 의무자",
-                    "kind": "other",
-                    "is_required": True,
-                    "cited_span": "취업규칙을 작성하여야 한다",
-                }
-            ]
+        from app.ai.chains.c4_mapping import deterministic_hold_reasons
+        from app.domain.context import ChangeContext, ContextPacket, LegalContext, UserContext
+        from app.domain.enums import ChangeType, CompanySize
+
+        packet = ContextPacket(
+            user=UserContext(
+                job="운영팀장", industry="제조",
+                company_size=CompanySize.MEDIUM, employee_count=None,
+            ),
+            law=LegalContext(
+                law_id="1", law_name="근로기준법", article_no="제54조",
+                effective_date=dt.date(2026, 8, 20),
+                original_text=(
+                    "제54조(휴게) ① 사용자는 근로시간이 4시간인 경우에는 30분 이상, "
+                    "8시간인 경우에는 1시간 이상의 휴게시간을 근로시간 도중에 주어야 한다."
+                ),
+            ),
+            change=ChangeContext(change_type=ChangeType.NEW),
         )
-        assert deterministic_hold_reasons(self._packet(None), extraction)
+        assert deterministic_hold_reasons(packet) == []

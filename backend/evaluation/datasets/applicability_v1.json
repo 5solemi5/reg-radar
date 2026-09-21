@@ -1,0 +1,230 @@
+{
+  "dataset_id": "applicability_v1",
+  "created_at": "2026-09-21",
+  "description": "적용 판정(해당/보류/무관) Ground Truth. 라벨은 조문 원문을 직접 읽고 부여했다.",
+  "labeling_policy": [
+    "gold_applicability는 '이 시스템이 주어진 입력으로 내려야 하는 판정'이다.",
+    "따라서 구체 기준이 하위법령에 위임된 조문은 HOLD가 정답이다 (BR-003, Q5).",
+    "조문 원문만으로 확정 가능한 규모 기준은 APPLICABLE/NOT_APPLICABLE로 확정해야 한다.",
+    "change_mode=as_new: 조문 전체를 신설로 간주해 입력한다. 이 평가셋은 '적용 판정' 품질을 측정하며, 신구법 변경 감지 정확도는 diff 단위 테스트가 담당한다."
+  ],
+  "profiles": {
+    "solo_commerce": {
+      "label": "4인 온라인 생활용품 쇼핑몰 대표",
+      "job": "쇼핑몰 운영·총무",
+      "industry": "이커머스 소매",
+      "company_size": "MICRO",
+      "employee_count": 4,
+      "interests": [
+        "개인정보",
+        "노동"
+      ]
+    },
+    "it_hr": {
+      "label": "80인 IT기업 HR 실무자",
+      "job": "HR 담당자 (채용·근태·취업규칙)",
+      "industry": "IT 서비스",
+      "company_size": "MEDIUM",
+      "employee_count": 80,
+      "interests": [
+        "노동",
+        "근로계약"
+      ]
+    },
+    "mfg_ops_unknown": {
+      "label": "제조기업 운영팀장 (상시근로자 수 미입력)",
+      "job": "운영·경영지원 팀장",
+      "industry": "제조",
+      "company_size": "MEDIUM",
+      "employee_count": null,
+      "interests": [
+        "안전",
+        "노동"
+      ]
+    },
+    "mfg_ops_150": {
+      "label": "150인 제조기업 운영팀장",
+      "job": "운영·경영지원 팀장",
+      "industry": "제조",
+      "company_size": "MEDIUM",
+      "employee_count": 150,
+      "interests": [
+        "안전",
+        "노동"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "E01",
+      "law_name": "근로기준법",
+      "article_no": "제93조",
+      "profile": "it_hr",
+      "gold_applicability": "APPLICABLE",
+      "expected_action_grade": [
+        "ACTION",
+        "DECISION"
+      ],
+      "expects_delegation": false,
+      "note": "상시 10명 이상 기준을 80명이 명확히 충족. 작성·신고 의무이므로 행동이 필요하다."
+    },
+    {
+      "id": "E02",
+      "law_name": "근로기준법",
+      "article_no": "제93조",
+      "profile": "solo_commerce",
+      "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": false,
+      "note": "4명은 상시 10명 이상 기준 미충족. 규모 기준만으로 확정 가능하므로 보류가 아니다."
+    },
+    {
+      "id": "E03",
+      "law_name": "근로기준법",
+      "article_no": "제93조",
+      "profile": "mfg_ops_unknown",
+      "gold_applicability": "HOLD",
+      "expects_delegation": false,
+      "expected_missing_context_keyword": "근로자",
+      "note": "규모 기준은 있는데 상시근로자 수가 미상. 값 하나만 받으면 풀리는 전형적 보류."
+    },
+    {
+      "id": "E04",
+      "law_name": "근로기준법",
+      "article_no": "제54조",
+      "profile": "it_hr",
+      "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "휴게시간 규정. 규모 조건도 위임도 없어 사용자 전원에게 적용된다."
+    },
+    {
+      "id": "E05",
+      "law_name": "근로기준법",
+      "article_no": "제54조",
+      "profile": "solo_commerce",
+      "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "휴게 규정은 소규모 사업장에도 적용된다. 규모가 작다는 이유로 무관 처리하면 오답."
+    },
+    {
+      "id": "E06",
+      "law_name": "근로기준법",
+      "article_no": "제54조",
+      "profile": "mfg_ops_unknown",
+      "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "회귀 케이스: 인원이 미상이어도 조문에 규모 조건이 없으면 보류할 이유가 없다."
+    },
+    {
+      "id": "E07",
+      "law_name": "근로기준법",
+      "article_no": "제76조의2",
+      "profile": "it_hr",
+      "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "직장 내 괴롭힘 금지. 조문에 규모 조건이 없고 80인 사업장이므로 해당."
+    },
+    {
+      "id": "E08",
+      "law_name": "산업안전보건법",
+      "article_no": "제17조",
+      "profile": "mfg_ops_150",
+      "gold_applicability": "HOLD",
+      "expects_delegation": true,
+      "expected_missing_context_keyword": "대통령령",
+      "note": "안전관리자를 두어야 하는 업종·상시근로자 수가 대통령령에 위임되어 조문만으로 확정 불가."
+    },
+    {
+      "id": "E09",
+      "law_name": "산업안전보건법",
+      "article_no": "제24조",
+      "profile": "mfg_ops_150",
+      "gold_applicability": "HOLD",
+      "expects_delegation": true,
+      "note": "산업안전보건위원회 구성 대상이 대통령령에 위임되어 있다."
+    },
+    {
+      "id": "E10",
+      "law_name": "개인정보 보호법",
+      "article_no": "제31조",
+      "profile": "solo_commerce",
+      "gold_applicability": "HOLD",
+      "expects_delegation": true,
+      "note": "지정 면제 기준(종업원 수·매출액)이 대통령령에 위임. 4인 사업자는 면제 대상일 수 있다."
+    },
+    {
+      "id": "E11",
+      "law_name": "개인정보 보호법",
+      "article_no": "제31조",
+      "profile": "it_hr",
+      "gold_applicability": "HOLD",
+      "expects_delegation": true,
+      "note": "단서의 면제 기준이 대통령령이므로 조문만으로는 지정 의무를 확정할 수 없다."
+    },
+    {
+      "id": "E12",
+      "law_name": "화학물질관리법",
+      "article_no": "제32조",
+      "profile": "it_hr",
+      "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "대상이 '유해화학물질 영업자'. IT 서비스는 해당 없음. 위임이 있어도 무관은 무관이다."
+    },
+    {
+      "id": "E13",
+      "law_name": "화학물질관리법",
+      "article_no": "제32조",
+      "profile": "solo_commerce",
+      "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "생활용품 쇼핑몰은 유해화학물질 영업자가 아니다."
+    },
+    {
+      "id": "E14",
+      "law_name": "식품위생법",
+      "article_no": "제41조",
+      "profile": "it_hr",
+      "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "식품접객업·식품영업자 대상. IT 서비스는 해당 없음."
+    },
+    {
+      "id": "E15",
+      "law_name": "식품위생법",
+      "article_no": "제41조",
+      "profile": "mfg_ops_150",
+      "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "일반 제조업은 식품위생교육 대상 영업자가 아니다."
+    }
+  ],
+  "known_limitations": [
+    "근로기준법 제76조의2(직장 내 괴롭힘 금지)는 조문 문언에 규모 조건이 없지만 실제로는 5인 미만 사업장에 적용되지 않는다(시행령 별표1). 조문 단독 입력으로는 알 수 없으므로 4인 프로필 케이스는 평가셋에서 제외했다. 법률↔시행령 페어링이 붙으면 케이스를 추가한다."
+  ],
+  "methodology_caveats": [
+    "이 데이터셋은 개발셋(dev set)으로 사용되었다. C4 프롬프트를 이 셋의 오답을 보고 두 차례 수정했으므로, 여기서 나온 실측값은 낙관적으로 편향되어 있다.",
+    "따라서 현재 수치는 '이 15건에서의 성능'이며 일반화된 성능이 아니다.",
+    "일반화 성능을 주장하려면 프롬프트 수정에 사용하지 않은 홀드아웃 셋이 필요하다. 이것이 다음 평가 작업의 최우선 항목이다.",
+    "표본이 15건이라 지표 1건의 변화가 6.7%p를 움직인다. 신뢰구간을 논할 크기가 아니다."
+  ],
+  "tuning_log": [
+    {
+      "iteration": 1,
+      "accuracy": 0.467,
+      "over_hold_rate": 0.7,
+      "change": "초기 구현"
+    },
+    {
+      "iteration": 2,
+      "accuracy": 0.8,
+      "over_hold_rate": 0.2,
+      "change": "C4 판정 절차를 '대상 집단 확인 → 세부 기준 확인' 2단계로 명시. 규모 보류 판단에서 LLM 라벨 폴백 제거."
+    },
+    {
+      "iteration": 3,
+      "accuracy": 0.867,
+      "over_hold_rate": 0.0,
+      "q4_recall": 0.6,
+      "change": "'적용 여부'와 '의무 수준'을 구분하는 원칙 추가. 보류는 사라졌으나 재현율이 80%→60%로 악화 — 임계값 이동이지 능력 향상이 아님. 여기서 튜닝 중단."
+    }
+  ]
+}

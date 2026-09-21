@@ -17,6 +17,7 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 
 ```bash
 .venv/bin/python -m pytest -q                            # 전체 (116)
+.venv/bin/python scripts/run_eval.py --save              # Q1~Q6 실측
 .venv/bin/python scripts/smoke_law_api.py "근로기준법"    # 법제처 실연결 확인
 .venv/bin/python scripts/smoke_analysis.py 근로기준법 제93조  # AI Core E2E (LLM 호출)
 ```
@@ -40,6 +41,7 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 | `app/ai/chains/` | C3 추출 → C4 매핑 → C5 영향 | AP-02 |
 | `app/validator/` | C6. 인용·금지필드·HOLD 검증 | FR-020~022 |
 | `app/services/analysis_service.py` | C3~C6 orchestration + 결과 조립 | 04 §5-2 |
+| `evaluation/` | 평가 데이터셋·지표·리포트 ([README](evaluation/README.md)) | 기획서 §11 |
 
 ## 설계상 지켜지는 불변식
 
@@ -56,3 +58,15 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
    '용어 정의가 불명확하다'며 회피해 세 프로필이 전부 보류로 나온 회귀가 있었다.
 6. **근거 없는 '해당'은 차단된다.** 검증된 인용이 하나도 남지 않은 APPLICABLE은
    Validator가 REJECT한다 — 이 서비스에서 가장 위험한 출력이기 때문이다 (Q2).
+
+## 평가 실측 (2026-09-21 · 15케이스)
+
+| 지표 | 목표 | gpt-4o | gpt-4o-mini |
+|---|---|---|---|
+| 판정 정확도 | — | **100%** | 86.7% |
+| Q2 오탐률 | ≤ 5% | 0% | 0% |
+| Q4 재현율 | ≥ 90% | 100% | 60% ✗ |
+| Q6 금지 필드 유출 | 0건 | 0건 | 0건 |
+
+기본 모델이 `gpt-4o`인 이유는 gpt-4o-mini가 Q4 재현율 60%로 NFR-003을 충족하지
+못했기 때문이다. 수치를 읽는 법과 과적합 주의사항은 `evaluation/README.md` 참조.

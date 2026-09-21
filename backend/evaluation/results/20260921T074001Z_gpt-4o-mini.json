@@ -1,0 +1,284 @@
+{
+  "model": "gpt-4o-mini",
+  "ran_at": "20260921T074001Z",
+  "metrics": {
+    "total": 15,
+    "executed": 15,
+    "errors": 0,
+    "accuracy": 0.4666666666666667,
+    "confusion": {
+      "APPLICABLE": {
+        "APPLICABLE": 1,
+        "HOLD": 3,
+        "NOT_APPLICABLE": 1
+      },
+      "HOLD": {
+        "APPLICABLE": 0,
+        "HOLD": 5,
+        "NOT_APPLICABLE": 0
+      },
+      "NOT_APPLICABLE": {
+        "APPLICABLE": 0,
+        "HOLD": 4,
+        "NOT_APPLICABLE": 1
+      }
+    },
+    "q1_citation_accuracy": 0.8205128205128205,
+    "q2_false_positive_rate": 0.0,
+    "q3_action_conversion_rate": 1.0,
+    "q4_recall": 0.8,
+    "q5_delegation_detection": 1.0,
+    "q6_forbidden_field_leaks": 0,
+    "over_hold_rate": 0.7,
+    "hold_explains_itself": 1.0,
+    "latency_p50": 9761,
+    "latency_p95": 24453
+  },
+  "cases": [
+    {
+      "id": "E01",
+      "law": "근로기준법",
+      "article": "제93조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 7170,
+      "error": null
+    },
+    {
+      "id": "E02",
+      "law": "근로기준법",
+      "article": "제93조",
+      "profile": "solo_commerce",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 4507,
+      "error": null
+    },
+    {
+      "id": "E03",
+      "law": "근로기준법",
+      "article": "제93조",
+      "profile": "mfg_ops_unknown",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "상시근로자 수"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 7583,
+      "error": null
+    },
+    {
+      "id": "E04",
+      "law": "근로기준법",
+      "article": "제54조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "근로시간이 4시간 또는 8시간이 아닌 경우에 대한 규정"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 7876,
+      "error": null
+    },
+    {
+      "id": "E05",
+      "law": "근로기준법",
+      "article": "제54조",
+      "profile": "solo_commerce",
+      "gold": "APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 3656,
+      "error": null
+    },
+    {
+      "id": "E06",
+      "law": "근로기준법",
+      "article": "제54조",
+      "profile": "mfg_ops_unknown",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "상시근로자 수"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 7362,
+      "error": null
+    },
+    {
+      "id": "E07",
+      "law": "근로기준법",
+      "article": "제76조의2",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "직장 내 괴롭힘의 구체적인 정의 및 기준",
+        "업무상 적정범위의 구체적인 기준"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 7199,
+      "error": null
+    },
+    {
+      "id": "E08",
+      "law": "산업안전보건법",
+      "article": "제17조",
+      "profile": "mfg_ops_150",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "안전관리자를 두어야 하는 사업의 종류와 사업장의 상시근로자 수에 대한 구체적 기준"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 15159,
+      "error": null
+    },
+    {
+      "id": "E09",
+      "law": "산업안전보건법",
+      "article": "제24조",
+      "profile": "mfg_ops_150",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "산업안전보건위원회를 구성하여야 할 사업의 종류 및 사업장의 상시근로자 수에 대한 구체적 기준"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 13979,
+      "error": null
+    },
+    {
+      "id": "E10",
+      "law": "개인정보 보호법",
+      "article": "제31조",
+      "profile": "solo_commerce",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "대통령령으로 정하는 기준이 무엇인지"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 9761,
+      "error": null
+    },
+    {
+      "id": "E11",
+      "law": "개인정보 보호법",
+      "article": "제31조",
+      "profile": "it_hr",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "대통령령으로 정하는 기준이 무엇인지"
+      ],
+      "dropped_spans": [
+        "다만, 종업원 수, 매출액 등이 대통령령으로 정하는 기준에 해당하는 개인정보처리자는 개인정보 보호책임자를 지정하지 아니할 수 있다."
+      ],
+      "latency_ms": 11176,
+      "error": null
+    },
+    {
+      "id": "E12",
+      "law": "화학물질관리법",
+      "article": "제32조",
+      "profile": "it_hr",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "유해화학물질 취급량 및 종사자수 등 기후에너지환경부령으로 정하는 기준이 무엇인지"
+      ],
+      "dropped_spans": [
+        "제1항이나 제2항에 따라 유해화학물질관리자를 선임한 자는 지체 없이 그 선임 사실을 기후에너지환경부장관에게 신고하여야 한다.",
+        "선임한 유해화학물질 관리자를 해임하거나 유해화학물질관리자가 퇴직한 경우에는 해임 또는 퇴직한 날부터 30일 이내에 다른 유해화학물질관리자를 선임하여야 한다.",
+        "③ 제1항이나 제2항에 따라 유해화학물질관리자를 선임한 자는 지체 없이 그 선임 사실을 기후에너지환경부장관에게 신고하여야 하며, 선임한 유해화학물질 관리자를 해임하거나 유해화학물질관리자가 퇴직한 경우에는 해임 또는 퇴직한 날부터 30일 이내에 다른 유해화학물질관리자를 선임하여야 한다."
+      ],
+      "latency_ms": 24686,
+      "error": null
+    },
+    {
+      "id": "E13",
+      "law": "화학물질관리법",
+      "article": "제32조",
+      "profile": "solo_commerce",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "유해화학물질 취급량 및 종사자수 등 기후에너지환경부령으로 정하는 기준이 무엇인지"
+      ],
+      "dropped_spans": [
+        "제1항이나 제2항에 따라 유해화학물질관리자를 선임한 자는 지체 없이 그 선임 사실을 기후에너지환경부장관에게 신고하여야 한다.",
+        "선임한 유해화학물질 관리자를 해임하거나 유해화학물질관리자가 퇴직한 경우에는 해임 또는 퇴직한 날부터 30일 이내에 다른 유해화학물질관리자를 선임하여야 한다.",
+        "③ 제1항이나 제2항에 따라 유해화학물질관리자를 선임한 자는 지체 없이 그 선임 사실을 기후에너지환경부장관에게 신고하여야 하며, 선임한 유해화학물질 관리자를 해임하거나 유해화학물질관리자가 퇴직한 경우에는 해임 또는 퇴직한 날부터 30일 이내에 다른 유해화학물질관리자를 선임하여야 한다."
+      ],
+      "latency_ms": 24453,
+      "error": null
+    },
+    {
+      "id": "E14",
+      "law": "식품위생법",
+      "article": "제41조",
+      "profile": "it_hr",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "회사가 식품접객업에 해당하는지 여부"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 19759,
+      "error": null
+    },
+    {
+      "id": "E15",
+      "law": "식품위생법",
+      "article": "제41조",
+      "profile": "mfg_ops_150",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "대통령령으로 정해질 영업자의 구체적 기준"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 18573,
+      "error": null
+    }
+  ]
+}

@@ -35,9 +35,7 @@ async def map_applicability(
     return await runner.invoke(chain=CHAIN_NAME, prompt=prompt, schema=ApplicabilityOutput)
 
 
-def deterministic_hold_reasons(
-    packet: ContextPacket, extraction: TargetExtractionOutput
-) -> list[str]:
+def deterministic_hold_reasons(packet: ContextPacket) -> list[str]:
     """코드로 확정할 수 있는 HOLD 사유를 모은다 (AP-03, AP-04, BR-003).
 
     LLM이 'APPLICABLE'이라고 말해도 이 목록이 비어 있지 않으면 확정하지 않는다.
@@ -60,12 +58,9 @@ def deterministic_hold_reasons(
             f"조문에 규모 기준({found})이 있으나 상시근로자 수가 입력되지 않아 "
             "충족 여부를 확인할 수 없습니다."
         )
-    elif not size.has_condition and packet.user.employee_count is None:
-        # 원문 정규식이 놓쳤을 수 있으므로 C3 결과를 보조 신호로 쓴다.
-        if any(c.kind == "size" and c.is_required for c in extraction.conditions):
-            reasons.append(
-                "적용에 규모 조건이 있으나 상시근로자 수가 입력되지 않았습니다."
-            )
+    # 원문에 규모 기준이 없으면 C3가 'size' 조건을 만들어냈더라도 보류하지 않는다.
+    # 폴백으로 C3 라벨을 신뢰했더니, 규모 조건이 없는 조문(근로기준법 제54조 휴게)에서
+    # '상시근로자 수 미상'을 이유로 보류하는 오답이 실측에서 나왔다.
 
     return reasons
 

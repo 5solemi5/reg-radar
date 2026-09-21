@@ -17,7 +17,10 @@ class Settings(BaseSettings):
 
     # --- LLM (AP-02) ---
     openai_api_key: str = ""
-    llm_model: str = "gpt-4o-mini"
+    # 기본 모델은 측정으로 결정한다. applicability_v1 기준 gpt-4o-mini는
+    # Q4 재현율 60%로 NFR-003(≥90%)을 충족하지 못했고, gpt-4o는 100%였다.
+    # evaluation/results/ 참조.
+    llm_model: str = "gpt-4o"
     llm_temperature: float = 0.0
     llm_timeout_seconds: float = 60.0
     llm_max_retries: int = 2
