@@ -9,3 +9,6 @@ __pycache__/
 
 evaluation/.snapshots/
 .snapshots/
+
+# 잘못된 경로로 생성되는 디렉터리 방지
+None/

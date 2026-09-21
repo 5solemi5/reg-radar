@@ -1,0 +1,307 @@
+{
+  "model": "gpt-4o",
+  "rag": true,
+  "ran_at": "20260921T100556Z",
+  "metrics": {
+    "total": 16,
+    "executed": 16,
+    "errors": 0,
+    "accuracy": 0.625,
+    "confusion": {
+      "APPLICABLE": {
+        "APPLICABLE": 4,
+        "HOLD": 5,
+        "NOT_APPLICABLE": 0
+      },
+      "HOLD": {
+        "APPLICABLE": 0,
+        "HOLD": 2,
+        "NOT_APPLICABLE": 0
+      },
+      "NOT_APPLICABLE": {
+        "APPLICABLE": 0,
+        "HOLD": 1,
+        "NOT_APPLICABLE": 4
+      }
+    },
+    "q1_model_citation_accuracy": 0.8378378378378378,
+    "q1_displayed_citation_accuracy": 1.0,
+    "q2_false_positive_rate": 0.0,
+    "q3_action_conversion_rate": 1.0,
+    "q4_recall": 1.0,
+    "q5_delegation_detection": 1.0,
+    "q6_forbidden_field_leaks": 0,
+    "over_hold_rate": 0.42857142857142855,
+    "hold_explains_itself": 1.0,
+    "rag_coverage": 0.0,
+    "rag_docs_total": 0,
+    "latency_p50": 10807,
+    "latency_p95": 16959
+  },
+  "cases": [
+    {
+      "id": "H01",
+      "law": "채용절차의 공정화에 관한 법률",
+      "article": "제3조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 5497,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H02",
+      "law": "채용절차의 공정화에 관한 법률",
+      "article": "제3조",
+      "profile": "solo_commerce",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 3054,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H03",
+      "law": "채용절차의 공정화에 관한 법률",
+      "article": "제3조",
+      "profile": "mfg_ops_unknown",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "상시근로자 수"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 4951,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H04",
+      "law": "채용절차의 공정화에 관한 법률",
+      "article": "제11조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령, 부령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 18331,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H05",
+      "law": "채용절차의 공정화에 관한 법률",
+      "article": "제4조의3",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 6987,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H06",
+      "law": "최저임금법",
+      "article": "제6조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령, 부령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [
+        "제1항과 제3항에 따른 임금에는 매월 1회 이상 정기적으로 지급하는 임금을 산입한다."
+      ],
+      "latency_ms": 16959,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H07",
+      "law": "최저임금법",
+      "article": "제6조",
+      "profile": "solo_commerce",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령, 부령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 14045,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H08",
+      "law": "최저임금법",
+      "article": "제6조",
+      "profile": "mfg_ops_unknown",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령, 부령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 12521,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H09",
+      "law": "최저임금법",
+      "article": "제11조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 6292,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H10",
+      "law": "근로자퇴직급여 보장법",
+      "article": "제4조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 11194,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H11",
+      "law": "근로자퇴직급여 보장법",
+      "article": "제4조",
+      "profile": "solo_commerce",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 9796,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H12",
+      "law": "건설산업기본법",
+      "article": "제40조",
+      "profile": "it_hr",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 5519,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H13",
+      "law": "건설산업기본법",
+      "article": "제40조",
+      "profile": "solo_commerce",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 4225,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H14",
+      "law": "의료법",
+      "article": "제33조",
+      "profile": "it_hr",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [
+        "다음 각 호의 어느 하나에 해당하는 자가 아니면 의료기관을 개설할 수 없다. 1. 의사, 치과의사, 한의사 또는 조산사",
+        "다음 각 호의 어느 하나에 해당하는 자가 아니면 의료기관을 개설할 수 없다. 2. 국가나 지방자치단체",
+        "다음 각 호의 어느 하나에 해당하는 자가 아니면 의료기관을 개설할 수 없다. 3. 의료업을 목적으로 설립된 법인(이하 \"의료법인\"이라 한다)",
+        "다음 각 호의 어느 하나에 해당하는 자가 아니면 의료기관을 개설할 수 없다. 4. 「민법」이나 특별법에 따라 설립된 비영리법인",
+        "다음 각 호의 어느 하나에 해당하는 자가 아니면 의료기관을 개설할 수 없다. 5. 「공공기관의 운영에 관한 법률」에 따른 준정부기관, 「지방의료원의 설립 및 운영에 관한 법률」에 따른 지방의료원, 「한국보훈복지의료공단법」에 따른 한국보훈복지의료공단"
+      ],
+      "latency_ms": 15371,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H15",
+      "law": "파견근로자 보호 등에 관한 법률",
+      "article": "제5조",
+      "profile": "staffing_ops",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 12444,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "H16",
+      "law": "파견근로자 보호 등에 관한 법률",
+      "article": "제5조",
+      "profile": "clinic_admin",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "대통령령으로 정하는 업무의 구체적 기준"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 10807,
+      "rag_count": 0,
+      "error": null
+    }
+  ]
+}

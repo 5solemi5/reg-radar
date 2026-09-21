@@ -1,0 +1,169 @@
+{
+  "dataset_id": "holdout_v1",
+  "created_at": "2026-09-21",
+  "description": "홀드아웃 평가셋. 프롬프트 튜닝에 사용하지 않는다.",
+  "purpose": [
+    "applicability_v1(개발셋)은 C4 프롬프트를 그 셋의 오답을 보고 두 차례 수정했다.",
+    "따라서 개발셋 실측값은 낙관적으로 편향되어 있고 일반화 성능을 말해주지 않는다.",
+    "이 데이터셋은 그 편향 없이 성능을 재기 위한 것이다."
+  ],
+  "rules": [
+    "이 데이터셋의 결과를 보고 프롬프트를 수정하지 않는다. 수정하는 순간 홀드아웃이 아니게 된다.",
+    "라벨은 실행 전에 확정했다. 결과를 보고 라벨을 바꾸지 않는다.",
+    "개발셋과 법령이 겹치지 않는다. 근로기준법·산업안전보건법·개인정보 보호법·화학물질관리법·식품위생법은 쓰지 않았다.",
+    "프로필 2종(인력공급, 의료)을 새로 추가해 업종 판단이 기존 4종에 과적합되지 않았는지 본다."
+  ],
+  "labeling_policy": [
+    "gold_applicability는 '이 시스템이 주어진 입력으로 내려야 하는 판정'이다.",
+    "적용을 가르는 핵심 기준이 하위법령에 위임되면 HOLD (ADR-011).",
+    "위임이 방법·절차·세부 운영에 관한 부수적 사항이면 HOLD 사유가 아니다.",
+    "조문에 규모 기준이 없으면 사용자 인원이 미상이어도 HOLD가 아니다."
+  ],
+  "profiles": {
+    "it_hr": {
+      "label": "80인 IT기업 HR 실무자 (개발셋과 동일)",
+      "job": "HR 담당자 (채용·근태·취업규칙)",
+      "industry": "IT 서비스",
+      "company_size": "MEDIUM",
+      "employee_count": 80,
+      "interests": ["노동·인사"]
+    },
+    "solo_commerce": {
+      "label": "4인 온라인 쇼핑몰 대표 (개발셋과 동일)",
+      "job": "쇼핑몰 운영·총무",
+      "industry": "이커머스 소매",
+      "company_size": "MICRO",
+      "employee_count": 4,
+      "interests": ["노동·인사"]
+    },
+    "mfg_ops_unknown": {
+      "label": "제조기업 운영팀장 (상시근로자 수 미입력)",
+      "job": "운영·경영지원 팀장",
+      "industry": "제조",
+      "company_size": "MEDIUM",
+      "employee_count": null,
+      "interests": ["노동·인사"]
+    },
+    "staffing_ops": {
+      "label": "50인 인력공급·파견업체 운영 담당 (신규 프로필)",
+      "job": "파견사업 운영 담당",
+      "industry": "인력공급·파견",
+      "company_size": "MEDIUM",
+      "employee_count": 50,
+      "interests": ["노동·인사"]
+    },
+    "clinic_admin": {
+      "label": "15인 의원 행정실장 (신규 프로필)",
+      "job": "의원 행정·총무",
+      "industry": "의료",
+      "company_size": "SMALL",
+      "employee_count": 15,
+      "interests": ["노동·인사"]
+    }
+  },
+  "cases": [
+    {
+      "id": "H01", "law_name": "채용절차의 공정화에 관한 법률", "article_no": "제3조",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expected_action_grade": ["ACTION", "DECISION", "AWARENESS"],
+      "expects_delegation": false,
+      "note": "조문이 '상시 30명 이상'을 명시한다. 80명은 충족."
+    },
+    {
+      "id": "H02", "law_name": "채용절차의 공정화에 관한 법률", "article_no": "제3조",
+      "profile": "solo_commerce", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": false,
+      "note": "4명은 상시 30명 이상 기준 미충족. 규모만으로 확정 가능하므로 보류가 아니다."
+    },
+    {
+      "id": "H03", "law_name": "채용절차의 공정화에 관한 법률", "article_no": "제3조",
+      "profile": "mfg_ops_unknown", "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "근로자",
+      "expects_delegation": false,
+      "note": "규모 기준은 있는데 상시근로자 수가 미상. 값 하나로 풀리는 보류."
+    },
+    {
+      "id": "H04", "law_name": "채용절차의 공정화에 관한 법률", "article_no": "제11조",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "반환 방법·보관 기간이 대통령령·부령에 위임되어 있으나, 이는 절차에 관한 부수적 사항이다. 반환 의무 자체는 조문에 명확하므로 보류가 아니다."
+    },
+    {
+      "id": "H05", "law_name": "채용절차의 공정화에 관한 법률", "article_no": "제4조의3",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "구인자에게 적용되는 금지 규정. 위임도 규모 조건도 없다."
+    },
+    {
+      "id": "H06", "law_name": "최저임금법", "article_no": "제6조",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "최저임금 지급 의무. 위임은 산입 제외 임금의 범위에 관한 것으로 적용 여부를 가르지 않는다."
+    },
+    {
+      "id": "H07", "law_name": "최저임금법", "article_no": "제6조",
+      "profile": "solo_commerce", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "최저임금은 근로자를 사용하는 모든 사업장에 적용된다. 규모가 작다는 이유로 무관 처리하면 오답."
+    },
+    {
+      "id": "H08", "law_name": "최저임금법", "article_no": "제6조",
+      "profile": "mfg_ops_unknown", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "회귀 확인: 조문에 규모 기준이 없으므로 인원이 미상이어도 보류할 이유가 없다."
+    },
+    {
+      "id": "H09", "law_name": "최저임금법", "article_no": "제11조",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "주지 의무. '대통령령으로 정하는 바에 따라'는 게시 방법에 관한 위임이며 적용 여부를 가르지 않는다."
+    },
+    {
+      "id": "H10", "law_name": "근로자퇴직급여 보장법", "article_no": "제4조",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "퇴직급여제도 설정 의무. 규모 조건도 위임도 없다."
+    },
+    {
+      "id": "H11", "law_name": "근로자퇴직급여 보장법", "article_no": "제4조",
+      "profile": "solo_commerce", "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "퇴직급여는 소규모 사업장에도 적용된다. 단서는 개별 근로자의 근로기간·시간에 관한 것이지 사업장 규모가 아니다."
+    },
+    {
+      "id": "H12", "law_name": "건설산업기본법", "article_no": "제40조",
+      "profile": "it_hr", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "대상이 '건설사업자'. IT 서비스는 해당 없음. 위임이 있어도 대상 집단이 아니면 무관이다 (ADR-011)."
+    },
+    {
+      "id": "H13", "law_name": "건설산업기본법", "article_no": "제40조",
+      "profile": "solo_commerce", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "온라인 쇼핑몰은 건설사업자가 아니다."
+    },
+    {
+      "id": "H14", "law_name": "의료법", "article_no": "제33조",
+      "profile": "it_hr", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "대상이 '의료인'. IT 서비스 HR 담당자는 해당 없음."
+    },
+    {
+      "id": "H15", "law_name": "파견근로자 보호 등에 관한 법률", "article_no": "제5조",
+      "profile": "staffing_ops", "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "대통령령",
+      "expects_delegation": true,
+      "note": "파견사업자가 대상이나, 어떤 업무를 대상으로 할 수 있는지가 대통령령에 위임되어 있다. 적용을 가르는 핵심 기준이 조문 밖에 있으므로 보류."
+    },
+    {
+      "id": "H16", "law_name": "파견근로자 보호 등에 관한 법률", "article_no": "제5조",
+      "profile": "clinic_admin", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "의원은 근로자파견사업을 하는 주체가 아니다. 신규 프로필로 업종 판단이 기존 4종에 과적합되지 않았는지 본다."
+    }
+  ],
+  "known_limitations": [
+    "채용절차법 제4조의3(H05)은 조문 문언에 규모 조건이 없지만 같은 법 제3조가 상시 30명 이상으로 적용범위를 정한다. 80인 프로필만 사용해 조문 단독 판단으로도 정답이 같도록 했다.",
+    "HOLD 케이스가 2건뿐이다. 보류 판정의 정밀도를 재기에는 부족하다."
+  ]
+}
