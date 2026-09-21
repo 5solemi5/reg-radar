@@ -48,6 +48,9 @@ def build_lifespan(settings: Settings):
             # 여기서 실패하면 기동을 막는다. DB 없이 뜬 서버는 모든 저장 요청을
             # 실패시키므로, 조용히 뜨는 것보다 시작을 거부하는 편이 낫다.
             await database.connect()
+
+        await report_rag_index(settings)
+
         yield
         if database.is_connected:
             await database.disconnect()
@@ -55,17 +58,41 @@ def build_lifespan(settings: Settings):
     return lifespan
 
 
+async def report_rag_index(settings: Settings) -> int:
+    """RAG 인덱스 상태를 기동 시 한 번 알린다.
+
+    Chroma는 로컬 디렉터리에 저장하므로 컨테이너를 다시 띄우면 인덱스가
+    사라진다. RAG가 켜져 있는데 인덱스가 비면 참고자료가 항상 0건이 되는데,
+    BR-005에 따라 그것이 '정상 상태'로 조용히 처리된다. 즉 설정 실수를
+    알아챌 방법이 로그밖에 없다.
+    """
+    if not settings.rag_enabled:
+        logger.info("RAG 비활성 — 참고자료 없이 동작합니다")
+        return 0
+    try:
+        from app.rag.store import build_store
+
+        count = await build_store(settings).count()
+    except Exception as exc:
+        logger.warning("RAG 인덱스를 확인할 수 없습니다 — 참고자료 없이 동작합니다: %s", exc)
+        return 0
+
+    if count:
+        logger.info("RAG 인덱스 %d개 청크", count)
+    else:
+        logger.warning(
+            "RAG_ENABLED=true인데 인덱스가 비어 있습니다. "
+            "`python scripts/ingest_rag.py`로 구축하거나 RAG_ENABLED=false로 두세요."
+        )
+    return count
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings)
 
-    # dev 인증은 X-User-Id 헤더를 그대로 믿는다. 운영에서 이 조합은 인증이
-    # 없는 것과 같으므로 기동을 거부한다 (NFR-007).
-    if settings.app_env == "production" and settings.auth_mode == "dev":
-        raise RuntimeError(
-            "production에서 auth_mode=dev는 허용되지 않습니다. AUTH_MODE=supabase로 설정하세요."
-        )
-
+    # 운영 환경 무결성은 Settings가 검증한다 (app/core/config.py).
+    # 여기서는 저장소 설정만 한 번 더 확인한다.
     if settings.storage == "postgres" and not settings.database_url:
         raise RuntimeError("STORAGE=postgres에는 DATABASE_URL이 필요합니다.")
 

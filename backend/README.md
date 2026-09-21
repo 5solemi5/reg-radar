@@ -160,6 +160,26 @@ psql -d regradar_test -f migrations/001_initial_schema.sql
 .venv/bin/python -m pytest tests/test_repositories.py -q
 ```
 
+## 배포
+
+```bash
+docker build -t regradar-backend .
+docker run -p 8000:8000 --env-file .env.production regradar-backend
+```
+
+`backend/.env.production.example`이 운영 환경변수 목록이다. 상세는
+`docs/규제변화_AI도우미_MD_문서/08_배포_운영_가이드.md`.
+
+**운영 설정 실수는 기동 단계에서 막힌다.** `APP_ENV=production`에서 아래 조합은
+서버가 뜨지 않고 무엇이 문제인지 알려준다. 배포 후에 발견하면 이미 늦기 때문이다.
+
+| 막히는 조합 | 이유 |
+|---|---|
+| `AUTH_MODE=dev` | X-User-Id 헤더를 그대로 신뢰한다 |
+| `STORAGE=memory` | 재시작 시 모든 데이터를 잃는다 |
+| `DATABASE_URL` 누락 | 저장이 전부 실패한다 |
+| `CORS_ORIGINS`에 localhost | 운영 도메인이 설정되지 않은 것이다 |
+
 ## 평가 실측 (2026-09-21 · 15케이스)
 
 | 지표 | 목표 | gpt-4o | gpt-4o-mini |

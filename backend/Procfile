@@ -1,0 +1,4 @@
+# Railway/Render/Heroku 계열 호스트용 시작 명령.
+# 릴리스 단계에서 마이그레이션을 먼저 적용한다.
+release: python scripts/migrate.py
+web: uvicorn app.main:app --host 0.0.0.0 --port $PORT

@@ -112,11 +112,16 @@ dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없�
 
 ```json
 {
-  "status": "ok", "env": "local", "auth_mode": "dev",
+  "status": "ok", "env": "local", "auth_mode": "supabase",
   "storage": "postgres", "database_connected": true,
+  "rag_enabled": true, "rag_indexed_chunks": 184,
   "law_api_configured": true, "llm_configured": true, "llm_model": "gpt-4o"
 }
 ```
+
+`rag_indexed_chunks`를 노출하는 이유: 참고자료 0건은 정상 상태로 처리되므로
+(BR-005), 인덱스가 비어 있다는 설정 실수가 조용히 묻힌다. 배포 후 이 값이
+0이면 `scripts/ingest_rag.py`를 돌리지 않은 것이다.
 
 ### 4-2. 프로필 (FR-002, UC-01)
 

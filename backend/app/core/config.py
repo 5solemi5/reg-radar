@@ -1,10 +1,10 @@
 """애플리케이션 설정. 모든 secret은 환경변수/.env에서만 읽는다 (NFR-008)."""
 
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -70,16 +70,63 @@ class Settings(BaseSettings):
     # --- API ---
     # localhost와 127.0.0.1은 브라우저에게 서로 다른 origin이다. 로컬 개발에서
     # 어느 쪽으로 접속하든 동작하도록 둘 다 허용한다.
-    cors_origins: list[str] = [
+    # 운영 도메인은 CORS_ORIGINS에 콤마로 구분해 넣는다.
+    # NoDecode가 필요한 이유: pydantic-settings는 list 타입 환경변수를 JSON으로
+    # 먼저 파싱하려 하고, 실패하면 validator가 실행되기 전에 예외를 던진다.
+    # 즉 NoDecode 없이 아래 validator만 두면 콤마 구분 값이 동작하지 않는다.
+    # (컨테이너를 실제로 띄워보고서야 발견했다.)
+    cors_origins: Annotated[list[str], NoDecode] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, value):
+        """콤마로 구분한 문자열을 목록으로 바꾼다.
+
+        배포 플랫폼의 환경변수 입력란에 JSON 배열을 넣는 것은 실수하기 쉽다.
+        `https://a.com,https://b.com` 형태를 받는다.
+        """
+        if isinstance(value, str):
+            return [v.strip() for v in value.split(",") if v.strip()]
+        return value
     api_prefix: str = "/api/v1"
 
     # --- 판정 정책 (BR-003) ---
     hold_confidence_threshold: float = Field(
         0.6, description="이 값 미만의 confidence는 APPLICABLE로 확정하지 않고 HOLD로 내린다."
     )
+
+    @model_validator(mode="after")
+    def _production_guards(self) -> "Settings":
+        """운영에서 조용히 잘못 뜨는 것보다 기동을 막는 편이 낫다.
+
+        dev 인증은 헤더를 그대로 믿고, 인메모리 저장소는 재시작 시 사용자
+        데이터를 잃는다. 둘 다 배포 후에 발견하면 이미 늦다.
+        """
+        if self.app_env != "production":
+            return self
+
+        problems: list[str] = []
+        if self.auth_mode == "dev":
+            problems.append("AUTH_MODE=dev는 X-User-Id 헤더를 그대로 신뢰합니다")
+        if self.storage == "memory":
+            problems.append("STORAGE=memory는 재시작 시 모든 데이터를 잃습니다")
+        if self.storage == "postgres" and not self.database_url:
+            problems.append("STORAGE=postgres인데 DATABASE_URL이 없습니다")
+        if self.auth_mode == "supabase" and not (
+            self.supabase_url or self.supabase_jwt_secret
+        ):
+            problems.append("SUPABASE_URL 또는 SUPABASE_JWT_SECRET이 필요합니다")
+        if any(o.startswith("http://localhost") for o in self.cors_origins):
+            problems.append("CORS_ORIGINS에 localhost가 남아 있습니다")
+
+        if problems:
+            raise ValueError(
+                "운영 환경 설정에 문제가 있습니다:\n  - " + "\n  - ".join(problems)
+            )
+        return self
 
     @property
     def llm_enabled(self) -> bool:

@@ -105,6 +105,9 @@ class TestSpecContent:
         assert documented_codes <= actual, f"문서에만 있는 코드: {documented_codes - actual}"
 
     def test_production에서_dev인증은_기동을_거부한다(self):
-        """명세서 §2의 약속."""
-        with pytest.raises(RuntimeError, match="production"):
-            create_app(Settings(app_env="production", auth_mode="dev", storage="memory"))
+        """명세서 §2의 약속. 설정 단계에서 막는다."""
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="AUTH_MODE=dev"):
+            Settings(app_env="production", auth_mode="dev", storage="postgres",
+                     database_url="postgresql://x", cors_origins=["https://a.com"])
