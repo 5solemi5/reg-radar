@@ -21,3 +21,6 @@ __pycache__/
 # Node (W4 Frontend)
 node_modules/
 .next/
+
+# 브라우저 자동화 도구 산출물
+.playwright-mcp/
