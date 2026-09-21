@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets — 절대 커밋하지 않는다 (NFR-008)
+.env
+.env.local
+.env.*.local
+
+# 로컬 산출물
+.snapshots/
+.chroma/
+
+# Node (W4 Frontend)
+node_modules/
+.next/
