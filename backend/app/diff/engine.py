@@ -145,3 +145,38 @@ def inline_diff(before_text: str, after_text: str) -> str:
             lineterm="",
         )
     )
+
+
+def change_from_official_marks(
+    *,
+    before_text: str | None,
+    after_text: str | None,
+    additions: list[str],
+    deletions: list[str],
+) -> ChangeContext:
+    """법제처가 직접 표시한 변경 구간으로 ChangeContext를 만든다 (FR-005).
+
+    `compute_change()`는 우리가 텍스트를 비교해 변경점을 **추정**한다. 이 함수는
+    법제처 신구법 비교가 `<P>`로 **명시한** 구간을 그대로 쓰므로 더 정확하다.
+    신구법 응답을 받을 수 있으면 이쪽을 쓰고, 없을 때만 compute_change로 내려간다.
+    """
+    before_norm = normalize(before_text) if before_text else ""
+    after_norm = normalize(after_text) if after_text else ""
+
+    if not before_norm and after_norm:
+        change_type = ChangeType.NEW
+    elif before_norm and not after_norm:
+        change_type = ChangeType.DELETED
+    elif not additions and not deletions and before_norm == after_norm:
+        change_type = ChangeType.UNCHANGED
+    else:
+        change_type = ChangeType.AMENDED
+
+    return ChangeContext(
+        change_type=change_type,
+        before_text=before_text,
+        after_text=after_text,
+        additions=list(additions),
+        deletions=list(deletions),
+        delegation_targets=detect_delegation(after_norm or before_norm),
+    )

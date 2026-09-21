@@ -18,6 +18,7 @@ from tenacity import (
 )
 
 from app.adapters.law.models import LawSnapshot, LawSummary
+from app.adapters.law.oldnew import OldAndNewComparison, parse_old_and_new
 from app.adapters.law.parser import parse_law_detail, parse_law_list, parse_total_count
 from app.core.config import Settings, get_settings
 
@@ -134,6 +135,18 @@ class LawApiClient:
                 "effective_date": snapshot.effective_date or summary.effective_date,
             }
         )
+
+    async def fetch_old_and_new(self, summary: LawSummary) -> OldAndNewComparison:
+        """신구법 비교를 조회한다 (FR-005).
+
+        응답에는 직전 개정으로 **실제 변경된 조문만** 들어 있으므로, 분석 후보
+        선정에 그대로 쓴다. 변경 구간은 법제처가 <P>로 표시해 주므로 우리가
+        diff를 추정할 필요가 없다.
+        """
+        if not summary.mst:
+            raise LawApiError(f"{summary.law_name}: 신구법 비교에는 MST가 필요합니다.")
+        xml = await self._get("/lawService.do", self._params(target="oldAndNew", MST=summary.mst))
+        return parse_old_and_new(xml)
 
     def public_url(self, summary: LawSummary) -> str:
         """사용자에게 보여줄 법제처 공식 링크 (FR-012)."""

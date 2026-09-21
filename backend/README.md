@@ -19,11 +19,14 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 .venv/bin/python -m pytest -q                            # 전체 (116)
 .venv/bin/python scripts/run_eval.py --save              # Q1~Q6 실측
 .venv/bin/python scripts/smoke_law_api.py "근로기준법"    # 법제처 실연결 확인
-.venv/bin/python scripts/smoke_analysis.py 근로기준법 제93조  # AI Core E2E (LLM 호출)
+.venv/bin/python scripts/smoke_change_analysis.py 근로기준법   # 실제 개정 기반 E2E
+.venv/bin/python scripts/smoke_analysis.py 근로기준법 제93조   # 프로필 비교 (조문 지정)
 ```
 
-`smoke_analysis.py`는 같은 조문에 세 사용자 프로필을 넣어 **무관 / 해당 / 보류**로
-갈리는지 확인합니다 (기획서 §13 '입력 비교' 장면).
+- `smoke_change_analysis.py`: 법제처가 **이번 개정에서 바뀌었다고 표시한 조문만**
+  분석합니다. 근로기준법 기준 132개 조문 중 1건입니다.
+- `smoke_analysis.py`: 지정한 조문에 세 프로필을 넣어 **무관 / 해당 / 보류**로
+  갈리는지 봅니다 (기획서 §13 '입력 비교' 장면). 개정 전 텍스트는 시뮬레이션입니다.
 
 ## 디렉터리 구조
 
@@ -34,6 +37,7 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 | `app/domain/outputs.py` | LLM **출력** 스키마. 공식 사실 필드 자체가 없음 | FR-020 |
 | `app/domain/result.py` | 최종 결과. 법적근거/참고자료/AI해석 필드 분리 | AP-05, FR-014 |
 | `app/adapters/law/` | 법제처 OPEN API — 공식 사실값의 유일한 공급원 | AP-01, BR-001 |
+| `app/adapters/law/oldnew.py` | 신구법 비교 — 변경 조문·변경 구간의 공식 원천 | FR-005 |
 | `app/diff/engine.py` | 신구법 diff + 하위법령 위임 감지. 전부 코드 | BR-002, Q5 |
 | `app/diff/headcount.py` | 상시근로자 수 기준 충족 판정. 산술은 코드가 | AP-03 |
 | `app/ai/llm.py` | LLM provider 추상화 | NFR-012 |
@@ -48,7 +52,9 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 1. **법령 사실값은 LLM이 만들 수 없다.** `ApplicabilityOutput` / `ImpactOutput` 스키마에
    `law_name`, `article_no`, `effective_date` 같은 필드가 아예 존재하지 않는다.
    `assert_no_forbidden_fields()`가 이를 테스트에서 강제한다.
-2. **변화는 코드가 감지한다.** `compute_change()`의 출력에 없는 변경점은 모델도 말할 수 없다.
+2. **변화는 모델이 만들지 않는다.** 법제처 신구법 비교가 `<P>` 태그로 표시한 구간을
+   그대로 쓰고(`change_from_official_marks`), 그 응답을 못 받을 때만 텍스트 비교로
+   추정한다(`compute_change`). 어느 쪽이든 모델은 여기 없는 변화를 말할 수 없다.
 3. **불확실하면 HOLD.** `ApplicabilityOutput`은 HOLD인데 `missing_context`가 비면
    스키마 단계에서 거부된다.
 4. **근거는 섞이지 않는다.** `LegalEvidence` / `ReferenceEvidence` / `AiInterpretation`이
@@ -70,3 +76,13 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 
 기본 모델이 `gpt-4o`인 이유는 gpt-4o-mini가 Q4 재현율 60%로 NFR-003을 충족하지
 못했기 때문이다. 수치를 읽는 법과 과적합 주의사항은 `evaluation/README.md` 참조.
+
+## 분석 후보를 어떻게 정하는가
+
+"최근 규제 변화를 분석한다"는 말은 구체적으로 **직전 개정에서 실제로 바뀐 조문만**
+분석한다는 뜻이다. 법제처 신구법 비교(`target=oldAndNew`)가 변경된 조문만 돌려주고,
+바뀐 구간은 `<P>` 태그로 직접 표시해 준다.
+
+근로기준법의 경우 전체 132개 조문 중 이번 개정(2025-10-01 → 2026-08-20)에서 바뀐
+조문은 **제60조 1건**이며, 변경 내용은 `"제19조제1항에 따른"` → `"제19조에 따른"`이다.
+전 조문을 LLM에 넣는 대신 이 1건만 분석하면 되므로 비용과 정확도가 함께 해결된다.
