@@ -17,16 +17,21 @@ Base URL: `/api/v1`
 
 ### 1-1. 근거는 섞이지 않는다 (AP-05, FR-014)
 
-결과·근거 응답은 세 블록을 **별도 키**로 내보낸다.
+결과·근거 응답은 네 블록을 **별도 키**로 내보낸다.
 
 | 키 | 성격 | 출처 |
 |---|---|---|
-| `legal_evidence` | 법적 근거 | 법제처 원문. 모델이 생성하지 않는다 |
-| `reference_evidence` | 참고 자료 | RAG 검색 결과. 법적 권위 없음 (W5에서 연결) |
+| `legal_evidence` | 법적 근거 (모법) | 법제처 원문. 모델이 생성하지 않는다 |
+| `delegated_evidence` | 법적 근거 (하위법령) | 모법이 위임한 시행령·시행규칙 원문 (ADR-025) |
+| `reference_evidence` | 참고 자료 | RAG 검색 결과. 법적 권위 없음 |
 | `ai_interpretation` | AI 해석 | LLM 출력 중 Validator를 통과한 것 |
 
-프론트가 이 셋을 섞어 렌더링하려면 의도적으로 합쳐야 한다. 응답만 봐도 무엇이
+프론트가 이들을 섞어 렌더링하려면 의도적으로 합쳐야 한다. 응답만 봐도 무엇이
 공식 원문이고 무엇이 해석인지 구분된다.
+
+**`legal_evidence`와 `delegated_evidence`를 왜 나누는가.** 둘 다 법제처 원문이지만
+서로 다른 법령이다. 한 배열에 담으면 사용자가 시행령 구절을 모법 조문 원문에서
+찾으려다 실패한다. 근거는 어디서 확인할 수 있는지까지가 근거다 (BR-001).
 
 `ai_interpretation`에는 `law_name`, `article_no`, `effective_date`, `ministry`,
 `source_url` 필드가 **존재하지 않는다.** 담을 자리가 없으므로 위조도 불가능하다 (FR-020).
@@ -245,6 +250,11 @@ dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없�
                       "article_title": "연차 유급휴가",
                       "effective_date": "2026-08-20", "ministry": "고용노동부",
                       "source_url": "...", "quoted_spans": ["..."] },
+  "delegated_evidence": [
+    { "law_name": "근로기준법 시행령", "law_type": "대통령령",
+      "article_no": "제33조", "article_title": "연차 유급휴가의 사용촉진",
+      "source_url": "...", "quoted_spans": ["..."], "resolves_criterion": true }
+  ],
   "reference_evidence": [],
   "ai_interpretation": { "reason": "...", "matched_conditions": [],
                          "missing_context": [], "impact_summary": "...",
@@ -261,8 +271,15 @@ dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없�
 
 #### `GET /results/{id}/evidence` — 근거 조회
 
-`legal_evidence` / `reference_evidence` / `ai_interpretation`을 분리해 반환하며,
-`disclaimer`로 **법률 자문이 아님**을 명시한다 (NFR-015).
+`legal_evidence` / `delegated_evidence` / `reference_evidence` / `ai_interpretation`을
+분리해 반환하며, `disclaimer`로 **법률 자문이 아님**을 명시한다 (NFR-015).
+
+`delegated_evidence`는 모법 조문이 "대통령령으로 정한다"로 위임한 하위법령 조문 중
+**판정 근거로 실제 인용된 것**만 담는다 (ADR-025). 붙였다는 이유만으로 전부 넣으면
+판정과 무관한 조문까지 법적 근거로 제시하게 된다.
+
+`resolves_criterion: false`는 그 조문이 기준을 다시 별표 등으로 넘긴다는 뜻이다.
+이 경우 기준 자체는 확보되지 않았으므로 판정은 보류로 남는다 (ADR-027).
 
 `reference_evidence`는 법제처 법령해석례·행정규칙·판례에서 검색된 실무 맥락이다
 (07. RAG 설계서). **빈 배열일 수 있고 그것은 오류가 아니다** — 조문만으로

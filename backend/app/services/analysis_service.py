@@ -22,10 +22,12 @@ from app.domain.result import (
     AiInterpretation,
     AnalysisResult,
     ChangeSummary,
+    DelegatedEvidence,
     LegalEvidence,
     ReferenceEvidence,
 )
 from app.validator.core import validate
+from app.validator.rules import normalize_for_match
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +54,51 @@ def _legal_evidence(packet: ContextPacket, verified_spans: list[str]) -> LegalEv
         source_url=law.source_url,
         quoted_spans=verified_spans,
     )
+
+
+def _split_spans(packet: ContextPacket, spans: list[str]) -> tuple[list[str], dict[str, list[str]]]:
+    """검증된 인용을 모법 것과 하위법령 것으로 가른다.
+
+    Validator는 둘 다 통과시키지만(ADR-025) 표시는 분리해야 한다. 섞어 놓으면
+    사용자가 모법 조문 원문에서 찾을 수 없는 문장을 모법 인용으로 보게 된다.
+    """
+    parent = normalize_for_match(packet.law.original_text)
+    own: list[str] = []
+    by_decree: dict[str, list[str]] = {}
+    for span in spans:
+        needle = normalize_for_match(span)
+        if needle in parent:
+            own.append(span)
+            continue
+        for d in packet.delegated:
+            if needle in normalize_for_match(d.original_text):
+                by_decree.setdefault(f"{d.law_name}|{d.article_no}", []).append(span)
+                break
+    return own, by_decree
+
+
+def _delegated_evidence(
+    packet: ContextPacket, by_decree: dict[str, list[str]]
+) -> list[DelegatedEvidence]:
+    """근거로 실제 인용된 하위법령 조문만 남긴다.
+
+    붙였다는 이유만으로 전부 보여주면, 판정과 무관한 조문까지 '법적 근거'로
+    제시하게 된다.
+    """
+    return [
+        DelegatedEvidence(
+            law_id=d.law_id,
+            law_name=d.law_name,
+            law_type=d.law_type,
+            article_no=d.article_no,
+            article_title=d.article_title,
+            source_url=d.source_url,
+            quoted_spans=by_decree[f"{d.law_name}|{d.article_no}"],
+            resolves_criterion=d.resolves_criterion,
+        )
+        for d in packet.delegated
+        if f"{d.law_name}|{d.article_no}" in by_decree
+    ]
 
 
 def _reference_evidence(packet: ContextPacket) -> list[ReferenceEvidence]:
@@ -120,6 +167,9 @@ async def analyze_article(
         model=runner.llm.model_name,
     )
 
+    # 검증된 인용을 모법 것과 하위법령 것으로 가른다 (ADR-025).
+    own_spans, decree_spans = _split_spans(packet, outcome.applicability.cited_spans)
+
     result = AnalysisResult(
         analysis_id=analysis_id,
         status=outcome.status,
@@ -131,7 +181,8 @@ async def analyze_article(
             deletions=packet.change.deletions,
             delegation_targets=packet.change.delegation_targets,
         ),
-        legal_evidence=_legal_evidence(packet, outcome.applicability.cited_spans),
+        legal_evidence=_legal_evidence(packet, own_spans),
+        delegated_evidence=_delegated_evidence(packet, decree_spans),
         reference_evidence=_reference_evidence(packet),
         ai_interpretation=ai,
         validation=outcome.report,

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 
@@ -37,6 +38,7 @@ from app.repositories.base import (
 )
 from app.repositories.traces import NullTraceRepository, TraceRecord
 from app.services.analysis_service import analyze_article
+from app.services.decree_service import DecreeResolver, NullDecreeResolver
 from app.services.law_selector import build_search_keywords, dedupe_laws, pick_primary
 
 logger = logging.getLogger(__name__)
@@ -100,6 +102,7 @@ class AnalysisRunner:
         client_factory=None,
         retriever=None,
         trace_repo=None,
+        decree_resolver=None,
     ):
         self.analysis_repo = analysis_repo
         self.result_repo = result_repo
@@ -112,6 +115,9 @@ class AnalysisRunner:
         # RAG가 꺼져 있거나 인덱스가 없으면 참고자료 없이 분석한다 (BR-005).
         self._retriever = retriever or self._build_retriever()
         self._trace_repo = trace_repo or NullTraceRepository()
+        # 위임 하위법령은 조회 시점에 클라이언트가 필요하므로 run()에서 만든다.
+        # 주입된 값이 있으면 그것을 쓴다 (테스트·기능 끄기).
+        self._decree_resolver = decree_resolver
 
     def _build_retriever(self):
         if not self.settings.rag_enabled:
@@ -220,7 +226,7 @@ class AnalysisRunner:
     # ── 조문 분석 ─────────────────────────────────────────────────────
 
     async def build_packets(
-        self, item: LawWorkItem, profile: Profile
+        self, item: LawWorkItem, profile: Profile, decrees=None
     ) -> list[tuple[str, ContextPacket]]:
         """변경 조문을 AI 입력 packet으로 바꾼다. (조문번호, packet) 목록."""
         user_context = profile.to_user_context()
@@ -239,17 +245,29 @@ class AnalysisRunner:
             # 참고자료 검색 실패는 빈 목록으로 흡수된다 (BR-005).
             rag = await self._retriever.retrieve(legal, user_context)
 
+            change = change_from_official_marks(
+                before_text=changed.old_text,
+                after_text=changed.new_text,
+                additions=changed.additions,
+                deletions=changed.deletions,
+            )
+            # ADR-025: 위임된 하위법령 조문을 붙이면 "대통령령에 위임되어 알 수 없다"
+            # 대신 실제 기준을 읽고 판정할 수 있다. 못 찾으면 기존대로 보류가 된다.
+            resolver = decrees or self._decree_resolver or NullDecreeResolver()
+            delegated = await resolver.resolve(
+                legal.law_name,
+                legal.article_no,
+                legal.article_title,
+                change.delegation_targets,
+            )
+
             packets.append((
                 changed.article_no,
                 ContextPacket(
                     user=user_context,
                     law=legal,
-                    change=change_from_official_marks(
-                        before_text=changed.old_text,
-                        after_text=changed.new_text,
-                        additions=changed.additions,
-                        deletions=changed.deletions,
-                    ),
+                    change=change,
+                    delegated=delegated,
                     rag=rag,
                 ),
             ))
@@ -324,7 +342,20 @@ class AnalysisRunner:
 
         # 법령을 번갈아 가며 조문을 뽑아 총량 상한을 채운다. 한 법령이 상한을
         # 독식하면 다른 법령의 변화는 아예 보이지 않는다.
-        per_law = [await self.build_packets(item, profile) for item in items]
+        # LawApiClient는 async with 안에서만 쓸 수 있다. 밖에서 만들어 넘기면
+        # 호출마다 LawApiError가 나고 그것이 빈 목록으로 흡수되어, 기능이 꺼진 줄도
+        # 모른 채 위임 조문 0건으로 동작한다.
+        async with AsyncExitStack() as stack:
+            decrees = self._decree_resolver
+            if decrees is None:
+                if self.settings.decree_pairing_enabled:
+                    client = await stack.enter_async_context(self._client_factory())
+                    decrees = DecreeResolver(client)
+                else:
+                    decrees = NullDecreeResolver()
+            per_law = [
+                await self.build_packets(item, profile, decrees) for item in items
+            ]
         packets: list[tuple[str, ContextPacket]] = []
         for index in range(MAX_ARTICLES_PER_ANALYSIS):
             added = False

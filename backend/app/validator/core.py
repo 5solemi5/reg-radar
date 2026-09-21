@@ -63,11 +63,16 @@ def validate(
     failures: list[str] = []
 
     original = packet.law.original_text
+    delegated_texts = [d.original_text for d in packet.delegated]
 
     # ── 1. 인용 검증 (FR-021) ──────────────────────────────────────────
-    app_spans, app_dropped = verify_citations(applicability.cited_spans, original)
+    app_spans, app_dropped = verify_citations(
+        applicability.cited_spans, original, also=delegated_texts
+    )
     impact_spans, impact_dropped = (
-        verify_citations(impact.cited_spans, original) if impact else ([], [])
+        verify_citations(impact.cited_spans, original, also=delegated_texts)
+        if impact
+        else ([], [])
     )
     dropped = [*app_dropped, *impact_dropped]
     checks["citation"] = not dropped

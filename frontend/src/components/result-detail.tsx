@@ -186,6 +186,56 @@ export function ResultDetail({ resultId }: { resultId: string }) {
               )}
             </EvidenceBlock>
 
+            {evidence.data.delegated_evidence.length > 0 && (
+              <EvidenceBlock
+                badge="위임 하위법령"
+                badgeClass="bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900"
+                caption="모법이 위임한 시행령·시행규칙 원문. 법적 근거이지만 위 조문과는 다른 법령입니다."
+              >
+                <ul className="space-y-4">
+                  {evidence.data.delegated_evidence.map((d) => (
+                    <li key={`${d.law_id}-${d.article_no}`}>
+                      <p className="text-sm font-medium">
+                        {d.law_name} {d.article_no}
+                        {d.article_title && (
+                          <span className="font-normal text-slate-600 dark:text-slate-400">
+                            {" "}
+                            · {d.article_title}
+                          </span>
+                        )}
+                      </p>
+                      {!d.resolves_criterion && (
+                        <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                          이 조문은 구체적 기준을 별표 등으로 다시 넘깁니다. 기준 자체는
+                          확인하지 못했습니다.
+                        </p>
+                      )}
+                      <div className="mt-2 space-y-2">
+                        {d.quoted_spans.map((span, i) => (
+                          <blockquote
+                            key={i}
+                            className="border-l-2 border-slate-300 pl-3 text-sm text-slate-700 dark:border-slate-600 dark:text-slate-300"
+                          >
+                            {span}
+                          </blockquote>
+                        ))}
+                      </div>
+                      {d.source_url && (
+                        <a
+                          href={d.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-block text-xs font-medium text-sky-700 hover:underline dark:text-sky-400"
+                        >
+                          법제처에서 원문 보기 ↗
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </EvidenceBlock>
+            )}
+
             <EvidenceBlock
               badge="참고 자료"
               badgeClass="bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"

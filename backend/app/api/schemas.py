@@ -216,6 +216,7 @@ class ResultOut(BaseModel):
     action_grade: ActionGrade | None
     change: ChangeOut
     legal_evidence: LegalEvidenceOut
+    delegated_evidence: list[DelegatedEvidenceOut]
     reference_evidence: list[ReferenceEvidenceOut]
     ai_interpretation: AiInterpretationOut
     validation: ValidationOut
@@ -233,6 +234,10 @@ class ResultOut(BaseModel):
             legal_evidence=LegalEvidenceOut(
                 **result.legal_evidence.model_dump(exclude={"kind"})
             ),
+            delegated_evidence=[
+                DelegatedEvidenceOut(**d.model_dump(exclude={"kind"}))
+                for d in result.delegated_evidence
+            ],
             reference_evidence=[
                 ReferenceEvidenceOut(**r.model_dump(exclude={"kind"}))
                 for r in result.reference_evidence
@@ -257,11 +262,36 @@ class ResultListOut(BaseModel):
     items: list[ResultOut]
 
 
+class DelegatedEvidenceOut(BaseModel):
+    """위임된 하위법령 근거 (ADR-025). 법적 근거지만 **모법 조문이 아니다**.
+
+    모법 인용과 한 배열에 담으면 시행령 구절이 모법 조문에서 나온 것처럼 보인다.
+    사용자가 원문을 대조할 때 찾을 수 없는 문장을 보게 되므로 키를 분리한다.
+    """
+
+    law_id: str
+    law_name: str
+    law_type: str | None
+    article_no: str
+    article_title: str | None
+    source_url: str | None
+    quoted_spans: list[str]
+    resolves_criterion: bool = Field(
+        ..., description="False면 이 조문이 기준을 별표 등으로 다시 넘긴다"
+    )
+
+
 class EvidenceOut(BaseModel):
-    """FR-012/FR-014. 세 근거를 별도 키로 내보낸다. 프론트가 섞을 수 없다."""
+    """FR-012/FR-014. 근거를 종류별 키로 내보낸다. 프론트가 섞을 수 없다.
+
+    모법 조문 / 위임 하위법령 조문 / RAG 참고자료는 권위가 다르다. 앞의 둘은
+    법적 근거이고 마지막은 실무 맥락이며, 앞의 둘도 사용자가 원문을 대조할 위치가
+    다르다 (ADR-025).
+    """
 
     result_id: str
     legal_evidence: LegalEvidenceOut
+    delegated_evidence: list[DelegatedEvidenceOut] = Field(default_factory=list)
     reference_evidence: list[ReferenceEvidenceOut]
     ai_interpretation: AiInterpretationOut
     disclaimer: str = Field(

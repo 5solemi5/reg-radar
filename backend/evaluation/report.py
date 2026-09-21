@@ -66,6 +66,12 @@ def render(metrics: Metrics, outcomes: list[CaseOutcome], model: str) -> str:
     add(f"{'보류가 해소방법 제시':<26}{'100%':>10}{_pct(metrics.hold_explains_itself):>12}")
     add("")
 
+    add("── 위임 하위법령 (ADR-025) ──────────────────────────────────────────")
+    add(f"{'위임 케이스 중 조문 확보':<26}{'':>10}{_pct(metrics.delegated_coverage):>12}")
+    add(f"{'위임 조문 총 건수':<26}{'':>10}{str(metrics.delegated_docs_total) + '건':>12}")
+    hold_rate = _pct(metrics.delegation_hold_rate)
+    add(f"{'위임 케이스의 보류율':<26}{'낮을수록 좋음':>10}{hold_rate:>12}")
+    add("")
     add("── 참고자료 (RAG) ───────────────────────────────────────────────────")
     add(f"{'참고자료가 붙은 케이스':<26}{'':>10}{_pct(metrics.rag_coverage):>12}")
     add(f"{'참고자료 총 건수':<26}{'':>10}{str(metrics.rag_docs_total) + '건':>12}")

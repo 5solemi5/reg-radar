@@ -35,6 +35,7 @@ from app.domain.result import (
     AiInterpretation,
     AnalysisResult,
     ChangeSummary,
+    DelegatedEvidence,
     LegalEvidence,
     ReferenceEvidence,
     ValidationReport,
@@ -250,6 +251,9 @@ class PostgresResultRepository:
                 source_url=row["source_url"],
                 quoted_spans=_list(row["quoted_spans"]),
             ),
+            delegated_evidence=[
+                DelegatedEvidence(**doc) for doc in (row["delegated_evidence"] or [])
+            ],
             reference_evidence=[
                 ReferenceEvidence(**doc) for doc in (row["reference_evidence"] or [])
             ],
@@ -299,6 +303,7 @@ class PostgresResultRepository:
             [c.model_dump() for c in ai.checklist],
             ai.confidence,
             ai.model,
+            [d.model_dump(mode="json", exclude={"kind"}) for d in result.delegated_evidence],
             [r.model_dump(mode="json", exclude={"kind"}) for r in result.reference_evidence],
             result.validation.model_dump(),
             result.trace_id,
@@ -313,7 +318,7 @@ class PostgresResultRepository:
             change_type, additions, deletions, delegation_targets,
             ai_reason, ai_matched_conditions, ai_missing_context, ai_impact_summary,
             ai_affected_work, ai_checklist, ai_confidence, ai_model,
-            reference_evidence, validation, trace_id, created_at
+            delegated_evidence, reference_evidence, validation, trace_id, created_at
         ) VALUES (
             $1::uuid, $2::uuid, $3, $4::result_status, $5::applicability, $6::action_grade,
             $7, $8, $9, $10, $11, $12,
@@ -321,7 +326,7 @@ class PostgresResultRepository:
             $15::change_type, $16, $17, $18,
             $19, $20, $21, $22,
             $23, $24::jsonb, $25, $26,
-            $27::jsonb, $28::jsonb, $29::uuid, $30
+            $27::jsonb, $28::jsonb, $29::jsonb, $30::uuid, $31
         )
         ON CONFLICT (result_id) DO NOTHING
     """

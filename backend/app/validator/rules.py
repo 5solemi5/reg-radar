@@ -32,17 +32,25 @@ def normalize_for_match(text: str) -> str:
     return _WS.sub(" ", text).strip()
 
 
-def verify_citations(spans: list[str], original_text: str) -> tuple[list[str], list[str]]:
+def verify_citations(
+    spans: list[str], original_text: str, *, also: list[str] | None = None
+) -> tuple[list[str], list[str]]:
     """FR-021. 인용이 원문에 실제로 존재하는지 substring 검증.
+
+    `also`에는 위임된 하위법령 조문 원문이 들어온다 (ADR-025). 프롬프트에 넣어
+    놓고 인용은 위조로 떨구면, 모델이 실제 기준을 읽고도 근거를 댈 수 없게 된다.
+
+    각 원문을 **따로** 대조한다. 이어붙여 한 문자열로 만들면 두 조문에 걸친
+    가짜 인용이 통과할 수 있다.
 
     반환: (검증 통과 인용, 탈락 인용)
     """
-    haystack = normalize_for_match(original_text)
+    haystacks = [normalize_for_match(text) for text in (original_text, *(also or []))]
     verified: list[str] = []
     dropped: list[str] = []
     for span in spans:
         candidate = normalize_for_match(span)
-        if candidate and candidate in haystack:
+        if candidate and any(candidate in hay for hay in haystacks):
             verified.append(span)
         else:
             dropped.append(span)
@@ -62,8 +70,15 @@ def find_fabricated_article_refs(ai_text: str, packet: ContextPacket) -> list[st
       - 조문 원문 안에서 실제로 인용된 다른 조문 (예: "제10조에 따른")
     """
     allowed = {normalize_for_match(packet.law.article_no)}
-    for m in _ARTICLE_REF.finditer(packet.law.original_text):
-        allowed.add(_normalize_article_ref(m))
+    haystacks = [packet.law.original_text]
+    # 위임된 하위법령 조문도 근거 범위다 (ADR-025). 프롬프트에 넣어준 조문을
+    # 언급했다고 위조로 잡으면, 모델은 읽은 것을 말할 수 없게 된다.
+    for delegated in packet.delegated:
+        allowed.add(normalize_for_match(delegated.article_no))
+        haystacks.append(delegated.original_text)
+    for text in haystacks:
+        for m in _ARTICLE_REF.finditer(text):
+            allowed.add(_normalize_article_ref(m))
 
     fabricated: list[str] = []
     for m in _ARTICLE_REF.finditer(ai_text):
@@ -79,8 +94,9 @@ def find_fabricated_dates(ai_text: str, packet: ContextPacket) -> list[str]:
     for d in (packet.law.effective_date, packet.law.promulgation_date):
         if d:
             allowed.add((d.year, d.month, d.day))
-    for m in _DATE_REF.finditer(packet.law.original_text):
-        allowed.add((int(m.group(1)), int(m.group(2)), int(m.group(3))))
+    for text in (packet.law.original_text, *(d.original_text for d in packet.delegated)):
+        for m in _DATE_REF.finditer(text):
+            allowed.add((int(m.group(1)), int(m.group(2)), int(m.group(3))))
 
     fabricated: list[str] = []
     for m in _DATE_REF.finditer(ai_text):

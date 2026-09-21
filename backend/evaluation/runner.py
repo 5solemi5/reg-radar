@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from app.adapters.law.client import LawApiClient, LawApiError
+from app.adapters.law.decree import decree_names, pair_articles
 from app.adapters.law.models import LawSnapshot
 from app.adapters.law.store import FileSnapshotStore
 from app.ai.chains.base import ChainRunner
@@ -61,6 +62,13 @@ async def ensure_snapshots(
     dataset: Dataset, settings: Settings, *, offline: bool
 ) -> dict[str, LawSnapshot]:
     """필요한 법령 snapshot을 확보한다. 캐시 우선, 없으면 법제처에서 가져온다."""
+    return await fetch_by_names(dataset.required_laws, settings, offline=offline)
+
+
+async def fetch_by_names(
+    names_wanted: list[str], settings: Settings, *, offline: bool, optional: bool = False
+) -> dict[str, LawSnapshot]:
+    """법령명 목록을 snapshot으로 확보한다. 캐시 우선, 없으면 법제처에서."""
     store = FileSnapshotStore(EVAL_SNAPSHOT_DIR)
     by_name: dict[str, LawSnapshot] = {}
 
@@ -70,7 +78,7 @@ async def ensure_snapshots(
     )
 
     missing: list[str] = []
-    for name in dataset.required_laws:
+    for name in names_wanted:
         law_id = index.get(name)
         cached = store.get(law_id) if law_id else None
         if cached is not None:
@@ -82,6 +90,8 @@ async def ensure_snapshots(
         return by_name
 
     if offline:
+        if optional:
+            return by_name
         raise RuntimeError(
             f"캐시에 없는 법령이 있습니다: {missing}. --offline 없이 한 번 실행하세요."
         )
@@ -91,6 +101,9 @@ async def ensure_snapshots(
             laws = await client.search_laws(query=name, display=5)
             target = next((law for law in laws if law.law_name == name), None)
             if target is None:
+                if optional:
+                    print(f"  · 없음(건너뜀): {name}")
+                    continue
                 raise LawApiError(
                     f"'{name}'을(를) 찾지 못했습니다. 검색결과: {[x.law_name for x in laws]}"
                 )
@@ -110,6 +123,7 @@ async def run_case(
     snapshots: dict[str, LawSnapshot],
     gateway: LlmGateway,
     retriever=None,
+    decrees: dict[str, LawSnapshot] | None = None,
 ) -> CaseOutcome:
     law_name, article_no = case["law_name"], case["article_no"]
     gold = Applicability(case["gold_applicability"])
@@ -144,7 +158,18 @@ async def run_case(
     rag = await (retriever or NullRetriever()).retrieve(legal, user)
     base.rag_count = len(rag)
 
-    packet = ContextPacket(user=user, law=legal, change=change, rag=rag)
+    # ADR-025: 위임된 하위법령 조문을 붙인다. 캐시된 snapshot에서 찾으므로
+    # --offline 재현성이 유지된다.
+    delegated = []
+    for decree_name in decree_names(law_name, change.delegation_targets):
+        decree = (decrees or {}).get(decree_name)
+        if decree is not None:
+            delegated.extend(pair_articles(article_no, article.article_title, decree))
+    base.delegated_count = len(delegated)
+
+    packet = ContextPacket(
+        user=user, law=legal, change=change, delegated=delegated, rag=rag
+    )
 
     try:
         outcome = await analyze_article(ChainRunner(llm=gateway), packet)
@@ -192,6 +217,25 @@ async def run_dataset(
 
     print(f"▶ 데이터셋: {dataset.raw['dataset_id']} · 케이스 {len(dataset.cases)}건")
     snapshots = await ensure_snapshots(dataset, settings, offline=offline)
+
+    decrees: dict[str, LawSnapshot] = {}
+    if settings.decree_pairing_enabled:
+        wanted: list[str] = []
+        for case in dataset.cases:
+            article = snapshots[case["law_name"]].find_article(case["article_no"])
+            if article is None:
+                continue
+            targets = detect_delegation(article.original_text)
+            for name in decree_names(case["law_name"], targets):
+                if name not in wanted:
+                    wanted.append(name)
+        if wanted:
+            decrees = await fetch_by_names(
+                wanted, settings, offline=offline, optional=True
+            )
+        print(f"▶ 위임 하위법령: {len(decrees)}/{len(wanted)}건 확보")
+    else:
+        print("▶ 위임 하위법령: 꺼짐")
     retriever = None
     if use_rag:
         try:
@@ -210,7 +254,9 @@ async def run_dataset(
 
     async def guarded(case: dict) -> CaseOutcome:
         async with semaphore:
-            result = await run_case(case, dataset, snapshots, gateway, retriever)
+            result = await run_case(
+                case, dataset, snapshots, gateway, retriever, decrees
+            )
             mark = "✓" if result.correct else ("!" if result.error else "✗")
             predicted = result.predicted.value if result.predicted else f"ERROR({result.error})"
             print(f"  {mark} {result.case_id} {result.law_name} {result.article_no} "

@@ -1,7 +1,10 @@
 """C4. 사용자 ↔ 법령 매핑 판정 (FR-007).
 
-BR-003을 프롬프트에만 맡기지 않는다. 하위법령 위임이 있거나 규모 조건이 있는데
-사용자 규모 정보가 없으면, LLM 판정과 무관하게 **코드가 HOLD로 강등**한다.
+BR-003을 프롬프트에만 맡기지 않는다. 확정에 필요한 사실이 없으면 LLM 판정과
+무관하게 **코드가 HOLD로 강등**한다.
+
+강등 조건은 '정보가 없는가'이지 '위임이 있는가'가 아니다. 둘을 같게 보면 위임
+문구가 있다는 이유만으로 명백히 적용되는 조문까지 보류로 간다 (ADR-025).
 """
 
 from __future__ import annotations
@@ -29,6 +32,7 @@ async def map_applicability(
         law_block=blocks["law_block"],
         change_block=blocks["change_block"],
         rag_block=blocks["rag_block"],
+        delegated_block=blocks["delegated_block"],
         size_block=blocks["size_block"],
         conditions_block=render_conditions_block(extraction),
     )
@@ -44,7 +48,16 @@ def deterministic_hold_reasons(packet: ContextPacket) -> list[str]:
     reasons: list[str] = []
 
     # 1) 하위법령 위임: 구체 기준이 조문 밖에 있다 (Q5).
-    if packet.change.has_delegation:
+    #
+    #    단, 그 하위법령 조문을 확보했으면 기준은 더 이상 조문 밖에 있지 않다 (ADR-025).
+    #    홀드아웃 평가에서 오답 6건이 전부 이 규칙 때문이었다. 위임이 적용 여부를
+    #    가르는지 세부 절차에 관한 것인지 구분하지 않고 무조건 강등했더니, 최저임금법
+    #    제6조(최저임금 지급 의무)처럼 명백히 적용되는 조문까지 "확정할 수 없다"가 됐다.
+    #    위임된 기준을 프롬프트에 넣어준 뒤에는 그 구분을 LLM이 할 수 있다.
+    #
+    #    단 '조문을 찾았다'가 아니라 '기준을 손에 넣었다'여야 한다. 시행령이 다시
+    #    별표로 넘기면 기준은 여전히 없으므로 보류를 유지한다 (criterion_resolved).
+    if packet.change.has_delegation and not packet.criterion_resolved:
         targets = ", ".join(packet.change.delegation_targets)
         reasons.append(f"구체적 기준이 {targets}에 위임되어 조문만으로 확정할 수 없습니다.")
 

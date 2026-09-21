@@ -86,6 +86,7 @@ async def get_evidence(
     return EvidenceOut(
         result_id=result.result_id,
         legal_evidence=full.legal_evidence,
+        delegated_evidence=full.delegated_evidence,
         reference_evidence=full.reference_evidence,
         ai_interpretation=full.ai_interpretation,
     )

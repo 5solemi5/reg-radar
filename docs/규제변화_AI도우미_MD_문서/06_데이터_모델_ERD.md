@@ -85,7 +85,8 @@ snapshot과 다를 수 있다.
 │ ai_checklist jsonb,         │
 │ ai_confidence, ai_model     │
 │                             │
-│ reference_evidence jsonb    │  ← RAG (W5)
+│ delegated_evidence jsonb    │  ← 위임 하위법령 (ADR-025)
+│ reference_evidence jsonb    │  ← RAG
 │ validation jsonb            │
 └─────────────────────────────┘
 

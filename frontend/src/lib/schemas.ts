@@ -103,6 +103,25 @@ export const LegalEvidence = z.object({
 });
 export type LegalEvidence = z.infer<typeof LegalEvidence>;
 
+/**
+ * 위임된 하위법령 근거 (ADR-025). 법적 근거지만 **모법 조문이 아니다**.
+ *
+ * 모법 인용과 같은 목록에 담으면 시행령 구절이 모법 조문에서 나온 것처럼 보인다.
+ * 사용자가 원문을 대조할 때 찾을 수 없는 문장을 보게 되므로 분리해서 표시한다.
+ */
+export const DelegatedEvidence = z.object({
+  law_id: z.string(),
+  law_name: z.string(),
+  law_type: z.string().nullable(),
+  article_no: z.string(),
+  article_title: z.string().nullable(),
+  source_url: z.string().nullable(),
+  quoted_spans: z.array(z.string()),
+  /** false면 이 조문이 기준을 별표 등으로 다시 넘긴다. */
+  resolves_criterion: z.boolean(),
+});
+export type DelegatedEvidence = z.infer<typeof DelegatedEvidence>;
+
 /** RAG 참고자료. 법적 권위를 갖지 않는다 (BR-004). */
 export const ReferenceEvidence = z.object({
   doc_id: z.string(),
@@ -160,6 +179,7 @@ export const Result = z.object({
   action_grade: ActionGrade.nullable(),
   change: Change,
   legal_evidence: LegalEvidence,
+  delegated_evidence: z.array(DelegatedEvidence).default([]),
   reference_evidence: z.array(ReferenceEvidence),
   ai_interpretation: AiInterpretation,
   validation: Validation,
@@ -177,6 +197,7 @@ export const ResultList = z.object({
 export const Evidence = z.object({
   result_id: z.string(),
   legal_evidence: LegalEvidence,
+  delegated_evidence: z.array(DelegatedEvidence).default([]),
   reference_evidence: z.array(ReferenceEvidence),
   ai_interpretation: AiInterpretation,
   disclaimer: z.string(),

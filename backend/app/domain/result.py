@@ -2,6 +2,7 @@
 
 AP-05 / FR-014: 근거를 세 종류로 **필드 수준에서 분리**한다.
   legal_evidence     — 법제처 원문 (법적 근거)
+  delegated_evidence — 위임된 하위법령 원문 (법적 근거, 모법과 분리)
   reference_evidence — RAG 참고자료 (실무 맥락)
   ai_interpretation  — LLM 해석 (검증 통과분만)
 UI는 이 구분을 그대로 렌더링하면 되고, 데이터가 섞일 여지가 없다.
@@ -39,6 +40,28 @@ class LegalEvidence(BaseModel):
     quoted_spans: list[str] = Field(
         default_factory=list,
         description="AI가 인용했고 Validator가 원문 substring임을 확인한 구절만 담긴다.",
+    )
+
+
+class DelegatedEvidence(BaseModel):
+    """위임된 하위법령 근거 (ADR-025). 법적 근거지만 **모법 조문이 아니다**.
+
+    모법 인용과 한 칸에 섞으면 시행령 구절이 모법 조문에서 나온 것처럼 보인다.
+    사용자가 원문을 대조할 때 찾을 수 없는 문장을 보게 되므로 BR-001 위반이다.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    kind: EvidenceKind = EvidenceKind.OFFICIAL_LAW
+    law_id: str
+    law_name: str = Field(..., description="하위법령명. 예: 최저임금법 시행령")
+    law_type: str | None = None
+    article_no: str
+    article_title: str | None = None
+    source_url: str | None = None
+    quoted_spans: list[str] = Field(default_factory=list)
+    resolves_criterion: bool = Field(
+        True, description="False면 이 조문이 기준을 별표 등으로 다시 넘긴다는 뜻이다."
     )
 
 
@@ -111,6 +134,10 @@ class AnalysisResult(BaseModel):
 
     change: ChangeSummary
     legal_evidence: LegalEvidence
+    delegated_evidence: list[DelegatedEvidence] = Field(
+        default_factory=list,
+        description="위임된 하위법령 근거 (ADR-025). 모법 근거와 분리해 표시한다.",
+    )
     reference_evidence: list[ReferenceEvidence] = Field(default_factory=list)
     ai_interpretation: AiInterpretation
 

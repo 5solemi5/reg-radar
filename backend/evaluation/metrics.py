@@ -35,6 +35,7 @@ class CaseOutcome:
     detected_delegation: list[str] = field(default_factory=list)
     latency_ms: int = 0
     rag_count: int = 0
+    delegated_count: int = 0
     error: str | None = None
 
     @property
@@ -65,6 +66,9 @@ class Metrics:
     hold_explains_itself: float | None
     rag_coverage: float | None
     rag_docs_total: int
+    delegated_coverage: float | None
+    delegated_docs_total: int
+    delegation_hold_rate: float | None
     latency_p50: int
     latency_p95: int
 
@@ -147,6 +151,21 @@ def compute(outcomes: list[CaseOutcome]) -> Metrics:
     rag_coverage = _rate(len(with_rag), len(executed))
     rag_docs_total = sum(o.rag_count for o in executed)
 
+    # ADR-025. 위임이 감지된 케이스 중 실제로 하위법령 조문을 붙인 비율.
+    # 위임이 없는 케이스는 분모에서 빼야 커버리지가 왜곡되지 않는다.
+    with_delegation = [o for o in executed if o.expects_delegation]
+    delegated_coverage = _rate(
+        len([o for o in with_delegation if o.delegated_count > 0]), len(with_delegation)
+    )
+    delegated_docs_total = sum(o.delegated_count for o in executed)
+
+    # 위임이 있는 케이스에서 보류로 간 비율. 홀드아웃에서 오답 6건이 전부 이
+    # 조합이었으므로, 고쳤는지 보려면 이 값을 따로 봐야 한다.
+    delegation_hold_rate = _rate(
+        len([o for o in with_delegation if o.predicted is Applicability.HOLD]),
+        len(with_delegation),
+    )
+
     latencies = [o.latency_ms for o in executed if o.latency_ms]
 
     return Metrics(
@@ -166,6 +185,9 @@ def compute(outcomes: list[CaseOutcome]) -> Metrics:
         hold_explains_itself=hold_explains,
         rag_coverage=rag_coverage,
         rag_docs_total=rag_docs_total,
+        delegated_coverage=delegated_coverage,
+        delegated_docs_total=delegated_docs_total,
+        delegation_hold_rate=delegation_hold_rate,
         latency_p50=_percentile(latencies, 0.50),
         latency_p95=_percentile(latencies, 0.95),
         failures=[o for o in outcomes if not o.correct],

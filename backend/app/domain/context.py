@@ -5,6 +5,7 @@ Retriever)가 생성한다. LLM은 여기에 쓰기 권한이 없다 (AP-01, BR-
 """
 
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -63,6 +64,47 @@ class LegalContext(BaseModel):
             f"- 소관: {self.ministry or '미상'}\n"
             f"- 조문 원문:\n{self.original_text}"
         )
+
+
+class DelegatedContext(BaseModel):
+    """생성 주체: Legal Data Adapter. 모법 조문이 위임한 하위법령 조문 (ADR-025).
+
+    LegalContext와 같은 '공식 사실값'이며 LLM이 수정할 수 없다 (BR-001).
+    이것이 붙으면 "대통령령으로 정한다"에서 멈추지 않고 위임된 기준까지 읽고
+    판정할 수 있다. 붙지 않으면(하위법령이 없거나 역참조를 못 찾으면) 기존대로
+    위임을 보류 근거로 쓴다.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    law_id: str
+    law_name: str = Field(..., description="하위법령명. 예: 최저임금법 시행령")
+    law_type: str | None = Field(None, description="법령구분명. 예: 대통령령")
+    article_no: str
+    article_title: str | None = None
+    original_text: str = Field(..., description="하위법령 조문 원문. 인용 검증 대상에 포함된다")
+    source_url: str | None = None
+    matched_by: Literal["back_reference", "article_title"] = Field(
+        ...,
+        description="모법 조문과 연결한 근거. back_reference가 원문에 적힌 사실이라 더 강하다",
+    )
+    resolves_criterion: bool = Field(
+        True,
+        description=(
+            "이 조문이 기준을 실제로 담고 있는지. "
+            "'별표 3과 같다'처럼 또 넘기면 False이며 기준은 여전히 손에 없다."
+        ),
+    )
+
+    def to_prompt_block(self) -> str:
+        head = f"{self.law_name} {self.article_no}"
+        if self.article_title:
+            head += f"({self.article_title})"
+        if not self.resolves_criterion:
+            # 붙였지만 기준은 없다는 것을 모델이 알아야 한다. 그대로 주면
+            # "별표 3과 같다"를 읽고 기준을 아는 것처럼 판정한다.
+            head += " ※ 이 조문은 기준을 별표 등 다른 곳으로 다시 넘깁니다"
+        return f"- {head}\n{self.original_text}"
 
 
 class ChangeContext(BaseModel):
@@ -138,7 +180,31 @@ class ContextPacket(BaseModel):
     user: UserContext
     law: LegalContext
     change: ChangeContext
+    delegated: list[DelegatedContext] = Field(
+        default_factory=list,
+        description=(
+            "모법 조문이 위임한 하위법령 조문 (ADR-025). 비어 있으면 위임은 보류 근거로 남는다."
+        ),
+    )
     rag: list[RagContext] = Field(default_factory=list)
+
+    @property
+    def has_delegated(self) -> bool:
+        """위임된 하위법령 조문을 하나라도 확보했는지. 프롬프트 표시용이다."""
+        return bool(self.delegated)
+
+    @property
+    def criterion_resolved(self) -> bool:
+        """위임된 **기준**을 실제로 손에 넣었는지. 보류 해제의 조건이다.
+
+        맨 앞 조문만 본다. 목록은 구체적인 이행 조문 순으로 정렬돼 있고, 뒤쪽은
+        같은 조를 스쳐 참조하는 부수 조문이다. "하나라도 기준을 담았으면"으로
+        풀면 엉뚱한 조문 때문에 보류가 풀린다. 산업안전보건법 제17조가 그 예다 —
+        정작 선임 대상은 시행령 제16조가 별표 3으로 넘기는데, 부수 조문인
+        제19조(업무 위탁)가 기준을 담고 있어 보류가 풀리고 150인 제조업이
+        '무관'으로 판정됐다. 놓치는 것이 보류보다 나쁘다.
+        """
+        return bool(self.delegated) and self.delegated[0].resolves_criterion
 
     @property
     def has_rag(self) -> bool:

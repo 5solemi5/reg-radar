@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     vector_store: Literal["chroma", "pinecone"] = "chroma"
     # RAG를 끄면 참고자료 없이 분석한다. BR-005에 따라 정상 상태이며,
     # 인덱스를 아직 만들지 않은 환경에서 기본값으로 쓴다.
+    decree_pairing_enabled: bool = True
+    """위임된 하위법령 조문을 함께 조회할지 (ADR-025).
+
+    끄면 위임 문구만 보고 보류하는 이전 동작으로 돌아간다. 법제처 호출이 법령당
+    1~2건 늘어나므로 장애 시 끌 수 있게 플래그로 둔다.
+    """
+
     rag_enabled: bool = False
     chroma_persist_dir: str = ".chroma"
     pinecone_api_key: str = ""

@@ -77,6 +77,9 @@ export function ResultCard({ result }: { result: Result }) {
       <div className="mt-4 flex items-center justify-between text-xs">
         <span className="text-slate-500 dark:text-slate-400">
           검증된 원문 인용 {legal.quoted_spans.length}건
+          {result.delegated_evidence.length > 0 && (
+            <span className="ml-1">· 시행령 {result.delegated_evidence.length}건</span>
+          )}
           {result.validation.dropped_span_count > 0 && (
             <span className="ml-1 text-amber-600 dark:text-amber-400">
               · {result.validation.dropped_span_count}건은 검증에서 제외됨
