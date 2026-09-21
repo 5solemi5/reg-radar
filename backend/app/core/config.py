@@ -40,9 +40,18 @@ class Settings(BaseSettings):
     pinecone_index: str = "reg-radar"
     rag_top_k: int = 5
 
-    # --- Supabase (W3에서 사용) ---
+    # --- Supabase / 인증 (W3에서 실제 연동) ---
     supabase_url: str = ""
     supabase_service_key: str = ""
+    supabase_jwt_secret: str = ""
+    # dev: X-User-Id 헤더를 그대로 신뢰한다. 로컬 개발 전용이며 production에서 금지.
+    # supabase: Supabase JWT를 검증한다.
+    auth_mode: Literal["dev", "supabase"] = "dev"
+    dev_user_id: str = "dev-user"
+
+    # --- API ---
+    cors_origins: list[str] = ["http://localhost:3000"]
+    api_prefix: str = "/api/v1"
 
     # --- 판정 정책 (BR-003) ---
     hold_confidence_threshold: float = Field(

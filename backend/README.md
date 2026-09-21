@@ -45,6 +45,9 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 | `app/ai/chains/` | C3 추출 → C4 매핑 → C5 영향 | AP-02 |
 | `app/validator/` | C6. 인용·금지필드·HOLD 검증 | FR-020~022 |
 | `app/services/analysis_service.py` | C3~C6 orchestration + 결과 조립 | 04 §5-2 |
+| `app/api/` | FastAPI 라우터·스키마·인증·에러 계약 | AP-06, ER-001~008 |
+| `app/repositories/` | 저장소 인터페이스 + 인메모리 구현 (W3에서 Supabase로 교체) | NFR-011 |
+| `app/services/analysis_runner.py` | 분석 orchestration: 수집 → 분석 → 저장 | 04 §5-2 |
 | `evaluation/` | 평가 데이터셋·지표·리포트 ([README](evaluation/README.md)) | 기획서 §11 |
 
 ## 설계상 지켜지는 불변식
@@ -64,6 +67,38 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
    '용어 정의가 불명확하다'며 회피해 세 프로필이 전부 보류로 나온 회귀가 있었다.
 6. **근거 없는 '해당'은 차단된다.** 검증된 인용이 하나도 남지 않은 APPLICABLE은
    Validator가 REJECT한다 — 이 서비스에서 가장 위험한 출력이기 때문이다 (Q2).
+
+## API 실행
+
+```bash
+.venv/bin/python -m uvicorn app.main:app --reload --port 8000
+open http://127.0.0.1:8000/docs
+.venv/bin/python scripts/smoke_api.py http://127.0.0.1:8000/api/v1   # E2E 확인
+```
+
+| Method | Endpoint | 역할 |
+|---|---|---|
+| GET | `/api/v1/health` | 설정 상태 (키 값은 노출하지 않음) |
+| GET/PUT/PATCH | `/api/v1/profile` | 업무 프로필. 없으면 404 → 온보딩 |
+| POST | `/api/v1/analyses` | 분석 시작. **202**를 즉시 반환하고 백그라운드 실행 |
+| GET | `/api/v1/analyses` | 분석 히스토리 (최신순, 페이지네이션) |
+| GET | `/api/v1/analyses/{id}` | 분석 상태 폴링 |
+| GET | `/api/v1/analyses/{id}/results` | 결과 목록. ACTION·DECISION 우선 정렬 |
+| GET | `/api/v1/results/{id}` | 규제 상세 |
+| GET | `/api/v1/results/{id}/evidence` | 근거 — 세 종류 분리 |
+| POST | `/api/v1/results/{id}/feedback` | 판정 피드백 |
+| GET/POST/DELETE | `/api/v1/saved-regulations` | 관심 규제 저장 |
+
+분석은 법령 조회와 조문별 LLM 호출 때문에 수십 초가 걸린다. 동기 응답으로 묶으면
+NFR-006(장시간 무응답 UI 금지)을 어기므로, 202로 `analysis_id`를 먼저 주고
+프론트가 상태를 폴링하는 구조다.
+
+### 인증
+
+현재 `AUTH_MODE=dev`이며 `X-User-Id` 헤더를 그대로 신뢰한다. **로컬 전용**이다.
+`APP_ENV=production` + `AUTH_MODE=dev` 조합은 앱 기동 자체를 거부한다.
+W3에서 Supabase JWT 검증으로 교체하며, 라우터는 `CurrentUser`에만 의존하므로
+교체가 라우터로 번지지 않는다.
 
 ## 평가 실측 (2026-09-21 · 15케이스)
 

@@ -42,3 +42,13 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["app*", "evaluation*"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI 의존성 주입 관용구. 호출처럼 보이지만 선언이다.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Header",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Body",
+]
