@@ -45,3 +45,10 @@ AGENTS.md
 
 # Playwright MCP 임시 산출물
 .playwright-mcp/
+
+# Playwright
+test-results/
+playwright-report/
+
+# E2E 테스트 계정
+.env.e2e.local

@@ -35,6 +35,7 @@ from app.repositories.base import (
     ResultRepository,
     SnapshotRepository,
 )
+from app.repositories.traces import NullTraceRepository, TraceRecord
 from app.services.analysis_service import analyze_article
 from app.services.law_selector import build_search_keywords, dedupe_laws, pick_primary
 
@@ -98,6 +99,7 @@ class AnalysisRunner:
         llm_gateway: LlmGateway | None = None,
         client_factory=None,
         retriever=None,
+        trace_repo=None,
     ):
         self.analysis_repo = analysis_repo
         self.result_repo = result_repo
@@ -109,6 +111,7 @@ class AnalysisRunner:
         )
         # RAG가 꺼져 있거나 인덱스가 없으면 참고자료 없이 분석한다 (BR-005).
         self._retriever = retriever or self._build_retriever()
+        self._trace_repo = trace_repo or NullTraceRepository()
 
     def _build_retriever(self):
         if not self.settings.rag_enabled:
@@ -260,25 +263,44 @@ class AnalysisRunner:
         """조문들을 제한된 동시성으로 분석한다."""
         semaphore = asyncio.Semaphore(ARTICLE_CONCURRENCY)
 
+        collected: list[TraceRecord] = []
+
         async def one(article_no: str, packet: ContextPacket) -> AnalysisResult | None:
             async with semaphore:
+                runner = ChainRunner(llm=self.llm)
+                result: AnalysisResult | None = None
                 try:
                     outcome = await analyze_article(
-                        ChainRunner(llm=self.llm),
+                        runner,
                         packet,
                         analysis_id=analysis.analysis_id,
                         trace_id=analysis.trace_id,
                     )
+                    result = outcome.result
                 except Exception as exc:
                     # ER-002/ER-003: 조문 1건 실패가 분석 전체를 죽이지 않는다.
                     logger.warning(
                         "조문 분석 실패 law=%s article=%s err=%s",
                         packet.law.law_name, article_no, exc,
                     )
-                    return None
-                return outcome.result
+                finally:
+                    # 실패한 호출의 기록이 더 중요하다. 성공 여부와 무관하게 남긴다.
+                    collected.extend(
+                        TraceRecord.of(
+                            trace,
+                            trace_id=analysis.trace_id,
+                            analysis_id=analysis.analysis_id,
+                            user_id=analysis.user_id,
+                            law_id=packet.law.law_id,
+                            article_no=article_no,
+                        )
+                        for trace in runner.traces
+                    )
+                return result
 
         done = await asyncio.gather(*(one(no, p) for no, p in packets))
+        await self._trace_repo.save_many(collected)
+        self._last_traces = collected
         return [result for result in done if result is not None]
 
     # ── 실행 ──────────────────────────────────────────────────────────
@@ -316,6 +338,7 @@ class AnalysisRunner:
         for item in items:
             await self.snapshot_repo.save(item.snapshot)
 
+        self._last_traces = []
         all_results = await self.analyze_packets(packets, analysis)
         await self.result_repo.save_many(all_results)
 
@@ -327,6 +350,10 @@ class AnalysisRunner:
                 "articles_changed": len(packets),
                 "counts": summarize(all_results),
                 "snapshot_law_ids": [i.snapshot.law_id for i in items],
+                "chain_calls": len(self._last_traces),
+                "total_tokens": sum(
+                    t.input_tokens + t.output_tokens for t in self._last_traces
+                ),
             }
         )
         return await self.analysis_repo.update(completed)

@@ -21,6 +21,7 @@ from app.core.config import Settings, get_settings
 from app.diff.engine import compute_change, detect_delegation
 from app.domain.context import ContextPacket, UserContext
 from app.domain.enums import Applicability, CompanySize
+from app.rag.retriever import NullRetriever
 from app.services.analysis_service import analyze_article
 from evaluation.metrics import CaseOutcome, Metrics, compute
 
@@ -108,6 +109,7 @@ async def run_case(
     dataset: Dataset,
     snapshots: dict[str, LawSnapshot],
     gateway: LlmGateway,
+    retriever=None,
 ) -> CaseOutcome:
     law_name, article_no = case["law_name"], case["article_no"]
     gold = Applicability(case["gold_applicability"])
@@ -138,9 +140,11 @@ async def run_case(
     # change_mode=as_new: 조문 전체를 신설로 간주 (데이터셋 labeling_policy 참조)
     change = compute_change(None, legal.original_text)
 
-    packet = ContextPacket(
-        user=dataset.profile(case["profile"]), law=legal, change=change, rag=[]
-    )
+    user = dataset.profile(case["profile"])
+    rag = await (retriever or NullRetriever()).retrieve(legal, user)
+    base.rag_count = len(rag)
+
+    packet = ContextPacket(user=user, law=legal, change=change, rag=rag)
 
     try:
         outcome = await analyze_article(ChainRunner(llm=gateway), packet)
@@ -164,18 +168,41 @@ async def run_case(
     return base
 
 
+def build_retriever(settings: Settings):
+    """평가용 Retriever. 구성에 실패하면 참고자료 없이 측정한다."""
+    from app.rag.embeddings import OpenAIEmbedder
+    from app.rag.retriever import Retriever
+    from app.rag.store import build_store
+
+    return Retriever(
+        OpenAIEmbedder(settings), build_store(settings), top_k=settings.rag_top_k
+    )
+
+
 async def run_dataset(
     dataset_path: str | Path,
     *,
     settings: Settings | None = None,
     offline: bool = False,
     concurrency: int = 3,
+    use_rag: bool = False,
 ) -> tuple[Metrics, list[CaseOutcome]]:
     settings = settings or get_settings()
     dataset = Dataset.load(dataset_path)
 
     print(f"▶ 데이터셋: {dataset.raw['dataset_id']} · 케이스 {len(dataset.cases)}건")
     snapshots = await ensure_snapshots(dataset, settings, offline=offline)
+    retriever = None
+    if use_rag:
+        try:
+            retriever = build_retriever(settings)
+            from app.rag.store import build_store
+
+            print(f"▶ RAG: 켜짐 · 색인 {await build_store(settings).count()}개 청크")
+        except Exception as exc:
+            print(f"▶ RAG: 구성 실패 — 참고자료 없이 측정합니다 ({exc})")
+    else:
+        print("▶ RAG: 꺼짐")
     print(f"▶ 모델: {settings.llm_model}\n")
 
     gateway = LlmGateway(settings=settings)
@@ -183,7 +210,7 @@ async def run_dataset(
 
     async def guarded(case: dict) -> CaseOutcome:
         async with semaphore:
-            result = await run_case(case, dataset, snapshots, gateway)
+            result = await run_case(case, dataset, snapshots, gateway, retriever)
             mark = "✓" if result.correct else ("!" if result.error else "✗")
             predicted = result.predicted.value if result.predicted else f"ERROR({result.error})"
             print(f"  {mark} {result.case_id} {result.law_name} {result.article_no} "

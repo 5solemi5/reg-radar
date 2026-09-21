@@ -85,6 +85,10 @@ class Analysis(BaseModel):
     counts: ResultCounts = Field(default_factory=ResultCounts)
     error: str | None = Field(None, description="FAILED일 때의 사용자용 사유")
 
+    # 관측 (NFR-009). 비용과 성능을 결과 전체를 읽지 않고 볼 수 있게 한다.
+    chain_calls: int = 0
+    total_tokens: int = 0
+
     # AP-07/BR-006: 이 분석이 사용한 법령 snapshot을 추적한다.
     snapshot_law_ids: list[str] = Field(default_factory=list)
 

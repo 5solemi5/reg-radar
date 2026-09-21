@@ -1,0 +1,281 @@
+{
+  "model": "gpt-4o",
+  "rag": false,
+  "ran_at": "20260921T092921Z",
+  "metrics": {
+    "total": 15,
+    "executed": 15,
+    "errors": 0,
+    "accuracy": 1.0,
+    "confusion": {
+      "APPLICABLE": {
+        "APPLICABLE": 5,
+        "HOLD": 0,
+        "NOT_APPLICABLE": 0
+      },
+      "HOLD": {
+        "APPLICABLE": 0,
+        "HOLD": 5,
+        "NOT_APPLICABLE": 0
+      },
+      "NOT_APPLICABLE": {
+        "APPLICABLE": 0,
+        "HOLD": 0,
+        "NOT_APPLICABLE": 5
+      }
+    },
+    "q1_model_citation_accuracy": 1.0,
+    "q1_displayed_citation_accuracy": 1.0,
+    "q2_false_positive_rate": 0.0,
+    "q3_action_conversion_rate": 1.0,
+    "q4_recall": 1.0,
+    "q5_delegation_detection": 1.0,
+    "q6_forbidden_field_leaks": 0,
+    "over_hold_rate": 0.0,
+    "hold_explains_itself": 1.0,
+    "rag_coverage": 0.0,
+    "rag_docs_total": 0,
+    "latency_p50": 7295,
+    "latency_p95": 10291
+  },
+  "cases": [
+    {
+      "id": "E01",
+      "law": "근로기준법",
+      "article": "제93조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 5618,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E02",
+      "law": "근로기준법",
+      "article": "제93조",
+      "profile": "solo_commerce",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 3000,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E03",
+      "law": "근로기준법",
+      "article": "제93조",
+      "profile": "mfg_ops_unknown",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "상시근로자 수"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 4894,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E04",
+      "law": "근로기준법",
+      "article": "제54조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 6633,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E05",
+      "law": "근로기준법",
+      "article": "제54조",
+      "profile": "solo_commerce",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 6163,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E06",
+      "law": "근로기준법",
+      "article": "제54조",
+      "profile": "mfg_ops_unknown",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 6164,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E07",
+      "law": "근로기준법",
+      "article": "제76조의2",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 7430,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E08",
+      "law": "산업안전보건법",
+      "article": "제17조",
+      "profile": "mfg_ops_150",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "대통령령으로 정하는 사업의 종류",
+        "대통령령으로 정하는 사업장의 상시근로자 수"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 10291,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E09",
+      "law": "산업안전보건법",
+      "article": "제24조",
+      "profile": "mfg_ops_150",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "산업안전보건위원회를 구성하여야 할 사업의 종류 및 사업장의 상시근로자 수에 대한 대통령령의 세부 기준"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 10834,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E10",
+      "law": "개인정보 보호법",
+      "article": "제31조",
+      "profile": "solo_commerce",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "대통령령으로 정하는 종업원 수 기준",
+        "대통령령으로 정하는 매출액 기준"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 9799,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E11",
+      "law": "개인정보 보호법",
+      "article": "제31조",
+      "profile": "it_hr",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "사용자가 개인정보처리자인지 여부",
+        "대통령령으로 정하는 종업원 수 및 매출액 기준"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 7448,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E12",
+      "law": "화학물질관리법",
+      "article": "제32조",
+      "profile": "it_hr",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 7747,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E13",
+      "law": "화학물질관리법",
+      "article": "제32조",
+      "profile": "solo_commerce",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 7787,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E14",
+      "law": "식품위생법",
+      "article": "제41조",
+      "profile": "it_hr",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 7295,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "E15",
+      "law": "식품위생법",
+      "article": "제41조",
+      "profile": "mfg_ops_150",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 6364,
+      "rag_count": 0,
+      "error": null
+    }
+  ]
+}

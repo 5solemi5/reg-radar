@@ -34,6 +34,7 @@ class CaseOutcome:
     expects_delegation: bool = False
     detected_delegation: list[str] = field(default_factory=list)
     latency_ms: int = 0
+    rag_count: int = 0
     error: str | None = None
 
     @property
@@ -62,6 +63,8 @@ class Metrics:
 
     over_hold_rate: float | None
     hold_explains_itself: float | None
+    rag_coverage: float | None
+    rag_docs_total: int
     latency_p50: int
     latency_p95: int
 
@@ -139,6 +142,11 @@ def compute(outcomes: list[CaseOutcome]) -> Metrics:
     explained = [o for o in predicted_hold if o.missing_context]
     hold_explains = _rate(len(explained), len(predicted_hold))
 
+    # 참고자료가 붙은 케이스 비율. 0건이 정상이므로 '커버리지'로만 본다 (BR-005).
+    with_rag = [o for o in executed if o.rag_count > 0]
+    rag_coverage = _rate(len(with_rag), len(executed))
+    rag_docs_total = sum(o.rag_count for o in executed)
+
     latencies = [o.latency_ms for o in executed if o.latency_ms]
 
     return Metrics(
@@ -156,6 +164,8 @@ def compute(outcomes: list[CaseOutcome]) -> Metrics:
         q6_forbidden_field_leaks=q6,
         over_hold_rate=over_hold,
         hold_explains_itself=hold_explains,
+        rag_coverage=rag_coverage,
+        rag_docs_total=rag_docs_total,
         latency_p50=_percentile(latencies, 0.50),
         latency_p95=_percentile(latencies, 0.95),
         failures=[o for o in outcomes if not o.correct],

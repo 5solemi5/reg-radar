@@ -50,6 +50,7 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 | `migrations/` | DB 스키마·RLS. 도메인 규칙을 제약으로 이중화 | BR-003, BR-007, FR-003 |
 | `app/services/analysis_runner.py` | 분석 orchestration: 수집 → 분석 → 저장 | 04 §5-2 |
 | `app/rag/` | 참고자료 수집·청킹·임베딩·검색 | FR-013, BR-004~005 |
+| `app/repositories/traces.py` | AI 실행 추적. 프롬프트 원문은 저장하지 않는다 | NFR-009 |
 | `evaluation/` | 평가 데이터셋·지표·리포트 ([README](evaluation/README.md)) | 기획서 §11 |
 
 ## 설계상 지켜지는 불변식
@@ -134,6 +135,18 @@ Supabase도 Postgres이므로 같은 마이그레이션을 쓴다. 상세는
 
 `RAG_ENABLED=false`(기본값)이면 참고자료 없이 동작한다. **참고자료 없음은
 오류가 아니라 정상 상태다** (BR-005).
+
+### 관측성 (NFR-009)
+
+```bash
+.venv/bin/python scripts/trace_report.py            # 최근 분석
+.venv/bin/python scripts/trace_report.py --chains   # 체인별 토큰·지연
+.venv/bin/python scripts/trace_report.py --failures # 실패한 호출
+```
+
+체인 호출 단위로 latency·model·input/output 토큰·실패를 `ai_traces`에 남긴다.
+**프롬프트 원문과 모델 응답 전문은 저장하지 않는다** — 사용자 프로필과 법령
+원문이 그대로 남으면 관측성 도구가 개인정보 저장소가 된다.
 
 ### 저장소 테스트
 

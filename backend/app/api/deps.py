@@ -36,11 +36,20 @@ from app.repositories.postgres import (
     PostgresSavedRegulationRepository,
     PostgresSnapshotRepository,
 )
+from app.repositories.traces import (
+    InMemoryTraceRepository,
+    PostgresTraceRepository,
+)
 
 
 @lru_cache
 def get_store() -> InMemoryStore:
     return InMemoryStore()
+
+
+@lru_cache
+def get_memory_trace_repo() -> InMemoryTraceRepository:
+    return InMemoryTraceRepository()
 
 
 def _db(settings: Settings) -> Database:
@@ -96,11 +105,19 @@ def get_revision_repo(settings: Settings = Depends(get_settings)):
     )
 
 
+def get_trace_repo(settings: Settings = Depends(get_settings)):
+    return (
+        PostgresTraceRepository(_db(settings)) if settings.postgres_enabled
+        else get_memory_trace_repo()
+    )
+
+
 def get_analysis_runner(
     settings: Settings = Depends(get_settings),
     analysis_repo=Depends(get_analysis_repo),
     result_repo=Depends(get_result_repo),
     snapshot_repo=Depends(get_snapshot_repo),
+    trace_repo=Depends(get_trace_repo),
 ):
     """분석 실행기.
 
@@ -114,4 +131,5 @@ def get_analysis_runner(
         result_repo=result_repo,
         snapshot_repo=snapshot_repo,
         settings=settings,
+        trace_repo=trace_repo,
     )

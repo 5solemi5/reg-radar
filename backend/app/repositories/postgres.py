@@ -119,6 +119,8 @@ class PostgresAnalysisRepository:
             counts=ResultCounts(**counts) if counts else ResultCounts(),
             error=row["error"],
             snapshot_law_ids=_list(row["snapshot_law_ids"]),
+            chain_calls=row["chain_calls"],
+            total_tokens=row["total_tokens"],
         )
 
     async def create(self, analysis: Analysis) -> Analysis:
@@ -162,7 +164,9 @@ class PostgresAnalysisRepository:
                 articles_changed = $7,
                 counts = $8::jsonb,
                 error = $9,
-                snapshot_law_ids = $10
+                snapshot_law_ids = $10,
+                chain_calls = $11,
+                total_tokens = $12
             WHERE analysis_id = $1::uuid AND user_id = $2
             RETURNING *
             """,
@@ -176,6 +180,8 @@ class PostgresAnalysisRepository:
             analysis.counts.model_dump(),
             analysis.error,
             analysis.snapshot_law_ids,
+            analysis.chain_calls,
+            analysis.total_tokens,
         )
         if row is None:
             raise LookupError(f"분석을 찾을 수 없습니다: {analysis.analysis_id}")

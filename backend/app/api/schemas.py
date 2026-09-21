@@ -126,6 +126,9 @@ class AnalysisOut(BaseModel):
     counts: CountsOut
     error: str | None
     trace_id: str
+    # 관측 (NFR-009)
+    chain_calls: int
+    total_tokens: int
 
     @classmethod
     def of(cls, analysis: Analysis) -> AnalysisOut:

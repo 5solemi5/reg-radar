@@ -66,6 +66,11 @@ def render(metrics: Metrics, outcomes: list[CaseOutcome], model: str) -> str:
     add(f"{'보류가 해소방법 제시':<26}{'100%':>10}{_pct(metrics.hold_explains_itself):>12}")
     add("")
 
+    add("── 참고자료 (RAG) ───────────────────────────────────────────────────")
+    add(f"{'참고자료가 붙은 케이스':<26}{'':>10}{_pct(metrics.rag_coverage):>12}")
+    add(f"{'참고자료 총 건수':<26}{'':>10}{str(metrics.rag_docs_total) + '건':>12}")
+    add("")
+
     add("── 응답 성능 (NFR-006) ──────────────────────────────────────────────")
     add(f"조문 1건당 latency  p50 {metrics.latency_p50}ms · p95 {metrics.latency_p95}ms")
     add("")

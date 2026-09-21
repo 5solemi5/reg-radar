@@ -77,3 +77,12 @@ class LlmGateway:
         Structured Output 파싱 실패는 예외로 드러나야 하며(ER-003), 임의 보정하지 않는다.
         """
         return self.model.with_structured_output(schema)
+
+    def structured_with_usage(self, schema: type[T]) -> Runnable:
+        """구조화 출력 + 원본 응답을 함께 받는다.
+
+        토큰 사용량은 원본 AIMessage에만 담겨 있다. NFR-009가 요구하는
+        token/usage를 기록하려면 파싱 결과만으로는 부족하다.
+        반환 형태: {"raw": AIMessage, "parsed": T | None, "parsing_error": ...}
+        """
+        return self.model.with_structured_output(schema, include_raw=True)

@@ -26,6 +26,7 @@ async def main() -> int:
     parser.add_argument("--offline", action="store_true", help="법제처 호출 없이 캐시만 사용")
     parser.add_argument("--concurrency", type=int, default=3)
     parser.add_argument("--save", action="store_true", help="결과를 evaluation/results에 저장")
+    parser.add_argument("--rag", action="store_true", help="참고자료를 붙여 측정")
     args = parser.parse_args()
 
     settings = get_settings()
@@ -36,7 +37,11 @@ async def main() -> int:
         return 1
 
     metrics, outcomes = await run_dataset(
-        args.dataset, settings=settings, offline=args.offline, concurrency=args.concurrency
+        args.dataset,
+        settings=settings,
+        offline=args.offline,
+        concurrency=args.concurrency,
+        use_rag=args.rag,
     )
 
     print()
@@ -46,12 +51,14 @@ async def main() -> int:
     if args.save:
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        base = RESULTS_DIR / f"{stamp}_{settings.llm_model}"
+        suffix = "_rag" if args.rag else ""
+        base = RESULTS_DIR / f"{stamp}_{settings.llm_model}{suffix}"
         base.with_suffix(".txt").write_text(report, encoding="utf-8")
         base.with_suffix(".json").write_text(
             json.dumps(
                 {
                     "model": settings.llm_model,
+                    "rag": args.rag,
                     "ran_at": stamp,
                     "metrics": {
                         k: v for k, v in vars(metrics).items() if k != "failures"
@@ -69,6 +76,7 @@ async def main() -> int:
                             "missing_context": o.missing_context,
                             "dropped_spans": o.dropped_spans,
                             "latency_ms": o.latency_ms,
+                            "rag_count": o.rag_count,
                             "error": o.error,
                         }
                         for o in outcomes
