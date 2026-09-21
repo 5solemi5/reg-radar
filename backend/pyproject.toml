@@ -19,6 +19,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# 참고자료(RAG)용. 기본 설치에 넣지 않는 이유는 onnxruntime 등을 끌고 와
+# 이미지가 크게 불어나는데, RAG를 끄고 운영하는 구성(08 가이드 §5 선택 A)이
+# 유효하기 때문이다. 켜서 배포하려면 `pip install ".[rag]"`.
+rag = [
+    "chromadb>=1.0",
+]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",

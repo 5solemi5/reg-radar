@@ -8,14 +8,30 @@ FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app
 
 WORKDIR /app
 
 # 의존성을 먼저 설치해 코드 변경 시 레이어 캐시를 재사용한다.
+#
+# RAG는 기본으로 넣지 않는다. chromadb가 onnxruntime 등을 끌고 와 이미지가 크게
+# 불어나는데, 참고자료 없이 운영하는 구성이 유효하기 때문이다 (08 가이드 §5 선택 A).
+# 켜서 배포하려면 --build-arg INSTALL_RAG=true.
+ARG INSTALL_RAG=false
 COPY pyproject.toml ./
-RUN pip install --upgrade pip && pip install .
+RUN pip install --upgrade pip && \
+    if [ "$INSTALL_RAG" = "true" ]; then pip install ".[rag]"; else pip install .; fi
 
+# PYTHONPATH를 잡아 두는 이유:
+#
+# 의존성 캐시를 위해 pyproject.toml만 먼저 복사해 설치하므로, 그 시점에는 app/ 이
+# 없어 패키지 본체가 설치되지 않는다. `uvicorn app.main:app`은 작업 디렉터리가
+# /app이라 우연히 동작하지만, `python scripts/migrate.py`는 sys.path[0]이
+# /app/scripts라서 ModuleNotFoundError로 죽는다.
+#
+# 이것을 컨테이너에서 실행해 보기 전에는 몰랐다. railway.toml의 preDeployCommand가
+# 매 배포마다 조용히 실패해 마이그레이션이 영영 적용되지 않았을 것이다.
 COPY app ./app
 COPY migrations ./migrations
 COPY evaluation ./evaluation
