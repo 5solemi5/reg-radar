@@ -78,6 +78,14 @@ class AnalysisInProgressError(ApiError):
         self.analysis_id = analysis_id
 
 
+class ReassessNotAllowedError(ApiError):
+    """FR-008. 보류가 아니거나 근거가 없어 재판정할 수 없다."""
+
+    status_code = status.HTTP_409_CONFLICT
+    code = "reassess_not_allowed"
+    message = "이 결과는 재판정할 수 없습니다."
+
+
 class UpstreamUnavailableError(ApiError):
     """ER-001/ER-002. 법제처·LLM 등 외부 의존성 실패."""
 

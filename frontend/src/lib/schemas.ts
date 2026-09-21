@@ -185,6 +185,33 @@ export type Evidence = z.infer<typeof Evidence>;
 
 // ── 저장 / 피드백 ────────────────────────────────────────────────────
 
+// ── 보류 재판정 (FR-008) ─────────────────────────────────────────────
+
+export const ReassessResult = z.object({
+  revision_id: z.string(),
+  original_result_id: z.string(),
+  previous_applicability: Applicability,
+  new_applicability: Applicability,
+  /** 판정이 실제로 바뀌었는지 */
+  changed: z.boolean(),
+  message: z.string(),
+  /** 사용자가 채운 정보. 이력에 보존된다 */
+  added_context: z.record(z.string(), z.string()),
+  result: Result,
+});
+export type ReassessResult = z.infer<typeof ReassessResult>;
+
+export const Revision = z.object({
+  revision_id: z.string(),
+  original_result_id: z.string(),
+  new_result_id: z.string(),
+  previous_applicability: Applicability,
+  new_applicability: Applicability,
+  added_context: z.record(z.string(), z.string()),
+  created_at: z.string(),
+});
+export type Revision = z.infer<typeof Revision>;
+
 export const SavedRegulation = z.object({
   saved_id: z.string(),
   result_id: z.string(),

@@ -133,3 +133,39 @@ def get_analysis_runner(
         settings=settings,
         trace_repo=trace_repo,
     )
+
+
+def get_retriever(settings: Settings = Depends(get_settings)):
+    """참고자료 검색기. 구성 실패는 참고자료 없음으로 흡수한다 (BR-005)."""
+    from app.rag.retriever import NullRetriever
+
+    if not settings.rag_enabled:
+        return NullRetriever()
+    try:
+        from app.rag.embeddings import OpenAIEmbedder
+        from app.rag.retriever import Retriever
+        from app.rag.store import build_store
+
+        return Retriever(
+            OpenAIEmbedder(settings), build_store(settings), top_k=settings.rag_top_k
+        )
+    except Exception:
+        return NullRetriever()
+
+
+def get_reassess_service(
+    settings: Settings = Depends(get_settings),
+    snapshot_repo=Depends(get_snapshot_repo),
+    result_repo=Depends(get_result_repo),
+    revision_repo=Depends(get_revision_repo),
+    retriever=Depends(get_retriever),
+):
+    from app.services.reassess_service import ReassessService
+
+    return ReassessService(
+        snapshot_repo=snapshot_repo,
+        result_repo=result_repo,
+        revision_repo=revision_repo,
+        settings=settings,
+        retriever=retriever,
+    )

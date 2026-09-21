@@ -291,6 +291,54 @@ class FeedbackOut(BaseModel):
     created_at: datetime
 
 
+class ReassessIn(BaseModel):
+    """보류 재판정 요청 (FR-008).
+
+    보류 결과의 `missing_context`가 무엇을 채워야 하는지 알려준다.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    employee_count: int | None = Field(
+        None, ge=0, le=1_000_000, description="상시근로자 수. 가장 흔한 보류 사유"
+    )
+    notes: str | None = Field(
+        None, max_length=500, description="그 밖에 판단에 필요한 정보"
+    )
+    apply_to_profile: bool = Field(
+        False, description="입력한 상시근로자 수를 프로필에도 저장할지"
+    )
+
+
+class ReassessOut(BaseModel):
+    """재판정 결과.
+
+    기존 결과를 덮어쓰지 않고 새 결과를 만든다 (BR-008). 두 결과 모두 조회할
+    수 있으므로 판정이 왜 바뀌었는지 추적할 수 있다.
+    """
+
+    revision_id: str
+    original_result_id: str
+    previous_applicability: Applicability
+    new_applicability: Applicability
+    changed: bool = Field(..., description="판정이 실제로 바뀌었는지")
+    message: str
+    added_context: dict[str, str] = Field(
+        ..., description="사용자가 채운 정보. 이력에 보존된다"
+    )
+    result: ResultOut
+
+
+class RevisionOut(BaseModel):
+    revision_id: str
+    original_result_id: str
+    new_result_id: str
+    previous_applicability: Applicability
+    new_applicability: Applicability
+    added_context: dict[str, str]
+    created_at: datetime
+
+
 class SavedRegulationIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

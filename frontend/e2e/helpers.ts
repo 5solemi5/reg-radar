@@ -104,3 +104,20 @@ export async function openFirstResult(page: Page): Promise<void> {
   await page.getByRole("link", { name: /근거 보기/ }).first().click();
   await page.waitForURL(/\/results\//, { timeout: 20_000 });
 }
+
+/**
+ * 보류 상태인 결과 상세로 이동한다. 없으면 null을 돌려준다.
+ *
+ * 문구가 아니라 data 속성으로 찾는다. 카피가 바뀌어도 테스트가 살아 있어야 한다.
+ */
+export async function openHoldResult(page: Page): Promise<boolean> {
+  const holdCard = page
+    .locator('[data-testid="result-card"][data-applicability="HOLD"]')
+    .first();
+
+  if (!(await holdCard.isVisible().catch(() => false))) return false;
+
+  await holdCard.getByRole("link", { name: /근거 보기/ }).click();
+  await page.waitForURL(/\/results\//, { timeout: 20_000 });
+  return true;
+}

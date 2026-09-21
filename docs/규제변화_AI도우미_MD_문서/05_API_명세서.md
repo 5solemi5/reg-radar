@@ -270,7 +270,58 @@ dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없�
 
 `RAG_ENABLED=false`이거나 인덱스가 비어 있으면 항상 빈 배열이다.
 
-### 4-5. 피드백·저장
+### 4-5. 보류 재판정 (FR-008, BR-008)
+
+#### `POST /results/{id}/reassess` → `201`
+
+보류 결과에 부족한 정보를 채워 **그 조문만** 다시 판단한다. 분석 전체를 다시
+돌릴 이유가 없다.
+
+```json
+{ "employee_count": 80, "notes": "우리는 제조업이 아닙니다", "apply_to_profile": true }
+```
+
+| 필드 | 비고 |
+|---|---|
+| `employee_count` | 가장 흔한 보류 사유. 규모 기준 판정에 쓰인다 |
+| `notes` | 그 밖에 판단에 필요한 정보 (최대 500자) |
+| `apply_to_profile` | 입력한 인원 수를 프로필에도 저장할지 |
+
+**기존 결과를 덮어쓰지 않는다.** 새 결과를 만들고 이력으로 연결하므로 판정이
+왜 바뀌었는지 추적할 수 있다 (BR-008). 두 결과 모두 조회 가능하다.
+
+**분석 당시 법령 근거로 재판정한다.** `law_snapshots`에 보존된 원문과 최초
+분석의 변경 내용을 그대로 쓴다 (AP-07, BR-006). 신구법을 다시 부르면 그 사이
+또 개정됐을 때 다른 근거로 판단하게 된다.
+
+응답:
+
+```json
+{
+  "revision_id": "...", "original_result_id": "...",
+  "previous_applicability": "HOLD", "new_applicability": "APPLICABLE",
+  "changed": true,
+  "message": "HOLD → APPLICABLE로 바뀌었습니다.",
+  "added_context": { "상시근로자 수": "80" },
+  "result": { ... }
+}
+```
+
+| 응답 | 의미 |
+|---|---|
+| `201` | 재판정 완료. `changed`로 판정이 바뀌었는지 확인 |
+| `404` | 결과 없음 또는 타인 소유 |
+| `409 profile_required` | 프로필 미설정 |
+| `409 reassess_not_allowed` | 보류 상태가 아니거나, 추가 정보가 비었거나, 법령 근거 없음 |
+
+`apply_to_profile`은 **재판정이 성공한 뒤에** 반영한다. 실패했는데 프로필만
+바뀌면 사용자가 무엇이 적용됐는지 알 수 없다.
+
+#### `GET /results/{id}/revisions`
+
+이 결과와 연결된 재판정 이력. 어떤 정보를 채워서 판정이 어떻게 바뀌었는지 남는다.
+
+### 4-6. 피드백·저장
 
 | Endpoint | 역할 | 요구사항 |
 |---|---|---|
@@ -293,7 +344,8 @@ dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없�
 4. GET  /analyses/{id}/results  → 대시보드 카드
 5. GET  /results/{id}        → 상세 화면
 6. GET  /results/{id}/evidence  → Evidence 탭
-7. POST /saved-regulations, /results/{id}/feedback
+7. POST /results/{id}/reassess  → 보류 해소 (선택)
+8. POST /saved-regulations, /results/{id}/feedback
 ```
 
 ### 5-1. 상태별 UI 대응 (03 요구사항 §5-2)
@@ -316,7 +368,6 @@ dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없�
 
 | 항목 | 상태 | 예정 |
 |---|---|---|
-| 보류 재판정 (FR-008) | 도메인 모델만 존재. 화면은 프로필 수정으로 유도 | W4 |
 | 분석 이력 비교 (UC-11) | 미구현 | W6 |
 
 ---

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ActionGradeChip, ApplicabilityChip, Button, Card, SectionTitle, Spinner, StateMessage } from "@/components/ui";
+import { ReassessForm } from "@/components/reassess-form";
 import { api } from "@/lib/api";
 import type { ReferenceEvidence } from "@/lib/schemas";
 import {
@@ -110,24 +111,13 @@ export function ResultDetail({ resultId }: { resultId: string }) {
         </Card>
       </section>
 
-      {/* ② 보류라면 무엇이 필요한지 먼저 (FR-008) */}
+      {/* ② 보류라면 바로 해소할 수 있게 (FR-008) */}
       {data.applicability === "HOLD" && ai.missing_context.length > 0 && (
         <section>
-          <SectionTitle hint="아래 정보를 알면 해당 여부를 확정할 수 있습니다.">
+          <SectionTitle hint="정보를 채우면 이 조문만 다시 판단합니다. 이전 판정은 보존됩니다.">
             보류 사유
           </SectionTitle>
-          <Card className="border-amber-300 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20">
-            <ul className="list-inside list-disc space-y-1 text-sm text-amber-900 dark:text-amber-300">
-              {ai.missing_context.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-            <Link href="/settings">
-              <Button variant="secondary" className="mt-4">
-                프로필에 정보 추가하기
-              </Button>
-            </Link>
-          </Card>
+          <ReassessForm resultId={data.result_id} ai={ai} />
         </section>
       )}
 

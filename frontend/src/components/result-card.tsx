@@ -10,7 +10,13 @@ export function ResultCard({ result }: { result: Result }) {
   const note = effectiveDateNote(legal.effective_date);
 
   return (
-    <Card className="transition hover:border-slate-300 dark:hover:border-slate-700">
+    // data 속성은 E2E가 판정별로 카드를 안정적으로 찾기 위한 것이다.
+    // 문구로 찾으면 카피가 바뀔 때마다 테스트가 깨진다.
+    <Card
+      className="transition hover:border-slate-300 dark:hover:border-slate-700"
+      data-testid="result-card"
+      data-applicability={result.applicability}
+    >
       <div className="flex flex-wrap items-center gap-2">
         <ApplicabilityChip value={result.applicability} />
         {result.action_grade && <ActionGradeChip value={result.action_grade} />}

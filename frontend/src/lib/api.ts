@@ -16,8 +16,10 @@ import {
   Health,
   Profile,
   type ProfileInput,
+  ReassessResult,
   Result,
   ResultList,
+  Revision,
   SavedRegulation,
 } from "./schemas";
 
@@ -182,6 +184,13 @@ export const api = {
       method: "POST",
       ...json(input),
     }),
+
+  reassess: (
+    id: string,
+    input: { employee_count?: number; notes?: string; apply_to_profile?: boolean },
+  ) => request(`/results/${id}/reassess`, ReassessResult, { method: "POST", ...json(input) }),
+  listRevisions: (id: string) =>
+    request(`/results/${id}/revisions`, z.array(Revision)),
 
   listSaved: () => request("/saved-regulations", z.array(SavedRegulation)),
   saveRegulation: (input: { result_id: string; note?: string }) =>

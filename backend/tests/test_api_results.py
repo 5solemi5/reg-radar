@@ -154,3 +154,101 @@ class TestSavedRegulations:
             headers={"X-User-Id": "user-b"},
         )
         assert r.status_code == 404
+
+
+class TestReassessApi:
+    """FR-008 재판정 API."""
+
+    @pytest.fixture
+    async def hold_result(self, store):
+        """보류 결과와 법령 근거를 심는다."""
+        import datetime as dt
+
+        from app.adapters.law.models import LawArticle, LawSnapshot
+        from app.domain.enums import Applicability, ResultStatus
+        from app.repositories.memory import InMemorySnapshotRepository
+
+        analysis = await InMemoryAnalysisRepository(store).create(
+            Analysis(user_id="user-a")
+        )
+        result = make_result(
+            analysis_id=analysis.analysis_id,
+            applicability=Applicability.HOLD,
+            action_grade=None,
+            status=ResultStatus.HOLD,
+        )
+        result = result.model_copy(
+            update={
+                "ai_interpretation": result.ai_interpretation.model_copy(
+                    update={"missing_context": ["상시근로자 수"]}
+                )
+            }
+        )
+        await InMemoryResultRepository(store).save_many([result])
+        await InMemorySnapshotRepository(store).save(
+            LawSnapshot(
+                law_id="001872",
+                law_name="근로기준법",
+                effective_date=dt.date(2026, 8, 20),
+                articles=[
+                    LawArticle(
+                        article_no="제93조",
+                        article_title="취업규칙의 작성ㆍ신고",
+                        original_text="상시 10명 이상의 근로자를 사용하는 사용자는…",
+                    )
+                ],
+            )
+        )
+        return result
+
+    async def test_프로필이_없으면_거부(self, client, hold_result):
+        r = await client.post(
+            f"/api/v1/results/{hold_result.result_id}/reassess",
+            json={"employee_count": 80},
+        )
+        assert r.status_code == 409
+        assert r.json()["error"]["code"] == "profile_required"
+
+    async def test_빈_입력은_거부(self, client, hold_result):
+        await client.put(
+            "/api/v1/profile",
+            json={"job": "HR", "industry": "IT", "company_size": "MEDIUM"},
+        )
+        r = await client.post(
+            f"/api/v1/results/{hold_result.result_id}/reassess", json={}
+        )
+        assert r.status_code == 409
+        assert r.json()["error"]["code"] == "reassess_not_allowed"
+
+    async def test_없는_결과는_404(self, client):
+        r = await client.post(
+            "/api/v1/results/nope/reassess", json={"employee_count": 80}
+        )
+        assert r.status_code == 404
+
+    async def test_남의_결과는_404(self, client, hold_result):
+        r = await client.post(
+            f"/api/v1/results/{hold_result.result_id}/reassess",
+            json={"employee_count": 80},
+            headers={"X-User-Id": "user-b"},
+        )
+        assert r.status_code == 404
+
+    async def test_알_수_없는_필드는_거부(self, client, hold_result):
+        r = await client.post(
+            f"/api/v1/results/{hold_result.result_id}/reassess",
+            json={"employee_count": 80, "is_admin": True},
+        )
+        assert r.status_code == 422
+
+    async def test_이력_조회(self, client, hold_result):
+        r = await client.get(f"/api/v1/results/{hold_result.result_id}/revisions")
+        assert r.status_code == 200
+        assert r.json() == []
+
+    async def test_남의_이력은_404(self, client, hold_result):
+        r = await client.get(
+            f"/api/v1/results/{hold_result.result_id}/revisions",
+            headers={"X-User-Id": "user-b"},
+        )
+        assert r.status_code == 404

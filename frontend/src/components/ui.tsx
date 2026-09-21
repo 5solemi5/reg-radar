@@ -37,12 +37,11 @@ export function ActionGradeChip({ value }: { value: ActionGrade }) {
 export function Card({
   children,
   className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
+      {...rest}
       className={clsx(
         "rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900",
         className,
