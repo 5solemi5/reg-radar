@@ -476,3 +476,58 @@ class TestOneActiveAnalysisPerUser:
             first.model_copy(update={"status": AnalysisStatus.COMPLETED})
         )
         await repos["analysis"].create(Analysis(user_id=uid))
+
+
+class TestProfileActivities:
+    """활동 응답이 두 저장소에서 같게 왕복해야 한다 (ADR-033)."""
+
+    @staticmethod
+    def _profile(uid: str, **activities):
+        from app.domain.entities import Profile
+        from app.domain.enums import ActivityAnswer, BusinessActivity, CompanySize
+
+        return Profile(
+            user_id=uid,
+            job="HR 담당자",
+            industry="IT 서비스",
+            company_size=CompanySize.MEDIUM,
+            employee_count=80,
+            activities={
+                BusinessActivity(k): ActivityAnswer(v) for k, v in activities.items()
+            },
+        )
+
+    async def test_저장하고_그대로_돌려받는다(self, repos):
+        from app.domain.enums import ActivityAnswer, BusinessActivity
+
+        saved = await repos["profile"].upsert(
+            self._profile("u-act", SUBCONTRACTING="YES", FOOD_BUSINESS="NO")
+        )
+        got = await repos["profile"].get("u-act")
+        for p in (saved, got):
+            assert p.activities[BusinessActivity.SUBCONTRACTING] is ActivityAnswer.YES
+            assert p.activities[BusinessActivity.FOOD_BUSINESS] is ActivityAnswer.NO
+
+    async def test_답하지_않은_항목은_UNKNOWN으로_읽힌다(self, repos):
+        from app.domain.enums import ActivityAnswer, BusinessActivity
+
+        await repos["profile"].upsert(self._profile("u-unk", SUBCONTRACTING="YES"))
+        got = await repos["profile"].get("u-unk")
+        assert BusinessActivity.FOREIGN_WORKERS not in got.activities
+        assert (
+            got.to_user_context().answer(BusinessActivity.FOREIGN_WORKERS)
+            is ActivityAnswer.UNKNOWN
+        )
+
+    async def test_재저장하면_교체된다(self, repos):
+        from app.domain.enums import ActivityAnswer, BusinessActivity
+
+        await repos["profile"].upsert(self._profile("u-rep", SUBCONTRACTING="YES"))
+        await repos["profile"].upsert(self._profile("u-rep", SUBCONTRACTING="NO"))
+        got = await repos["profile"].get("u-rep")
+        assert got.activities[BusinessActivity.SUBCONTRACTING] is ActivityAnswer.NO
+
+    async def test_활동_없이도_저장된다(self, repos):
+        saved = await repos["profile"].upsert(self._profile("u-none"))
+        assert saved.activities == {}
+        assert (await repos["profile"].get("u-none")).activities == {}

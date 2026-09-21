@@ -9,11 +9,33 @@ from fastapi import APIRouter, Depends, status
 from app.api.auth import CurrentUser, get_current_user
 from app.api.deps import get_profile_repo
 from app.api.errors import ErrorResponse, NotFoundError
-from app.api.schemas import ProfileIn, ProfileOut, ProfilePatch
+from app.api.schemas import (
+    ActivityQuestionListOut,
+    ActivityQuestionOut,
+    ProfileIn,
+    ProfileOut,
+    ProfilePatch,
+)
+from app.domain.activities import ACTIVITY_QUESTIONS
 from app.domain.entities import Profile
 from app.repositories.memory import InMemoryProfileRepository
 
 router = APIRouter(tags=["profile"])
+
+
+@router.get("/profile/activities", response_model=ActivityQuestionListOut)
+async def list_activity_questions() -> ActivityQuestionListOut:
+    """온보딩 화면이 그릴 사업 활동 질문 목록 (ADR-033).
+
+    인증이 필요 없다. 어떤 질문을 하는지는 비밀이 아니고, 온보딩 화면이 프로필
+    조회(404)와 이 목록을 함께 받아야 하는데 둘의 인증 상태를 맞출 이유가 없다.
+
+    프론트엔드가 같은 문구를 따로 들고 있으면 반드시 어긋난다. 항목이 하나 빠져도
+    아무도 모르고, 사용자는 답할 기회조차 없는 질문 때문에 보류를 받는다.
+    """
+    return ActivityQuestionListOut(
+        items=[ActivityQuestionOut(**q.model_dump()) for q in ACTIVITY_QUESTIONS]
+    )
 
 
 @router.get(

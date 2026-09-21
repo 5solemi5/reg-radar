@@ -121,3 +121,53 @@ export async function openHoldResult(page: Page): Promise<boolean> {
   await page.waitForURL(/\/results\//, { timeout: 20_000 });
   return true;
 }
+
+/**
+ * 보류가 확실히 나오도록 프로필을 비운다.
+ *
+ * 재판정 테스트는 보류 결과가 있어야 의미가 있는데, 그것을 법제처가 이번에
+ * 무엇을 개정했는지에 맡기면 테스트가 조용히 건너뛰어진다. 실제로 그렇게 됐고,
+ * **건너뛰는 테스트는 실패하는 테스트보다 나쁘다** — 초록불인데 아무것도
+ * 검증하지 않는다.
+ *
+ * 상시근로자 수를 비우면 규모 조건이 있는 조문은 코드가 보류로 강등한다
+ * (AP-03). LLM 판단이 아니라 결정적 계층이라 흔들리지 않는다.
+ */
+export async function clearHeadcount(page: Page): Promise<void> {
+  await page.goto("/settings");
+  const field = page.getByLabel(/상시근로자 수/);
+  await field.waitFor({ state: "visible", timeout: 20_000 });
+  await field.fill("");
+  await page.getByRole("button", { name: /저장/ }).first().click();
+  await expect(page.getByText(/저장했습니다|저장 중/)).toBeVisible({ timeout: 20_000 });
+}
+
+/**
+ * 보류 결과가 나올 때까지 법령을 바꿔 가며 분석한다.
+ *
+ * 보류가 나오려면 (1) 규모 조건이나 지위 요건이 있는 조문이 (2) 최근 개정되어야
+ * 하는데, 뒤쪽은 법제처 데이터에 달려 있어 고를 수 없다. 한 법령만 보고
+ * 건너뛰면 테스트가 조용히 초록불이 된다 — **건너뛰는 테스트는 실패하는
+ * 테스트보다 나쁘다.**
+ *
+ * 그래서 여러 법령을 시도하고, 그래도 없으면 실패시킨다. 세 법령 모두에서
+ * 보류가 하나도 안 나오는 것은 데이터 사정이 아니라 보류 정책이 깨진 신호일
+ * 가능성이 높다.
+ */
+export async function findHoldResult(
+  page: Page,
+  laws: string[] = ["근로기준법", "산업안전보건법", "개인정보 보호법"],
+): Promise<void> {
+  const tried: string[] = [];
+  for (const law of laws) {
+    await page.goto("/dashboard");
+    await runAnalysis(page, law);
+    tried.push(law);
+    if (await openHoldResult(page)) return;
+  }
+  throw new Error(
+    `보류 결과를 찾지 못했습니다 (시도: ${tried.join(", ")}). ` +
+      "상시근로자 수를 비웠는데도 어느 법령에서도 보류가 나오지 않으면 " +
+      "규모 기준 판정(AP-03)이나 보류 강등 정책이 깨진 것입니다.",
+  );
+}

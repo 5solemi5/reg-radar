@@ -12,7 +12,13 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.context import UserContext
-from app.domain.enums import AnalysisStatus, Applicability, CompanySize
+from app.domain.enums import (
+    ActivityAnswer,
+    AnalysisStatus,
+    Applicability,
+    BusinessActivity,
+    CompanySize,
+)
 
 
 def _now() -> datetime:
@@ -32,6 +38,7 @@ class Profile(BaseModel):
     company_size: CompanySize
     employee_count: int | None = None
     interests: list[str] = Field(default_factory=list)
+    activities: dict[BusinessActivity, ActivityAnswer] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)
 
@@ -42,6 +49,7 @@ class Profile(BaseModel):
             company_size=self.company_size,
             employee_count=self.employee_count,
             interests=self.interests,
+            activities=self.activities,
         )
 
 

@@ -9,7 +9,20 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.domain.enums import ChangeType, CompanySize, DocType
+from app.domain.activities import ACTIVITY_QUESTIONS
+from app.domain.enums import (
+    ActivityAnswer,
+    BusinessActivity,
+    ChangeType,
+    CompanySize,
+    DocType,
+)
+
+_ANSWER_LABEL = {
+    ActivityAnswer.YES: "예",
+    ActivityAnswer.NO: "아니오",
+    ActivityAnswer.UNKNOWN: "모름 (사용자가 답하지 않음)",
+}
 
 
 class UserContext(BaseModel):
@@ -24,6 +37,16 @@ class UserContext(BaseModel):
         None, description="상시근로자 수. 없으면 규모 조건에서 HOLD 사유가 될 수 있다."
     )
     interests: list[str] = Field(default_factory=list, description="관심 규제 영역")
+    activities: dict[BusinessActivity, ActivityAnswer] = Field(
+        default_factory=dict,
+        description=(
+            "적용 여부를 가르지만 업종만으로는 알 수 없는 사업 활동 (ADR-033). "
+            "답하지 않은 항목은 UNKNOWN으로 취급한다."
+        ),
+    )
+
+    def answer(self, activity: BusinessActivity) -> ActivityAnswer:
+        return self.activities.get(activity, ActivityAnswer.UNKNOWN)
 
     def to_prompt_block(self) -> str:
         headcount = self.employee_count if self.employee_count is not None else "미상"
@@ -34,6 +57,10 @@ class UserContext(BaseModel):
             f"- 상시근로자 수: {headcount}",
             f"- 관심 영역: {', '.join(self.interests) if self.interests else '없음'}",
         ]
+        # 모든 활동을 항상 적는다. 답하지 않은 항목을 빼면 '아니오'와 구분되지 않아,
+        # 모델이 없는 줄을 '아니오'로 읽는다. '모름'이라고 적혀 있어야 보류가 나온다.
+        for question in ACTIVITY_QUESTIONS:
+            lines.append(f"- {question.label}: {_ANSWER_LABEL[self.answer(question.activity)]}")
         return "\n".join(lines)
 
 

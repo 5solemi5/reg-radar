@@ -23,6 +23,41 @@ test.describe("신뢰성 표시", () => {
     await page.close();
   });
 
+  test("사업 활동은 '아니오'와 '모름'을 따로 받는다", async () => {
+    /**
+     * 체크박스 하나로 받으면 체크하지 않은 것이 '아니오'인지 '아직 답하지
+     * 않음'인지 알 수 없다. 그러면 질문을 건너뛴 사용자에게 '무관'이라고
+     * 단정하게 된다 — 조문 판정에서 고친 실수를 입력 단계에서 반복하는 셈이다.
+     */
+    await page.goto("/settings");
+
+    const question = page.getByText(/다른 사업자에게 맡기십니까/).first();
+    await expect(question).toBeVisible({ timeout: 20_000 });
+
+    const group = page.getByRole("radiogroup").first();
+    for (const label of ["예", "아니오", "모름"]) {
+      await expect(group.getByRole("radio", { name: label })).toBeVisible();
+    }
+
+    // 답하지 않은 상태는 '모름'으로 드러난다. 비어 있거나 '아니오'로 보이면 안 된다.
+    await expect(
+      page.getByTestId("activity-SUBCONTRACTING-UNKNOWN"),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("활동에 답하면 저장되고 다시 열어도 남는다", async () => {
+    await page.goto("/settings");
+    await page.getByTestId("activity-SUBCONTRACTING-YES").click();
+    await page.getByRole("button", { name: /저장/ }).first().click();
+
+    await page.goto("/settings");
+    await expect(page.getByTestId("activity-SUBCONTRACTING-YES")).toHaveAttribute(
+      "aria-checked",
+      "true",
+      { timeout: 20_000 },
+    );
+  });
+
   test("법률 자문이 아님을 모든 화면에서 고지한다", async () => {
     for (const path of ["/dashboard", "/history", "/saved", "/settings"]) {
       await page.goto(path);

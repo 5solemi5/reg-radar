@@ -21,7 +21,12 @@ from app.ai.llm import LlmGateway
 from app.core.config import Settings, get_settings
 from app.diff.engine import compute_change, detect_delegation
 from app.domain.context import ContextPacket, UserContext
-from app.domain.enums import Applicability, CompanySize
+from app.domain.enums import (
+    ActivityAnswer,
+    Applicability,
+    BusinessActivity,
+    CompanySize,
+)
 from app.rag.retriever import NullRetriever
 from app.services.analysis_service import analyze_article
 from evaluation.metrics import CaseOutcome, Metrics, compute
@@ -51,6 +56,10 @@ class Dataset:
             company_size=CompanySize(p["company_size"]),
             employee_count=p.get("employee_count"),
             interests=p.get("interests", []),
+            activities={
+                BusinessActivity(k): ActivityAnswer(v)
+                for k, v in (p.get("activities") or {}).items()
+            },
         )
 
     @property

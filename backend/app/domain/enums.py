@@ -74,3 +74,38 @@ class EvidenceKind(StrEnum):
     OFFICIAL_LAW = "OFFICIAL_LAW"   # 법제처 원문 — 법적 근거
     RAG_REFERENCE = "RAG_REFERENCE" # RAG 참고자료 — 실무 맥락
     AI_INTERPRETATION = "AI_INTERPRETATION"  # AI 해석
+
+
+class ActivityAnswer(StrEnum):
+    """사업 활동 질문에 대한 답 (FR-002).
+
+    **'아니오'와 '모름'을 반드시 구분한다.** 체크박스 하나로 받으면 체크하지 않은
+    것이 '아니오'인지 '아직 답하지 않음'인지 알 수 없고, 그러면 답을 건너뛴
+    사용자에게 '무관'이라고 단정하게 된다. 조문 판정에서 고친 것과 똑같은 실수를
+    입력 단계에서 반복하는 셈이다 (ADR-031).
+    """
+
+    YES = "YES"
+    NO = "NO"
+    UNKNOWN = "UNKNOWN"
+
+
+class BusinessActivity(StrEnum):
+    """적용 여부를 가르지만 업종만으로는 알 수 없는 사업 활동 (ADR-033).
+
+    홀드아웃 평가에서 놓친 보류가 전부 이 유형이었다. 조문은 명확한데 '이 회사가
+    도급을 주는가', '외국인근로자를 고용하는가'를 프로필이 말해 주지 않아 판정할
+    수 없었다. 판정 능력이 아니라 **입력 설계**가 병목이었다.
+
+    목록은 실제 평가에서 보류를 만든 조문에서 역산했다. 짐작으로 늘리지 않는다 —
+    온보딩 질문 하나하나가 사용자에게는 비용이다.
+    """
+
+    SUBCONTRACTING = "SUBCONTRACTING"
+    FOREIGN_WORKERS = "FOREIGN_WORKERS"
+    ONLINE_SALES = "ONLINE_SALES"
+    INFO_SERVICE = "INFO_SERVICE"
+    WORKPLACE_WASTE = "WORKPLACE_WASTE"
+    DISPATCH_WORKERS = "DISPATCH_WORKERS"
+    HAZARDOUS_CHEMICALS = "HAZARDOUS_CHEMICALS"
+    FOOD_BUSINESS = "FOOD_BUSINESS"

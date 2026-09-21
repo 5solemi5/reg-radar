@@ -1,10 +1,30 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { Button, Card, StateMessage } from "@/components/ui";
+import { Button, Card, Spinner, StateMessage } from "@/components/ui";
+import { api } from "@/lib/api";
 import { COMPANY_SIZE_OPTIONS } from "@/lib/display";
-import { ProfileInput, type CompanySize, type Profile } from "@/lib/schemas";
+import {
+  ProfileInput,
+  type ActivityAnswer,
+  type ActivityAnswers,
+  type CompanySize,
+  type Profile,
+} from "@/lib/schemas";
+
+/**
+ * '아니오'와 '모름'을 따로 둔다.
+ *
+ * 체크박스 하나로 받으면 체크하지 않은 것이 '아니오'인지 '아직 답하지 않음'인지
+ * 알 수 없다. 그러면 질문을 건너뛴 사용자에게 '무관'이라고 단정하게 된다.
+ */
+const ANSWER_OPTIONS: { value: ActivityAnswer; label: string }[] = [
+  { value: "YES", label: "예" },
+  { value: "NO", label: "아니오" },
+  { value: "UNKNOWN", label: "모름" },
+];
 
 const INTEREST_OPTIONS = [
   "노동·인사", "개인정보", "안전·보건", "세무·회계",
@@ -31,7 +51,17 @@ export function ProfileForm({
     initial?.employee_count != null ? String(initial.employee_count) : "",
   );
   const [interests, setInterests] = useState<string[]>(initial?.interests ?? []);
+  const [activities, setActivities] = useState<ActivityAnswers>(
+    initial?.activities ?? {},
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // 질문 문구는 백엔드가 준다. 여기에 복제해 두면 반드시 어긋난다 (ADR-033).
+  const questions = useQuery({
+    queryKey: ["activity-questions"],
+    queryFn: () => api.getActivityQuestions(),
+    staleTime: Infinity,
+  });
 
   function toggleInterest(value: string) {
     setInterests((prev) =>
@@ -47,6 +77,7 @@ export function ProfileForm({
       company_size: companySize,
       employee_count: employeeCount.trim() === "" ? null : Number(employeeCount),
       interests,
+      activities,
     };
     const parsed = ProfileInput.safeParse(candidate);
     if (!parsed.success) {
@@ -140,6 +171,69 @@ export function ProfileForm({
             })}
           </div>
         </Field>
+      </Card>
+
+      <Card className="space-y-4">
+        <div>
+          <h2 className="text-sm font-medium">사업 활동</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            업종만으로는 알 수 없지만 법령 적용을 가르는 사실들입니다. 답해 주실수록
+            보류가 줄고 확정 판정이 늘어납니다.{" "}
+            <strong className="font-medium">모르면 &lsquo;모름&rsquo;으로 두셔도 됩니다</strong> —
+            그 조문은 보류로 나옵니다.
+          </p>
+        </div>
+
+        {questions.isLoading && <Spinner label="질문을 불러오는 중…" />}
+
+        {questions.isError && (
+          <StateMessage
+            tone="info"
+            title="사업 활동 질문을 불러오지 못했습니다"
+            description="이 항목 없이도 저장할 수 있습니다. 나중에 설정에서 다시 채울 수 있습니다."
+          />
+        )}
+
+        {questions.data?.items.map((q) => (
+          <div key={q.activity} className="border-t border-slate-200 pt-4 dark:border-slate-800">
+            {/* 질문을 legend·문단·aria-label로 세 번 적으면 스크린리더가 세 번 읽는다.
+                한 번만 쓰고 radiogroup이 그것을 가리킨다. */}
+            <p id={`activity-q-${q.activity}`} className="text-sm">
+              {q.question}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{q.hint}</p>
+            <div
+              className="mt-2 flex gap-2"
+              role="radiogroup"
+              aria-labelledby={`activity-q-${q.activity}`}
+            >
+              {ANSWER_OPTIONS.map((option) => {
+                const current = activities[q.activity] ?? "UNKNOWN";
+                const active = current === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    data-testid={`activity-${q.activity}-${option.value}`}
+                    onClick={() =>
+                      setActivities((prev) => ({ ...prev, [q.activity]: option.value }))
+                    }
+                    className={
+                      "rounded-full border px-3 py-1 text-sm transition " +
+                      (active
+                        ? "border-slate-900 bg-slate-900 text-white dark:border-sky-500 dark:bg-sky-600"
+                        : "border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800")
+                    }
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </Card>
 
       {errorMessage && <StateMessage tone="error" title="저장하지 못했습니다" description={errorMessage} />}

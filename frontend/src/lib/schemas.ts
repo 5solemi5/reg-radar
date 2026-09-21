@@ -29,6 +29,37 @@ export const ChangeType = z.enum(["NEW", "AMENDED", "DELETED", "UNCHANGED"]);
 
 // ── 프로필 ───────────────────────────────────────────────────────────
 
+/**
+ * 사업 활동 질문에 대한 답.
+ *
+ * **`NO`와 `UNKNOWN`을 반드시 구분한다.** 체크박스 하나로 받으면 체크하지 않은
+ * 것이 '아니오'인지 '아직 답하지 않음'인지 알 수 없고, 그러면 질문을 건너뛴
+ * 사용자에게 '무관'이라고 단정하게 된다.
+ */
+export const ActivityAnswer = z.enum(["YES", "NO", "UNKNOWN"]);
+export type ActivityAnswer = z.infer<typeof ActivityAnswer>;
+
+export const ActivityAnswers = z.record(z.string(), ActivityAnswer);
+export type ActivityAnswers = z.infer<typeof ActivityAnswers>;
+
+/**
+ * 온보딩이 그릴 질문. **문구는 백엔드가 준다.**
+ *
+ * 같은 목록을 프론트가 따로 들고 있으면 반드시 어긋난다. 항목이 하나 빠져도
+ * 아무도 모르고, 사용자는 답할 기회조차 없는 질문 때문에 보류를 받는다.
+ */
+export const ActivityQuestion = z.object({
+  activity: z.string(),
+  question: z.string(),
+  hint: z.string(),
+  label: z.string(),
+});
+export type ActivityQuestion = z.infer<typeof ActivityQuestion>;
+
+export const ActivityQuestionList = z.object({
+  items: z.array(ActivityQuestion),
+});
+
 export const Profile = z.object({
   user_id: z.string(),
   job: z.string(),
@@ -38,6 +69,7 @@ export const Profile = z.object({
   interests: z.array(z.string()),
   created_at: z.string(),
   updated_at: z.string(),
+  activities: ActivityAnswers,
 });
 export type Profile = z.infer<typeof Profile>;
 
@@ -47,6 +79,7 @@ export const ProfileInput = z.object({
   company_size: CompanySize,
   employee_count: z.number().int().min(0).max(1_000_000).nullable(),
   interests: z.array(z.string()).max(20),
+  activities: ActivityAnswers,
 });
 export type ProfileInput = z.infer<typeof ProfileInput>;
 

@@ -53,6 +53,34 @@
         "안전",
         "노동"
       ]
+    },
+    "it_hr_sub_yes": {
+      "label": "80인 IT기업 HR 실무자 — 도급 위탁 '예'라고 답함",
+      "job": "HR 담당자 (채용·근태·취업규칙)",
+      "industry": "IT 서비스",
+      "company_size": "MEDIUM",
+      "employee_count": 80,
+      "interests": [
+        "노동",
+        "근로계약"
+      ],
+      "activities": {
+        "SUBCONTRACTING": "YES"
+      }
+    },
+    "it_hr_sub_no": {
+      "label": "80인 IT기업 HR 실무자 — 도급 위탁 '아니오'라고 답함",
+      "job": "HR 담당자 (채용·근태·취업규칙)",
+      "industry": "IT 서비스",
+      "company_size": "MEDIUM",
+      "employee_count": 80,
+      "interests": [
+        "노동",
+        "근로계약"
+      ],
+      "activities": {
+        "SUBCONTRACTING": "NO"
+      }
     }
   },
   "cases": [
@@ -236,6 +264,42 @@
       "expected_missing_context_keyword": "도급",
       "expects_delegation": false,
       "note": "IT 서비스 사업장에도 상주 협력업체 인력이 있을 수 있다. 여부를 알 수 없으므로 보류다."
+    },
+    {
+      "id": "E20",
+      "law_name": "근로기준법",
+      "article_no": "제44조",
+      "profile": "it_hr_sub_yes",
+      "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "E17과 같은 조문·같은 회사인데 '도급을 준다'고 답했다. 보류가 확정으로 바뀌어야 한다. 프로필 입력이 판정을 바꾸는지 보는 케이스다."
+    },
+    {
+      "id": "E21",
+      "law_name": "근로기준법",
+      "article_no": "제44조",
+      "profile": "it_hr_sub_no",
+      "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "'도급을 주지 않는다'고 답했으므로 직상 수급인이 될 수 없다. '모름'과 '아니오'가 다른 결과를 내야 한다."
+    },
+    {
+      "id": "E22",
+      "law_name": "산업안전보건법",
+      "article_no": "제63조",
+      "profile": "it_hr_sub_yes",
+      "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "E19와 같은 조문. 도급을 준다고 답했으니 도급인의 안전조치 의무가 적용된다."
+    },
+    {
+      "id": "E23",
+      "law_name": "산업안전보건법",
+      "article_no": "제63조",
+      "profile": "it_hr_sub_no",
+      "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": false,
+      "note": "도급을 주지 않으면 도급인이 아니다."
     }
   ],
   "known_limitations": [
@@ -267,6 +331,7 @@
       "q4_recall": 0.6,
       "change": "'적용 여부'와 '의무 수준'을 구분하는 원칙 추가. 보류는 사라졌으나 재현율이 80%→60%로 악화 — 임계값 이동이지 능력 향상이 아님. 여기서 튜닝 중단."
     },
-    "2026-09-21: '역할 미상' 케이스 4건 추가(E16~E19). holdout_v2에서 보류 재현율 40%가 나왔는데 놓친 3건이 전부 이 유형이었고 개발셋에는 한 건도 없었다. 고칠 신호가 없어서 먼저 셋을 넓혔다."
+    "2026-09-21: '역할 미상' 케이스 4건 추가(E16~E19). holdout_v2에서 보류 재현율 40%가 나왔는데 놓친 3건이 전부 이 유형이었고 개발셋에는 한 건도 없었다. 고칠 신호가 없어서 먼저 셋을 넓혔다.",
+    "2026-09-21: 프로필 사업 활동 응답이 판정을 바꾸는지 보는 케이스 4건 추가(E20~E23). E17·E19와 같은 조문·같은 회사인데 '예/아니오'로 답한 경우다. 보류가 확정으로 바뀌어야 한다."
   ]
 }

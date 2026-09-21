@@ -9,6 +9,7 @@ import { z } from "zod";
 import { getAccessToken, isAuthConfigured } from "./supabase";
 
 import {
+  ActivityQuestionList,
   Analysis,
   AnalysisList,
   ApiErrorBody,
@@ -196,6 +197,8 @@ export const api = {
   health: () => request("/health", Health),
 
   getProfile: () => request("/profile", Profile),
+  /** 온보딩 질문 목록. 문구는 백엔드가 유일한 출처다 (ADR-033). */
+  getActivityQuestions: () => request("/profile/activities", ActivityQuestionList),
   putProfile: (input: ProfileInput) =>
     request("/profile", Profile, { method: "PUT", ...json(input) }),
   patchProfile: (input: Partial<ProfileInput>) =>

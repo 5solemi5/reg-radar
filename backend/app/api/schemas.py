@@ -13,8 +13,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from app.domain.entities import Analysis, Profile, ResultCounts
 from app.domain.enums import (
     ActionGrade,
+    ActivityAnswer,
     AnalysisStatus,
     Applicability,
+    BusinessActivity,
     ChangeType,
     CompanySize,
     DocType,
@@ -38,6 +40,12 @@ class ProfileIn(BaseModel):
         description="상시근로자 수. 없으면 규모 조건에서 보류가 날 수 있다.",
     )
     interests: list[str] = Field(default_factory=list, max_length=20)
+    activities: dict[BusinessActivity, ActivityAnswer] = Field(
+        default_factory=dict,
+        description=(
+            "사업 활동 응답 (ADR-033). 보내지 않은 항목은 '모름'이며 '아니오'와 다르다."
+        ),
+    )
 
     @field_validator("job", "industry")
     @classmethod
@@ -57,6 +65,7 @@ class ProfilePatch(BaseModel):
     company_size: CompanySize | None = None
     employee_count: int | None = Field(None, ge=0, le=1_000_000)
     interests: list[str] | None = Field(None, max_length=20)
+    activities: dict[BusinessActivity, ActivityAnswer] | None = None
 
 
 class ProfileOut(BaseModel):
@@ -66,12 +75,31 @@ class ProfileOut(BaseModel):
     company_size: CompanySize
     employee_count: int | None
     interests: list[str]
+    activities: dict[BusinessActivity, ActivityAnswer]
     created_at: datetime
     updated_at: datetime
 
     @classmethod
     def of(cls, profile: Profile) -> ProfileOut:
         return cls(**profile.model_dump())
+
+
+class ActivityQuestionOut(BaseModel):
+    """온보딩 화면이 그릴 질문 정의 (ADR-033).
+
+    프론트엔드가 같은 문구를 따로 들고 있으면 반드시 어긋난다. 코드가 8개인데
+    화면에 7개만 있어도 아무도 모르고, 사용자는 답할 기회조차 없는 질문 때문에
+    보류를 받는다. 백엔드를 유일한 출처로 둔다.
+    """
+
+    activity: BusinessActivity
+    question: str
+    hint: str
+    label: str
+
+
+class ActivityQuestionListOut(BaseModel):
+    items: list[ActivityQuestionOut]
 
 
 # ── 분석 ──────────────────────────────────────────────────────────────

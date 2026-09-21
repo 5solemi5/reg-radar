@@ -25,8 +25,10 @@ from app.domain.entities import (
 )
 from app.domain.enums import (
     ActionGrade,
+    ActivityAnswer,
     AnalysisStatus,
     Applicability,
+    BusinessActivity,
     ChangeType,
     CompanySize,
     ResultStatus,
@@ -49,6 +51,24 @@ def _list(value: Any) -> list:
     return list(value) if value else []
 
 
+
+def _activities(raw) -> dict[BusinessActivity, ActivityAnswer]:
+    """저장된 활동 응답을 도메인 타입으로 되돌린다.
+
+    모르는 코드는 버린다. 활동 목록에서 항목을 뺐는데 과거 프로필에 남아 있으면
+    복원이 실패해 프로필 조회 자체가 죽는다. 사라진 질문의 답은 없는 것과 같다.
+    """
+    if not raw:
+        return {}
+    out: dict[BusinessActivity, ActivityAnswer] = {}
+    for key, value in raw.items():
+        try:
+            out[BusinessActivity(key)] = ActivityAnswer(value)
+        except ValueError:
+            continue
+    return out
+
+
 class PostgresProfileRepository:
     def __init__(self, db: Database) -> None:
         self._db = db
@@ -62,6 +82,7 @@ class PostgresProfileRepository:
             company_size=CompanySize(row["company_size"]),
             employee_count=row["employee_count"],
             interests=_list(row["interests"]),
+            activities=_activities(row["activities"]),
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
@@ -78,14 +99,15 @@ class PostgresProfileRepository:
         row = await self._db.fetchrow(
             """
             INSERT INTO profiles
-                (user_id, job, industry, company_size, employee_count, interests)
-            VALUES ($1, $2, $3, $4::company_size, $5, $6)
+                (user_id, job, industry, company_size, employee_count, interests, activities)
+            VALUES ($1, $2, $3, $4::company_size, $5, $6, $7::jsonb)
             ON CONFLICT (user_id) DO UPDATE SET
                 job = EXCLUDED.job,
                 industry = EXCLUDED.industry,
                 company_size = EXCLUDED.company_size,
                 employee_count = EXCLUDED.employee_count,
-                interests = EXCLUDED.interests
+                interests = EXCLUDED.interests,
+                activities = EXCLUDED.activities
             RETURNING *
             """,
             profile.user_id,
@@ -94,6 +116,7 @@ class PostgresProfileRepository:
             profile.company_size.value,
             profile.employee_count,
             profile.interests,
+            {k.value: v.value for k, v in profile.activities.items()},
         )
         return self._to_domain(row)
 

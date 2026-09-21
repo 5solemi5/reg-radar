@@ -51,7 +51,7 @@ snapshot과 다를 수 있다.
                     ┌─────────────┐
                     │  profiles   │  user_id (PK)
                     │             │  job, industry, company_size,
-                    │             │  employee_count, interests[]
+                    │             │  employee_count, interests[], activities
                     └─────────────┘
                            ╎ user_id (FK 아님 — Supabase auth.users와 같은 값)
                            ╎
@@ -114,6 +114,7 @@ snapshot과 다를 수 있다.
 | `company_size` | enum | SOLO / MICRO / SMALL / MEDIUM / LARGE |
 | `employee_count` | integer NULL | **NULL이 유효한 상태다.** 규모 조건이 있는 조문에서 보류 사유가 된다 |
 | `interests` | text[] | 분석 대상 법령 선정에 쓰인다 (ADR-015) |
+| `activities` | jsonb | 사업 활동 응답 `{활동코드: YES\|NO\|UNKNOWN}` (ADR-033). **키가 없으면 '모름'이며 '아니오'와 구분된다** (ADR-034) |
 
 `updated_at`은 트리거로 자동 갱신하고, `created_at`은 upsert에서도 유지한다.
 프로필을 다시 저장한다고 가입 시점이 바뀌면 안 된다.

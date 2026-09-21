@@ -43,15 +43,20 @@ class Settings(BaseSettings):
     vector_store: Literal["chroma", "pinecone"] = "chroma"
     # RAG를 끄면 참고자료 없이 분석한다. BR-005에 따라 정상 상태이며,
     # 인덱스를 아직 만들지 않은 환경에서 기본값으로 쓴다.
-    daily_analysis_limit_per_user: int = 10
+    daily_analysis_limit_per_user: int = 0
     """사용자 1명이 하루에 돌릴 수 있는 분석 수. 0이면 제한 없음.
 
     '동시 1건' 제약(uq_analyses_one_active_per_user)은 중복 클릭을 막을 뿐
     하루에 몇 번이든 돌리는 것을 막지 못한다. 가입이 열린 공개 배포에서는
     그것이 곧 OpenAI 키를 열어 두는 것과 같다. 분석 1회가 약 6만 토큰이다.
+
+    **기본값이 0인 이유.** 처음에 10으로 두었더니 로컬 E2E가 한도에 걸려 멈췄다.
+    비용 상한은 공개 배포의 요구이지 개발 환경의 요구가 아니다. 대신 운영에서는
+    값을 반드시 지정하게 막는다(_production_guards) — '안전한 기본값'에 기대면
+    설정을 잊었는지 잊지 않았는지 알 수 없다.
     """
 
-    daily_analysis_limit_total: int = 200
+    daily_analysis_limit_total: int = 0
     """전체 사용자 합산 일일 상한. 계정을 여러 개 만드는 경우를 막는다. 0이면 제한 없음."""
 
     decree_pairing_enabled: bool = True
@@ -130,6 +135,9 @@ class Settings(BaseSettings):
 
         dev 인증은 헤더를 그대로 믿고, 인메모리 저장소는 재시작 시 사용자
         데이터를 잃는다. 둘 다 배포 후에 발견하면 이미 늦다.
+
+        비용 상한도 같은 이유로 여기서 강제한다. 기본값으로 숨겨 두면 설정을
+        빠뜨렸는지 일부러 껐는지 구분되지 않는다.
         """
         if self.app_env != "production":
             return self
@@ -147,6 +155,14 @@ class Settings(BaseSettings):
             problems.append("SUPABASE_URL 또는 SUPABASE_JWT_SECRET이 필요합니다")
         if any(o.startswith("http://localhost") for o in self.cors_origins):
             problems.append("CORS_ORIGINS에 localhost가 남아 있습니다")
+        if self.llm_enabled and self.daily_analysis_limit_total <= 0:
+            problems.append(
+                "DAILY_ANALYSIS_LIMIT_TOTAL이 없습니다 — AI 호출 비용에 상한이 없습니다"
+            )
+        if self.llm_enabled and self.daily_analysis_limit_per_user <= 0:
+            problems.append(
+                "DAILY_ANALYSIS_LIMIT_PER_USER가 없습니다 — 한 사용자가 한도를 독식할 수 있습니다"
+            )
 
         if problems:
             raise ValueError(

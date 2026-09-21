@@ -155,3 +155,100 @@ class TestPendingMigrationDetection:
                 raise RuntimeError("연결이 끊겼습니다")
 
         assert await pending_migrations(Broken()) == []
+
+
+class TestBusinessActivities:
+    """적용 여부를 가르지만 업종만으로는 알 수 없는 사실을 프로필로 받는다 (ADR-033).
+
+    홀드아웃 평가에서 놓친 보류가 전부 이 유형이었다. 조문은 명확한데 '이 회사가
+    도급을 주는가'를 프로필이 말해 주지 않아 판정할 수 없었다.
+    """
+
+    async def test_질문_목록은_인증_없이_받을_수_있다(self, client):
+        r = await client.get("/api/v1/profile/activities")
+        assert r.status_code == 200
+        items = r.json()["items"]
+        assert len(items) >= 5
+        for item in items:
+            assert item["question"].endswith("?"), "질문은 물음표로 끝나야 한다"
+            assert item["hint"], "판단을 돕는 한 줄이 있어야 한다"
+
+    async def test_질문이_법률_용어를_쓰지_않는다(self, client):
+        """'귀사가 원사업자입니까'는 법률 용어를 아는 사람만 답할 수 있다."""
+        jargon = ["원사업자", "수급사업자", "통신판매업자", "정보통신서비스 제공자",
+                  "사업장폐기물배출자", "도급인"]
+        items = (await client.get("/api/v1/profile/activities")).json()["items"]
+        for item in items:
+            for word in jargon:
+                assert word not in item["question"], (
+                    f"질문에 법률 용어 '{word}'가 들어 있습니다: {item['question']}"
+                )
+
+    async def test_모든_활동에_질문이_있다(self, client):
+        """활동 코드만 늘리고 질문을 안 만들면 사용자는 답할 기회가 없다."""
+        from app.domain.enums import BusinessActivity
+
+        items = (await client.get("/api/v1/profile/activities")).json()["items"]
+        assert {i["activity"] for i in items} == {a.value for a in BusinessActivity}
+
+    async def test_저장하고_돌려받는다(self, client):
+        payload = {
+            **VALID,
+            "activities": {"SUBCONTRACTING": "YES", "FOOD_BUSINESS": "NO"},
+        }
+        r = await client.put("/api/v1/profile", json=payload)
+        assert r.status_code == 200
+        assert r.json()["activities"] == {"SUBCONTRACTING": "YES", "FOOD_BUSINESS": "NO"}
+
+    async def test_보내지_않으면_빈_값이다(self, client):
+        r = await client.put("/api/v1/profile", json=VALID)
+        assert r.json()["activities"] == {}
+
+    async def test_잘못된_코드는_거부한다(self, client):
+        r = await client.put(
+            "/api/v1/profile", json={**VALID, "activities": {"없는활동": "YES"}}
+        )
+        assert r.status_code == 422
+
+    async def test_잘못된_답은_거부한다(self, client):
+        r = await client.put(
+            "/api/v1/profile", json={**VALID, "activities": {"SUBCONTRACTING": "아마도"}}
+        )
+        assert r.status_code == 422
+
+
+class TestActivityPromptRendering:
+    """프롬프트에 '모름'이 명시적으로 적혀야 한다."""
+
+    @staticmethod
+    def _context(**activities):
+        from app.domain.context import UserContext
+        from app.domain.enums import ActivityAnswer, BusinessActivity, CompanySize
+
+        return UserContext(
+            job="HR 담당자",
+            industry="IT 서비스",
+            company_size=CompanySize.MEDIUM,
+            employee_count=80,
+            activities={
+                BusinessActivity(k): ActivityAnswer(v) for k, v in activities.items()
+            },
+        )
+
+    def test_답하지_않은_항목도_줄로_남는다(self):
+        """빼면 '아니오'와 구분되지 않는다. 모델이 없는 줄을 부정으로 읽는다."""
+        block = self._context(SUBCONTRACTING="YES").to_prompt_block()
+        assert "- 도급·위탁: 예" in block
+        assert "모름" in block, "답하지 않은 항목이 '모름'으로 드러나야 한다"
+
+    def test_아니오와_모름이_다르게_표시된다(self):
+        block = self._context(SUBCONTRACTING="NO").to_prompt_block()
+        assert "- 도급·위탁: 아니오" in block
+        assert "- 외국인근로자 고용: 모름" in block
+
+    def test_모든_활동이_빠짐없이_나온다(self):
+        from app.domain.activities import ACTIVITY_QUESTIONS
+
+        block = self._context().to_prompt_block()
+        for q in ACTIVITY_QUESTIONS:
+            assert f"- {q.label}:" in block

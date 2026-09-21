@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { ensureProfile, openHoldResult, runAnalysis, signIn } from "./helpers";
+import { clearHeadcount, ensureProfile, findHoldResult, signIn } from "./helpers";
 
 /**
  * 보류 재판정 (FR-008, BR-008).
@@ -12,17 +12,16 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("보류 재판정", () => {
   let page: Page;
-  let hasHold = false;
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
     await signIn(page);
     await ensureProfile(page);
 
-    // 위임 조항이 많아 보류가 잘 나오는 법령을 고른다.
-    await page.goto("/dashboard");
-    await runAnalysis(page, "개인정보 보호법");
-    hasHold = await openHoldResult(page);
+    // 보류를 법제처가 이번에 무엇을 개정했는지에 맡기지 않는다. 상시근로자 수를
+    // 비우면 규모 조건이 있는 조문은 코드가 보류로 강등한다(AP-03).
+    await clearHeadcount(page);
+    await findHoldResult(page);
   });
 
   test.afterAll(async () => {
@@ -30,8 +29,6 @@ test.describe("보류 재판정", () => {
   });
 
   test("보류 결과에 해소 폼이 함께 보인다", async () => {
-    test.skip(!hasHold, "이번 분석에 보류 항목이 없습니다");
-
     await expect(page.getByText("이 정보가 있으면 확정할 수 있습니다")).toBeVisible();
     await expect(
       page.getByRole("button", { name: /이 정보로 다시 판단하기/ }),
@@ -42,8 +39,6 @@ test.describe("보류 재판정", () => {
   });
 
   test("정보를 채우면 다시 판단하고 이전 판정을 보존한다", async () => {
-    test.skip(!hasHold, "이번 분석에 보류 항목이 없습니다");
-
     await page
       .getByPlaceholder("판단에 필요한 다른 정보가 있다면 적어 주세요")
       .fill("E2E 테스트: 해당 설비나 활동을 운영하지 않습니다.");
