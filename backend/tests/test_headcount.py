@@ -45,7 +45,7 @@ class TestEvaluate:
     def test_충족(self):
         e = evaluate(self.TEXT, 80)
         assert e.verdict is SizeVerdict.MEETS
-        assert "충족" in e.to_prompt_block()
+        assert "80명은 해당함" in e.to_prompt_block()
 
     def test_미충족(self):
         assert evaluate(self.TEXT, 4).verdict is SizeVerdict.BELOW
@@ -126,3 +126,66 @@ class TestHoldReasonIntegration:
             change=ChangeContext(change_type=ChangeType.NEW),
         )
         assert deterministic_hold_reasons(packet) == []
+
+
+class TestExclusionClause:
+    """같은 '상시 30명'이라도 적용 조건이냐 배제 조건이냐에 따라 결론이 정반대다.
+
+    구분하지 않으면 80명 회사가 "상시 30명 미만 → 미충족"을 보고 '적용 안 된다'로
+    읽는다. 노사협의회는 30명 이상이면 설치해야 하므로 정확히 거꾸로다. 게다가
+    프롬프트가 "이 값을 의심하지 말라"고 못까지 박아 모델이 되돌릴 수도 없다.
+    """
+
+    EXCLUSION = (
+        "협의회는 사업장 단위로 설치하여야 한다. "
+        "다만, 상시 30명 미만의 근로자를 사용하는 사업이나 사업장은 그러하지 아니하다."
+    )
+    CONDITION = "상시 10명 이상의 근로자를 사용하는 사용자는 취업규칙을 작성하여야 한다."
+
+    def test_배제_단서를_표시한다(self):
+        (threshold,) = extract_thresholds(self.EXCLUSION)
+        assert threshold.in_exclusion_clause is True
+
+    def test_적용_조건은_표시하지_않는다(self):
+        (threshold,) = extract_thresholds(self.CONDITION)
+        assert threshold.in_exclusion_clause is False
+
+    def test_배제_단서는_프롬프트에_명시된다(self):
+        block = evaluate(self.EXCLUSION, 80).to_prompt_block()
+        assert "[적용 배제]" in block
+        assert "80명은 해당하지 않음" in block
+        assert "해당하지 않으면 배제되지 않습니다" in block
+
+    def test_적용_조건에는_배제_안내가_없다(self):
+        assert "[적용 배제]" not in evaluate(self.CONDITION, 80).to_prompt_block()
+
+    def test_아니한다_종결형을_놓치지_않는다(self):
+        """'아니하'로 찾으면 법조문에 가장 흔한 '아니한다'를 정확히 비껴간다.
+
+        `정하`가 `정한다`에 매치되지 않던 것과 같은 함정이다. 세 번째로 밟았으므로
+        활용형은 app/diff/korean.py 한 곳에 모아 두었다.
+        """
+        text = (
+            "상시 근로자가 5명 미만인 사업 또는 사업장의 사업주에게는 "
+            "이 장의 규정을 적용하지 아니한다."
+        )
+        (threshold,) = extract_thresholds(text)
+        assert threshold.in_exclusion_clause is True
+
+
+class TestSubjectParticle:
+    """조사(가/이/는/은)를 빼먹으면 규모 기준을 통째로 놓친다."""
+
+    @pytest.mark.parametrize(
+        ("text", "expected"),
+        [
+            ("상시 10명 이상", "상시 10명 이상"),
+            ("상시근로자 수가 300명 미만", "상시근로자 수가 300명 미만"),
+            ("근로자 5명 이상", "근로자 5명 이상"),
+            ("상시 근로자가 5명 미만", "상시 근로자가 5명 미만"),
+            ("상시 근로자 수가 50명 이상", "상시 근로자 수가 50명 이상"),
+        ],
+    )
+    def test_표현_변형을_모두_잡는다(self, text: str, expected: str):
+        thresholds = extract_thresholds(text)
+        assert [t.raw for t in thresholds] == [expected]

@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 
 from app.adapters.law.models import LawArticle, LawSnapshot
-from app.diff.engine import DELEGATION_VERB
+from app.diff.korean import DELEGATION_VERB, HADA
 from app.domain.context import DelegatedContext
 
 # 시행령 조문이 모법을 참조하는 문구. 예: "법 제6조제4항에 따라", "법 제7조에 따른"
@@ -58,7 +58,7 @@ BASIS_WINDOW = 60
 _STILL_UNRESOLVED = re.compile(
     rf"별표\s*\d+"
     rf"|(?:대통령령|부령|총리령|고시)(?:으로|로|이|에서)?\s*{DELEGATION_VERB}"
-    rf"|고시하는"
+    rf"|고시{HADA}"
 )
 
 # 큰따옴표로 묶인 구간. 이행 조문에서 정의 대상을 감싸는 데 쓰인다.
