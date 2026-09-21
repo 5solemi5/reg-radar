@@ -50,7 +50,12 @@ class Settings(BaseSettings):
     dev_user_id: str = "dev-user"
 
     # --- API ---
-    cors_origins: list[str] = ["http://localhost:3000"]
+    # localhost와 127.0.0.1은 브라우저에게 서로 다른 origin이다. 로컬 개발에서
+    # 어느 쪽으로 접속하든 동작하도록 둘 다 허용한다.
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
     api_prefix: str = "/api/v1"
 
     # --- 판정 정책 (BR-003) ---

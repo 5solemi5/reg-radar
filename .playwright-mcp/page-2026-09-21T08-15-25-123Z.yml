@@ -1,0 +1,55 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "규제 레이더" [ref=f2e4] [cursor=pointer]:
+        - /url: /dashboard
+      - navigation "주요 메뉴" [ref=f2e5]:
+        - link "대시보드" [ref=f2e6] [cursor=pointer]:
+          - /url: /dashboard
+        - link "분석 이력" [ref=f2e7] [cursor=pointer]:
+          - /url: /history
+        - link "저장함" [ref=f2e8] [cursor=pointer]:
+          - /url: /saved
+        - link "설정" [ref=f2e9] [cursor=pointer]:
+          - /url: /settings
+  - main [ref=f2e10]:
+    - generic [ref=f2e59]:
+      - generic [ref=f2e60]:
+        - generic [ref=f2e61]:
+          - heading "규제 대시보드" [level=1] [ref=f2e62]
+          - paragraph [ref=f2e63]: HR 담당자 (채용·근태·취업규칙) · IT 서비스 · 50~299인 · 80명
+        - button "최근 규제 변화 분석" [ref=f2e76]
+      - generic [ref=f2e77]:
+        - generic [ref=f2e78]:
+          - heading "요약" [level=2] [ref=f2e79]
+          - paragraph [ref=f2e80]: 법령 3건에서 변경 조문 8건을 분석했습니다.
+        - generic [ref=f2e81]:
+          - generic [ref=f2e82]:
+            - paragraph [ref=f2e83]: 조치 필요
+            - paragraph [ref=f2e84]: "0"
+          - generic [ref=f2e85]:
+            - paragraph [ref=f2e86]: 방침 결정
+            - paragraph [ref=f2e87]: "0"
+          - generic [ref=f2e88]:
+            - paragraph [ref=f2e89]: 인지
+            - paragraph [ref=f2e90]: "0"
+          - generic [ref=f2e91]:
+            - paragraph [ref=f2e92]: 보류
+            - paragraph [ref=f2e93]: "0"
+          - generic [ref=f2e94]:
+            - paragraph [ref=f2e95]: 무관
+            - paragraph [ref=f2e96]: "8"
+      - generic [ref=f2e97]:
+        - generic [ref=f2e98]:
+          - generic [ref=f2e99]:
+            - heading "분석 결과" [level=2] [ref=f2e100]
+            - paragraph [ref=f2e101]: 지금 해야 할 일과 결정이 필요한 변화를 위에 둡니다.
+          - generic [ref=f2e102]:
+            - checkbox "무관 항목도 보기" [ref=f2e103]
+            - text: 무관 항목도 보기
+        - generic [ref=f2e104]:
+          - paragraph [ref=f2e105]: 표시할 결과가 없습니다
+          - generic [ref=f2e106]: 내게 해당하거나 보류인 항목이 없습니다. 무관 항목도 보려면 위 체크박스를 켜세요.
+  - contentinfo [ref=f2e14]: 이 서비스는 법률 자문이 아니라 AI 기반 규제 모니터링 도구입니다. AI 해석은 참고용이며, 법적 판단이 필요한 경우 전문가 검토를 받으십시오.
+  - button "Open Next.js Dev Tools" [ref=f2e54] [cursor=pointer]
+  - alert [ref=f2e58]: 규제 대시보드

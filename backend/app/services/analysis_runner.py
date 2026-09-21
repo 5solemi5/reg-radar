@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
@@ -34,11 +35,20 @@ from app.repositories.base import (
     SnapshotRepository,
 )
 from app.services.analysis_service import analyze_article
+from app.services.law_selector import build_search_keywords, dedupe_laws, pick_primary
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_LOOKBACK_DAYS = 180
-MAX_ARTICLES_PER_LAW = 10
+MAX_ARTICLES_PER_LAW = 6
+# 검색어가 많아도 법제처 호출 횟수를 제한한다.
+MAX_SEARCH_KEYWORDS = 8
+# 분석 1회의 총 조문 수 상한. 조문 1건이 LLM 3회(C3~C5)를 쓰므로 상한이 없으면
+# 개정 범위가 넓은 법령 하나만 걸려도 분석이 수 분씩 걸린다 (NFR-006).
+MAX_ARTICLES_PER_ANALYSIS = 12
+# 조문 분석 동시 실행 수. 순차로 돌리면 사용자가 기다리는 시간이 조문 수에
+# 비례해 늘어난다. 모델 rate limit을 고려해 과하지 않게 잡는다.
+ARTICLE_CONCURRENCY = 4
 
 
 def summarize(results: list[AnalysisResult]) -> ResultCounts:
@@ -98,22 +108,63 @@ class AnalysisRunner:
 
     # ── 법령 수집 ─────────────────────────────────────────────────────
 
-    async def collect(self, analysis: Analysis, *, max_laws: int) -> list[LawWorkItem]:
+    async def select_laws(
+        self, client, analysis: Analysis, profile: Profile, *, max_laws: int
+    ) -> list[LawSummary]:
+        """분석할 법령을 고른다.
+
+        사용자가 법령을 지정했으면 그것만 본다. 아니면 프로필의 관심 영역·업종을
+        검색어로 바꿔 후보를 좁힌다. 최신순으로 아무거나 집으면 무관한 법령만
+        분석하게 된다 — 실측에서 IT HR 담당자에게 '감사원사무처 직제'가 나왔다.
+        """
+        if analysis.law_query:
+            found = await client.search_laws(query=analysis.law_query, display=max_laws)
+            exact = [law for law in found if law.law_name == analysis.law_query]
+            return (exact or found)[:max_laws]
+
+        start = analysis.period_from or (date.today() - timedelta(days=DEFAULT_LOOKBACK_DAYS))
+        end = analysis.period_to or date.today()
+
+        keywords = build_search_keywords(
+            interests=profile.interests, industry=profile.industry, job=profile.job
+        )
+        # 검색어마다 대표 법령 1건씩만 담는다. 시행령·시행규칙까지 담으면
+        # 첫 검색어가 예산을 독식해 다른 관심 영역은 검색조차 되지 않는다.
+        candidates: list[LawSummary] = []
+        for keyword in keywords[:MAX_SEARCH_KEYWORDS]:
+            if len(candidates) >= max_laws * 2:
+                break
+            try:
+                found = await client.search_laws(query=keyword, display=5)
+            except LawApiError as exc:
+                logger.info("법령 검색 실패 keyword=%s: %s", keyword, exc)
+                continue
+            primary = pick_primary(found, keyword)
+            if primary is not None:
+                candidates.append(primary)
+
+        # 기간 안에 시행되는 것을 우선한다. 없으면 검색 순서를 유지한다.
+        unique = dedupe_laws(candidates)
+        in_period = [
+            law for law in unique
+            if law.effective_date and start <= law.effective_date <= end
+        ]
+        selected = in_period or unique
+
+        if not selected:
+            # 프로필 기반 검색이 아무것도 못 찾으면 기간 내 최신 법령으로 되돌아간다.
+            selected = await client.search_laws(
+                effective_from=start, effective_to=end, display=max_laws
+            )
+        return selected[:max_laws]
+
+    async def collect(
+        self, analysis: Analysis, profile: Profile, *, max_laws: int
+    ) -> list[LawWorkItem]:
         """분석 대상 법령과 '실제 변경된 조문'을 모은다 (FR-004, FR-005)."""
         items: list[LawWorkItem] = []
         async with self._client_factory() as client:
-            if analysis.law_query:
-                found = await client.search_laws(query=analysis.law_query, display=max_laws)
-                laws = [law for law in found if law.law_name == analysis.law_query] or found
-            else:
-                start = analysis.period_from or (
-                    date.today() - timedelta(days=DEFAULT_LOOKBACK_DAYS)
-                )
-                laws = await client.search_laws(
-                    effective_from=start,
-                    effective_to=analysis.period_to or date.today(),
-                    display=max_laws,
-                )
+            laws = await self.select_laws(client, analysis, profile, max_laws=max_laws)
 
             for law in laws[:max_laws]:
                 try:
@@ -143,15 +194,15 @@ class AnalysisRunner:
 
     # ── 조문 분석 ─────────────────────────────────────────────────────
 
-    async def analyze_item(
-        self, item: LawWorkItem, profile: Profile, analysis: Analysis
-    ) -> list[AnalysisResult]:
+    def build_packets(
+        self, item: LawWorkItem, profile: Profile
+    ) -> list[tuple[str, ContextPacket]]:
+        """변경 조문을 AI 입력 packet으로 바꾼다. (조문번호, packet) 목록."""
         user_context = profile.to_user_context()
-        results: list[AnalysisResult] = []
+        packets: list[tuple[str, ContextPacket]] = []
 
         for changed in item.changed:
-            article = item.snapshot.find_article(changed.article_no)
-            if article is None:
+            if item.snapshot.find_article(changed.article_no) is None:
                 # 신구법에는 있는데 현행 본문에 없다 → 근거를 만들 수 없으므로 건너뛴다.
                 logger.info(
                     "현행 본문에 없는 조문 건너뜀 law=%s article=%s",
@@ -159,35 +210,50 @@ class AnalysisRunner:
                 )
                 continue
 
-            packet = ContextPacket(
-                user=user_context,
-                law=item.snapshot.to_legal_context(changed.article_no),
-                change=change_from_official_marks(
-                    before_text=changed.old_text,
-                    after_text=changed.new_text,
-                    additions=changed.additions,
-                    deletions=changed.deletions,
+            packets.append((
+                changed.article_no,
+                ContextPacket(
+                    user=user_context,
+                    law=item.snapshot.to_legal_context(changed.article_no),
+                    change=change_from_official_marks(
+                        before_text=changed.old_text,
+                        after_text=changed.new_text,
+                        additions=changed.additions,
+                        deletions=changed.deletions,
+                    ),
+                    rag=[],  # W5에서 Retriever 연결
                 ),
-                rag=[],  # W5에서 Retriever 연결
-            )
+            ))
+        return packets
 
-            try:
-                outcome = await analyze_article(
-                    ChainRunner(llm=self.llm),
-                    packet,
-                    analysis_id=analysis.analysis_id,
-                    trace_id=analysis.trace_id,
-                )
-            except Exception as exc:
-                # ER-002/ER-003: 조문 1건 실패가 분석 전체를 죽이지 않는다.
-                logger.warning(
-                    "조문 분석 실패 law=%s article=%s err=%s",
-                    item.snapshot.law_name, changed.article_no, exc,
-                )
-                continue
+    async def analyze_packets(
+        self,
+        packets: list[tuple[str, ContextPacket]],
+        analysis: Analysis,
+    ) -> list[AnalysisResult]:
+        """조문들을 제한된 동시성으로 분석한다."""
+        semaphore = asyncio.Semaphore(ARTICLE_CONCURRENCY)
 
-            results.append(outcome.result)
-        return results
+        async def one(article_no: str, packet: ContextPacket) -> AnalysisResult | None:
+            async with semaphore:
+                try:
+                    outcome = await analyze_article(
+                        ChainRunner(llm=self.llm),
+                        packet,
+                        analysis_id=analysis.analysis_id,
+                        trace_id=analysis.trace_id,
+                    )
+                except Exception as exc:
+                    # ER-002/ER-003: 조문 1건 실패가 분석 전체를 죽이지 않는다.
+                    logger.warning(
+                        "조문 분석 실패 law=%s article=%s err=%s",
+                        packet.law.law_name, article_no, exc,
+                    )
+                    return None
+                return outcome.result
+
+        done = await asyncio.gather(*(one(no, p) for no, p in packets))
+        return [result for result in done if result is not None]
 
     # ── 실행 ──────────────────────────────────────────────────────────
 
@@ -198,7 +264,7 @@ class AnalysisRunner:
         await self.analysis_repo.update(analysis)
 
         try:
-            items = await self.collect(analysis, max_laws=max_laws)
+            items = await self.collect(analysis, profile, max_laws=max_laws)
         except LawApiError as exc:
             logger.warning("법령 수집 실패 analysis=%s: %s", analysis.analysis_id, exc)
             return await self.fail(
@@ -208,11 +274,23 @@ class AnalysisRunner:
             logger.exception("법령 수집 중 예기치 못한 오류 analysis=%s", analysis.analysis_id)
             return await self.fail(analysis, "분석을 준비하지 못했습니다.", detail=str(exc))
 
-        all_results: list[AnalysisResult] = []
+        # 법령을 번갈아 가며 조문을 뽑아 총량 상한을 채운다. 한 법령이 상한을
+        # 독식하면 다른 법령의 변화는 아예 보이지 않는다.
+        per_law = [self.build_packets(item, profile) for item in items]
+        packets: list[tuple[str, ContextPacket]] = []
+        for index in range(MAX_ARTICLES_PER_ANALYSIS):
+            added = False
+            for law_packets in per_law:
+                if index < len(law_packets) and len(packets) < MAX_ARTICLES_PER_ANALYSIS:
+                    packets.append(law_packets[index])
+                    added = True
+            if not added:
+                break
+
         for item in items:
             await self.snapshot_repo.save(item.snapshot)
-            all_results.extend(await self.analyze_item(item, profile, analysis))
 
+        all_results = await self.analyze_packets(packets, analysis)
         await self.result_repo.save_many(all_results)
 
         completed = analysis.model_copy(
@@ -220,7 +298,7 @@ class AnalysisRunner:
                 "status": AnalysisStatus.COMPLETED,
                 "completed_at": datetime.now(UTC),
                 "laws_examined": len(items),
-                "articles_changed": sum(len(i.changed) for i in items),
+                "articles_changed": len(packets),
                 "counts": summarize(all_results),
                 "snapshot_law_ids": [i.snapshot.law_id for i in items],
             }

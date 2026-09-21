@@ -1,0 +1,197 @@
+- generic [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "규제 레이더" [ref=f2e4] [cursor=pointer]:
+        - /url: /dashboard
+      - navigation "주요 메뉴" [ref=f2e5]:
+        - link "대시보드" [ref=f2e6] [cursor=pointer]:
+          - /url: /dashboard
+        - link "분석 이력" [ref=f2e7] [cursor=pointer]:
+          - /url: /history
+        - link "저장함" [ref=f2e8] [cursor=pointer]:
+          - /url: /saved
+        - link "설정" [ref=f2e9] [cursor=pointer]:
+          - /url: /settings
+  - main [ref=f2e10]:
+    - generic [ref=f2e59]:
+      - generic [ref=f2e60]:
+        - generic [ref=f2e61]:
+          - heading "규제 대시보드" [level=1] [ref=f2e62]
+          - paragraph [ref=f2e63]: HR 담당자 (채용·근태·취업규칙) · IT 서비스 · 50~299인 · 80명
+        - button "최근 규제 변화 분석" [ref=f2e76]
+      - generic [ref=f2e77]:
+        - generic [ref=f2e78]:
+          - heading "요약" [level=2] [ref=f2e79]
+          - paragraph [ref=f2e80]: 법령 3건에서 변경 조문 8건을 분석했습니다.
+        - generic [ref=f2e81]:
+          - generic [ref=f2e82]:
+            - paragraph [ref=f2e83]: 조치 필요
+            - paragraph [ref=f2e84]: "0"
+          - generic [ref=f2e85]:
+            - paragraph [ref=f2e86]: 방침 결정
+            - paragraph [ref=f2e87]: "0"
+          - generic [ref=f2e88]:
+            - paragraph [ref=f2e89]: 인지
+            - paragraph [ref=f2e90]: "0"
+          - generic [ref=f2e91]:
+            - paragraph [ref=f2e92]: 보류
+            - paragraph [ref=f2e93]: "0"
+          - generic [ref=f2e94]:
+            - paragraph [ref=f2e95]: 무관
+            - paragraph [ref=f2e96]: "8"
+      - generic [ref=f2e97]:
+        - generic [ref=f2e98]:
+          - generic [ref=f2e99]:
+            - heading "분석 결과" [level=2] [ref=f2e100]
+            - paragraph [ref=f2e101]: 지금 해야 할 일과 결정이 필요한 변화를 위에 둡니다.
+          - generic [ref=f2e102]:
+            - checkbox "무관 항목도 보기" [checked] [active] [ref=f2e103]
+            - text: 무관 항목도 보기
+        - generic [ref=f2e107]:
+          - generic [ref=f2e108]:
+            - generic [ref=f2e109]:
+              - generic "현재 프로필 기준으로 직접 적용되지 않습니다." [ref=f2e110]: 무관
+              - generic [ref=f2e112]: 개정
+            - heading [level=3] [ref=f2e113]:
+              - link "감사원사무처 직제 제1조 · 조직" [ref=f2e114] [cursor=pointer]:
+                - /url: /results/9edeed46-c821-489d-96ea-2d792571435d
+                - text: 감사원사무처 직제 제1조
+                - generic [ref=f2e115]: · 조직
+            - paragraph [ref=f2e116]:
+              - text: 시행 2026년 9월 21일
+              - generic [ref=f2e117]: (오늘 시행)
+              - generic [ref=f2e118]: · 감사원
+            - paragraph [ref=f2e119]: 조문은 감사원사무처의 조직에 관한 내용으로, IT 서비스 업종의 HR 담당자에게는 적용되지 않습니다.
+            - generic [ref=f2e120]:
+              - generic [ref=f2e121]: 검증된 원문 인용 1건
+              - link "근거 보기 →" [ref=f2e122] [cursor=pointer]:
+                - /url: /results/9edeed46-c821-489d-96ea-2d792571435d
+          - generic [ref=f2e123]:
+            - generic [ref=f2e124]:
+              - generic "현재 프로필 기준으로 직접 적용되지 않습니다." [ref=f2e125]: 무관
+              - generic [ref=f2e127]: 개정
+            - heading [level=3] [ref=f2e128]:
+              - link "감사원사무처 직제 제2조 · 정원" [ref=f2e129] [cursor=pointer]:
+                - /url: /results/2b1e7fa4-2a54-4977-b5ff-cbe6f64d51f6
+                - text: 감사원사무처 직제 제2조
+                - generic [ref=f2e130]: · 정원
+            - paragraph [ref=f2e131]:
+              - text: 시행 2026년 9월 21일
+              - generic [ref=f2e132]: (오늘 시행)
+              - generic [ref=f2e133]: · 감사원
+            - paragraph [ref=f2e134]: 이 조문은 감사원 사무처의 직원 정원에 관한 내용으로, IT 서비스 업종의 HR 담당자에게는 적용되지 않습니다.
+            - generic [ref=f2e135]:
+              - generic [ref=f2e136]: 검증된 원문 인용 1건
+              - link "근거 보기 →" [ref=f2e137] [cursor=pointer]:
+                - /url: /results/2b1e7fa4-2a54-4977-b5ff-cbe6f64d51f6
+          - generic [ref=f2e138]:
+            - generic [ref=f2e139]:
+              - generic "현재 프로필 기준으로 직접 적용되지 않습니다." [ref=f2e140]: 무관
+              - generic [ref=f2e142]: 개정
+            - heading [level=3] [ref=f2e143]:
+              - link "감사원사무처 직제 제4조의2 · 심의실" [ref=f2e144] [cursor=pointer]:
+                - /url: /results/05c96c61-f055-4b10-adaf-06427891679b
+                - text: 감사원사무처 직제 제4조의2
+                - generic [ref=f2e145]: · 심의실
+            - paragraph [ref=f2e146]:
+              - text: 시행 2026년 9월 21일
+              - generic [ref=f2e147]: (오늘 시행)
+              - generic [ref=f2e148]: · 감사원
+            - paragraph [ref=f2e149]: 조문은 감사원사무처의 심의실장에 관한 내용으로, IT 서비스 업종의 HR 담당자와는 관련이 없습니다.
+            - generic [ref=f2e150]:
+              - generic [ref=f2e151]: 검증된 원문 인용 1건
+              - link "근거 보기 →" [ref=f2e152] [cursor=pointer]:
+                - /url: /results/05c96c61-f055-4b10-adaf-06427891679b
+          - generic [ref=f2e153]:
+            - generic [ref=f2e154]:
+              - generic "현재 프로필 기준으로 직접 적용되지 않습니다." [ref=f2e155]: 무관
+              - generic [ref=f2e157]: 개정
+            - heading [level=3] [ref=f2e158]:
+              - link "감사원사무처 직제 제8조 · 기획조정실장" [ref=f2e159] [cursor=pointer]:
+                - /url: /results/5f41e45f-c5a2-49e8-ac84-699c69bb649f
+                - text: 감사원사무처 직제 제8조
+                - generic [ref=f2e160]: · 기획조정실장
+            - paragraph [ref=f2e161]:
+              - text: 시행 2026년 9월 21일
+              - generic [ref=f2e162]: (오늘 시행)
+              - generic [ref=f2e163]: · 감사원
+            - paragraph [ref=f2e164]: 조문은 감사원사무처의 기획조정실장 및 전략기획관에 관한 내용으로, IT 서비스 업종의 HR 담당자에게는 적용되지 않습니다.
+            - generic [ref=f2e165]:
+              - generic [ref=f2e166]: 검증된 원문 인용 2건
+              - link "근거 보기 →" [ref=f2e167] [cursor=pointer]:
+                - /url: /results/5f41e45f-c5a2-49e8-ac84-699c69bb649f
+          - generic [ref=f2e168]:
+            - generic [ref=f2e169]:
+              - generic "현재 프로필 기준으로 직접 적용되지 않습니다." [ref=f2e170]: 무관
+              - generic [ref=f2e172]: 개정
+            - heading [level=3] [ref=f2e173]:
+              - link "감사원사무처 직제 제9조 · 각 국ㆍ단" [ref=f2e174] [cursor=pointer]:
+                - /url: /results/eaf2b059-84da-47d7-95d8-99a15d9ed104
+                - text: 감사원사무처 직제 제9조
+                - generic [ref=f2e175]: · 각 국ㆍ단
+            - paragraph [ref=f2e176]:
+              - text: 시행 2026년 9월 21일
+              - generic [ref=f2e177]: (오늘 시행)
+              - generic [ref=f2e178]: · 감사원
+            - paragraph [ref=f2e179]: 조문은 감사원사무처의 각 국ㆍ단의 국ㆍ단장 및 관련 공무원에 대한 규정을 다루고 있으며, IT 서비스 업종의 HR 담당자와는 관련이 없습니다.
+            - generic [ref=f2e180]:
+              - generic [ref=f2e181]: 검증된 원문 인용 2건
+              - link "근거 보기 →" [ref=f2e182] [cursor=pointer]:
+                - /url: /results/eaf2b059-84da-47d7-95d8-99a15d9ed104
+          - generic [ref=f2e183]:
+            - generic [ref=f2e184]:
+              - generic "현재 프로필 기준으로 직접 적용되지 않습니다." [ref=f2e185]: 무관
+              - generic [ref=f2e187]: 개정
+            - heading [level=3] [ref=f2e188]:
+              - link "감사원사무처 직제 제10조 · 과, 담당관 등" [ref=f2e189] [cursor=pointer]:
+                - /url: /results/55eed848-38d5-4c60-9224-9b0d8663a923
+                - text: 감사원사무처 직제 제10조
+                - generic [ref=f2e190]: · 과, 담당관 등
+            - paragraph [ref=f2e191]:
+              - text: 시행 2026년 9월 21일
+              - generic [ref=f2e192]: (오늘 시행)
+              - generic [ref=f2e193]: · 감사원
+            - paragraph [ref=f2e194]: 이 조문은 감사원사무처의 직제에 관한 내용으로, IT 서비스 업종의 HR 담당자에게는 적용되지 않습니다.
+            - generic [ref=f2e195]:
+              - generic [ref=f2e196]: 검증된 원문 인용 1건
+              - link "근거 보기 →" [ref=f2e197] [cursor=pointer]:
+                - /url: /results/55eed848-38d5-4c60-9224-9b0d8663a923
+          - generic [ref=f2e198]:
+            - generic [ref=f2e199]:
+              - generic "현재 프로필 기준으로 직접 적용되지 않습니다." [ref=f2e200]: 무관
+              - generic [ref=f2e202]: 개정
+            - heading [level=3] [ref=f2e203]:
+              - link "취업 후 학자금 상환 특별법 시행규칙 제33조 · 재산 파악에 필요한 자료" [ref=f2e204] [cursor=pointer]:
+                - /url: /results/436be903-52b0-4ffb-8224-230ab76a6227
+                - text: 취업 후 학자금 상환 특별법 시행규칙 제33조
+                - generic [ref=f2e205]: · 재산 파악에 필요한 자료
+            - paragraph [ref=f2e206]:
+              - text: 시행 2026년 9월 18일
+              - generic [ref=f2e207]: (3일 전 시행됨)
+              - generic [ref=f2e208]: · 교육부
+            - paragraph [ref=f2e209]: 조문은 '재산 파악에 필요한 자료'에 관한 것으로, 주로 교육부와 관련된 자료 제출 의무를 규정하고 있습니다. HR 담당자나 IT 서비스 업종과는 직접적인 관련이 없습니다.
+            - generic [ref=f2e210]:
+              - generic [ref=f2e211]: 검증된 원문 인용 1건
+              - link "근거 보기 →" [ref=f2e212] [cursor=pointer]:
+                - /url: /results/436be903-52b0-4ffb-8224-230ab76a6227
+          - generic [ref=f2e213]:
+            - generic [ref=f2e214]:
+              - generic "현재 프로필 기준으로 직접 적용되지 않습니다." [ref=f2e215]: 무관
+              - generic [ref=f2e217]: 개정
+            - heading [level=3] [ref=f2e218]:
+              - link "하천법 시행규칙 제17조의2 · 하천점용허가 신청에 대한 기술검토" [ref=f2e219] [cursor=pointer]:
+                - /url: /results/2a728494-ff33-4e8a-a2ea-2692c49ffb45
+                - text: 하천법 시행규칙 제17조의2
+                - generic [ref=f2e220]: · 하천점용허가 신청에 대한 기술검토
+            - paragraph [ref=f2e221]:
+              - text: 시행 2026년 9월 18일
+              - generic [ref=f2e222]: (3일 전 시행됨)
+              - generic [ref=f2e223]: · 기후에너지환경부
+            - paragraph [ref=f2e224]: 조문은 하천점용허가와 관련된 기술검토에 관한 내용으로, IT 서비스 업종의 HR 담당자와는 관련이 없습니다.
+            - generic [ref=f2e225]:
+              - generic [ref=f2e226]: 검증된 원문 인용 1건
+              - link "근거 보기 →" [ref=f2e227] [cursor=pointer]:
+                - /url: /results/2a728494-ff33-4e8a-a2ea-2692c49ffb45
+  - contentinfo [ref=f2e14]: 이 서비스는 법률 자문이 아니라 AI 기반 규제 모니터링 도구입니다. AI 해석은 참고용이며, 법적 판단이 필요한 경우 전문가 검토를 받으십시오.
+  - button "Open Next.js Dev Tools" [ref=f2e54] [cursor=pointer]
+  - alert [ref=f2e58]: 규제 대시보드
