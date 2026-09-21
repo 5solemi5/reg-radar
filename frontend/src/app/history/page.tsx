@@ -5,8 +5,9 @@ import Link from "next/link";
 import { Card, SectionTitle, Spinner, StateMessage } from "@/components/ui";
 import { useAnalysisHistory } from "@/hooks/use-analysis";
 import { ANALYSIS_STATUS_META, formatDateTime } from "@/lib/display";
+import { AuthGate } from "@/components/auth-gate";
 
-export default function HistoryPage() {
+function HistoryPageContent() {
   const { data, isLoading, error } = useAnalysisHistory();
 
   if (isLoading) return <Spinner label="이력을 불러오는 중…" />;
@@ -68,5 +69,13 @@ export default function HistoryPage() {
         })}
       </ul>
     </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <AuthGate>
+      <HistoryPageContent />
+    </AuthGate>
   );
 }

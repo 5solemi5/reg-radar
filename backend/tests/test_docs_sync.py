@@ -28,7 +28,7 @@ def _normalize(endpoint: str) -> str:
 
 @pytest.fixture(scope="module")
 def implemented() -> set[str]:
-    app = create_app(Settings(app_env="local", auth_mode="dev"))
+    app = create_app(Settings(app_env="local", auth_mode="dev", storage="memory"))
     return {
         _normalize(f"{method.upper()} {path}")
         for path, operations in app.openapi()["paths"].items()
@@ -107,4 +107,4 @@ class TestSpecContent:
     def test_production에서_dev인증은_기동을_거부한다(self):
         """명세서 §2의 약속."""
         with pytest.raises(RuntimeError, match="production"):
-            create_app(Settings(app_env="production", auth_mode="dev"))
+            create_app(Settings(app_env="production", auth_mode="dev", storage="memory"))

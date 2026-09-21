@@ -15,7 +15,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
             // 계약 위반이나 없는 리소스를 재시도해봐야 같은 결과다.
             retry: (failureCount, error) => {
               if (error instanceof ApiError) {
-                if (error.status === 404 || error.code === "contract_mismatch") return false;
+                // 없는 리소스·계약 위반·인증 실패는 재시도해봐야 같은 결과다.
+                if (
+                  error.status === 404 ||
+                  error.status === 401 ||
+                  error.code === "contract_mismatch"
+                ) {
+                  return false;
+                }
               }
               return failureCount < 2;
             },

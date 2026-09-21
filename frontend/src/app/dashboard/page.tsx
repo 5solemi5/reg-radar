@@ -10,8 +10,9 @@ import { useResults, useRunAnalysis } from "@/hooks/use-analysis";
 import { useProfile } from "@/hooks/use-profile";
 import { COMPANY_SIZE_OPTIONS } from "@/lib/display";
 import type { Counts } from "@/lib/schemas";
+import { AuthGate } from "@/components/auth-gate";
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const router = useRouter();
   const { profile, needsOnboarding, isLoading, error } = useProfile();
   const { start, analysis, activeId, isRunning, startError } = useRunAnalysis();
@@ -185,5 +186,13 @@ function CountsGrid({ counts }: { counts: Counts }) {
         </Card>
       ))}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AuthGate>
+      <DashboardPageContent />
+    </AuthGate>
   );
 }

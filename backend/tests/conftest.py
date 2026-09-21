@@ -47,9 +47,22 @@ from app.main import create_app  # noqa: E402
 
 @pytest.fixture
 def api_settings() -> Settings:
+    """API 테스트용 설정.
+
+    storage/database_url을 **명시적으로** 지정한다. Settings()는 지정하지 않은
+    필드를 .env에서 읽으므로, 명시하지 않으면 테스트가 개발자의 로컬 .env에
+    좌우된다. 실제로 .env를 postgres로 바꾸자 전체 API 테스트가 깨진 적이 있다.
+    """
     return Settings(
-        app_env="local", auth_mode="dev", dev_user_id="user-a",
-        law_api_oc="testoc", openai_api_key="test-key",
+        app_env="local",
+        auth_mode="dev",
+        dev_user_id="user-a",
+        law_api_oc="testoc",
+        openai_api_key="test-key",
+        storage="memory",
+        database_url="",
+        supabase_url="",
+        supabase_jwt_secret="",
     )
 
 

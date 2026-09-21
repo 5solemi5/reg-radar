@@ -56,8 +56,15 @@ Base URL: `/api/v1`
 | `AUTH_MODE=supabase` | `Authorization: Bearer <Supabase JWT>` | 운영 |
 | `AUTH_MODE=dev` | `X-User-Id` 헤더 | **로컬 개발 전용** |
 
-Supabase 모드는 HS256 서명, 만료, `audience=authenticated`, `sub` 존재를 모두
-검증한다. 만료된 토큰은 다른 실패와 구분해 "세션이 만료되었습니다"로 응답한다.
+Supabase 모드는 토큰 헤더의 알고리즘에 따라 검증 방식을 고른다.
+
+- **ES256 / RS256** — 프로젝트의 JWKS에서 `kid`에 맞는 공개키를 받아 검증한다.
+  Supabase의 현재 기본값이다. 공개키를 못 받으면 통과시키지 않고 실패시킨다.
+- **HS256** — `SUPABASE_JWT_SECRET`으로 검증한다. 레거시 키를 쓰는 프로젝트용.
+
+어느 쪽이든 서명·만료·`audience=authenticated`·`sub` 존재를 모두 확인하고,
+허용 알고리즘을 고정한다 (토큰이 알고리즘을 고르게 두면 `alg:none` 공격에 열린다).
+만료된 토큰은 다른 실패와 구분해 "세션이 만료되었습니다"로 응답한다.
 
 `APP_ENV=production`과 `AUTH_MODE=dev`를 함께 쓰면 애플리케이션이 기동을 거부한다.
 dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없는 것과 같기 때문이다.

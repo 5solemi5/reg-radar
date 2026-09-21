@@ -54,7 +54,11 @@ class Settings(BaseSettings):
     # --- Supabase / 인증 ---
     supabase_url: str = ""
     supabase_service_key: str = ""
+    # Supabase는 이제 프로젝트마다 ES256 비대칭 키로 JWT를 서명한다. 공개키는
+    # JWKS 엔드포인트에서 받는다. HS256 공유 시크릿은 레거시 방식이며,
+    # 레거시 키를 아직 쓰는 프로젝트를 위해 함께 지원한다.
     supabase_jwt_secret: str = ""
+    jwks_cache_seconds: int = 3600
     # dev: X-User-Id 헤더를 그대로 신뢰한다. 로컬 개발 전용이며 production에서 금지.
     # supabase: Supabase JWT를 검증한다.
     auth_mode: Literal["dev", "supabase"] = "dev"
@@ -85,6 +89,12 @@ class Settings(BaseSettings):
     @property
     def postgres_enabled(self) -> bool:
         return self.storage == "postgres" and bool(self.database_url)
+
+    @property
+    def jwks_url(self) -> str:
+        """Supabase 프로젝트의 공개키 목록. 공개 정보이므로 비밀이 아니다."""
+        base = self.supabase_url.rstrip("/")
+        return f"{base}/auth/v1/.well-known/jwks.json" if base else ""
 
 
 @lru_cache

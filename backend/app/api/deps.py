@@ -2,11 +2,18 @@
 
 `STORAGE` 설정에 따라 인메모리와 Postgres 구현을 바꿔 끼운다. 라우터는 어느
 쪽인지 모른다 — 저장소 Protocol만 알면 되기 때문이다 (NFR-011).
+
+설정을 전역에서 직접 읽지 않고 `Depends(get_settings)`로 받는 이유: 그래야
+`dependency_overrides`로 설정을 갈아끼울 수 있다. 전역을 읽으면 테스트가
+개발자의 .env에 좌우되고, 실제로 .env를 postgres로 바꾸자 전체 테스트가
+깨지는 일이 있었다.
 """
 
 from __future__ import annotations
 
 from functools import lru_cache
+
+from fastapi import Depends
 
 from app.core.config import Settings, get_settings
 from app.repositories.db import Database, get_database
@@ -36,64 +43,65 @@ def get_store() -> InMemoryStore:
     return InMemoryStore()
 
 
-def _use_postgres(settings: Settings | None = None) -> bool:
-    return (settings or get_settings()).postgres_enabled
+def _db(settings: Settings) -> Database:
+    return get_database(settings)
 
 
-def _db() -> Database:
-    return get_database()
-
-
-def get_profile_repo():
+def get_profile_repo(settings: Settings = Depends(get_settings)):
     return (
-        PostgresProfileRepository(_db()) if _use_postgres()
+        PostgresProfileRepository(_db(settings)) if settings.postgres_enabled
         else InMemoryProfileRepository(get_store())
     )
 
 
-def get_analysis_repo():
+def get_analysis_repo(settings: Settings = Depends(get_settings)):
     return (
-        PostgresAnalysisRepository(_db()) if _use_postgres()
+        PostgresAnalysisRepository(_db(settings)) if settings.postgres_enabled
         else InMemoryAnalysisRepository(get_store())
     )
 
 
-def get_result_repo():
+def get_result_repo(settings: Settings = Depends(get_settings)):
     return (
-        PostgresResultRepository(_db()) if _use_postgres()
+        PostgresResultRepository(_db(settings)) if settings.postgres_enabled
         else InMemoryResultRepository(get_store())
     )
 
 
-def get_snapshot_repo():
+def get_snapshot_repo(settings: Settings = Depends(get_settings)):
     return (
-        PostgresSnapshotRepository(_db()) if _use_postgres()
+        PostgresSnapshotRepository(_db(settings)) if settings.postgres_enabled
         else InMemorySnapshotRepository(get_store())
     )
 
 
-def get_feedback_repo():
+def get_feedback_repo(settings: Settings = Depends(get_settings)):
     return (
-        PostgresFeedbackRepository(_db()) if _use_postgres()
+        PostgresFeedbackRepository(_db(settings)) if settings.postgres_enabled
         else InMemoryFeedbackRepository(get_store())
     )
 
 
-def get_saved_repo():
+def get_saved_repo(settings: Settings = Depends(get_settings)):
     return (
-        PostgresSavedRegulationRepository(_db()) if _use_postgres()
+        PostgresSavedRegulationRepository(_db(settings)) if settings.postgres_enabled
         else InMemorySavedRegulationRepository(get_store())
     )
 
 
-def get_revision_repo():
+def get_revision_repo(settings: Settings = Depends(get_settings)):
     return (
-        PostgresRevisionRepository(_db()) if _use_postgres()
+        PostgresRevisionRepository(_db(settings)) if settings.postgres_enabled
         else InMemoryRevisionRepository(get_store())
     )
 
 
-def get_analysis_runner():
+def get_analysis_runner(
+    settings: Settings = Depends(get_settings),
+    analysis_repo=Depends(get_analysis_repo),
+    result_repo=Depends(get_result_repo),
+    snapshot_repo=Depends(get_snapshot_repo),
+):
     """분석 실행기.
 
     라우터가 이 함수에 의존하므로, 테스트는 dependency_overrides로 네트워크와
@@ -102,8 +110,8 @@ def get_analysis_runner():
     from app.services.analysis_runner import AnalysisRunner
 
     return AnalysisRunner(
-        analysis_repo=get_analysis_repo(),
-        result_repo=get_result_repo(),
-        snapshot_repo=get_snapshot_repo(),
-        settings=get_settings(),
+        analysis_repo=analysis_repo,
+        result_repo=result_repo,
+        snapshot_repo=snapshot_repo,
+        settings=settings,
     )

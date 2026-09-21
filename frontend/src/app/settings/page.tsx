@@ -3,8 +3,9 @@
 import { ProfileForm } from "@/components/profile-form";
 import { Spinner, StateMessage } from "@/components/ui";
 import { useProfile, useSaveProfile } from "@/hooks/use-profile";
+import { AuthGate } from "@/components/auth-gate";
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const { profile, isLoading, needsOnboarding } = useProfile();
   const save = useSaveProfile();
 
@@ -39,5 +40,13 @@ export default function SettingsPage() {
         <p className="mt-4 text-sm text-emerald-600 dark:text-emerald-400">저장되었습니다.</p>
       )}
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <AuthGate>
+      <SettingsPageContent />
+    </AuthGate>
   );
 }

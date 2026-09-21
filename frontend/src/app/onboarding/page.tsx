@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { ProfileForm } from "@/components/profile-form";
 import { Spinner } from "@/components/ui";
 import { useProfile, useSaveProfile } from "@/hooks/use-profile";
+import { AuthGate } from "@/components/auth-gate";
 
-export default function OnboardingPage() {
+function OnboardingPageContent() {
   const router = useRouter();
   const { profile, isLoading } = useProfile();
   const save = useSaveProfile();
@@ -36,5 +37,13 @@ export default function OnboardingPage() {
         }
       />
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <AuthGate>
+      <OnboardingPageContent />
+    </AuthGate>
   );
 }

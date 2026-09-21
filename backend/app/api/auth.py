@@ -13,6 +13,7 @@ import jwt
 from fastapi import Depends, Header, Request
 
 from app.api.errors import UnauthorizedError
+from app.api.jwks import JwksUnavailableError, get_jwks_cache
 from app.core.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
@@ -40,29 +41,64 @@ def _dev_user(settings: Settings, x_user_id: str | None) -> CurrentUser:
     return CurrentUser(user_id=(x_user_id or settings.dev_user_id).strip())
 
 
-def _supabase_user(settings: Settings, token: str | None) -> CurrentUser:
+# 허용 알고리즘을 고정한다. 토큰이 알고리즘을 고르게 두면 `alg: none` 공격에 열린다.
+_ASYMMETRIC_ALGORITHMS = ["ES256", "RS256"]
+_SYMMETRIC_ALGORITHMS = ["HS256"]
+
+
+def _decode_claims(token: str, key, algorithms: list[str]) -> dict:
+    """공통 검증 규칙. 서명·만료·audience·필수 클레임을 모두 확인한다."""
+    return jwt.decode(
+        token,
+        key,
+        algorithms=algorithms,
+        audience="authenticated",
+        options={"require": ["sub", "exp"]},
+    )
+
+
+async def _supabase_user(settings: Settings, token: str | None) -> CurrentUser:
     """Supabase가 발급한 JWT를 검증한다.
 
-    서명 검증을 건너뛰면(`verify_signature=False`) 누구나 아무 sub를 넣어
-    남의 데이터를 읽을 수 있다. 알고리즘도 고정한다 — 토큰이 알고리즘을
-    고르게 두면 `alg: none` 공격에 열린다.
+    Supabase는 프로젝트마다 ES256 비대칭 키로 서명하며, 공개키를 JWKS로 배포한다.
+    서버가 공개키만 가지면 되므로 HS256 공유 시크릿보다 안전하다 — 검증자가
+    토큰을 위조할 수 없기 때문이다. 레거시 HS256 프로젝트를 위해 공유 시크릿
+    방식도 함께 지원한다.
     """
     if not token:
         raise UnauthorizedError()
-    if not settings.supabase_jwt_secret:
-        # 비밀키가 없는데 통과시키면 인증이 없는 것과 같다. 열지 않고 막는다.
-        raise UnauthorizedError(
-            "인증 설정이 완료되지 않았습니다.", detail="SUPABASE_JWT_SECRET 없음"
-        )
 
     try:
-        claims = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-            options={"require": ["sub", "exp"]},
-        )
+        header = jwt.get_unverified_header(token)
+    except jwt.InvalidTokenError as exc:
+        raise UnauthorizedError(detail="토큰 헤더를 읽을 수 없습니다.") from exc
+
+    algorithm = header.get("alg")
+    kid = header.get("kid")
+
+    try:
+        if algorithm in _ASYMMETRIC_ALGORITHMS and kid:
+            if not settings.jwks_url:
+                raise UnauthorizedError(
+                    "인증 설정이 완료되지 않았습니다.", detail="SUPABASE_URL 없음"
+                )
+            signing_key = await get_jwks_cache(settings).get(kid)
+            claims = _decode_claims(token, signing_key.key, _ASYMMETRIC_ALGORITHMS)
+        elif algorithm in _SYMMETRIC_ALGORITHMS:
+            if not settings.supabase_jwt_secret:
+                # 비밀키가 없는데 통과시키면 인증이 없는 것과 같다. 열지 않고 막는다.
+                raise UnauthorizedError(
+                    "인증 설정이 완료되지 않았습니다.", detail="SUPABASE_JWT_SECRET 없음"
+                )
+            claims = _decode_claims(
+                token, settings.supabase_jwt_secret, _SYMMETRIC_ALGORITHMS
+            )
+        else:
+            raise UnauthorizedError(detail=f"지원하지 않는 서명 알고리즘: {algorithm}")
+    except JwksUnavailableError as exc:
+        # 공개키를 못 가져오면 통과시키지 않는다. 열어두면 인증이 없는 것과 같다.
+        logger.warning("JWKS 사용 불가: %s", exc)
+        raise UnauthorizedError("인증 서버에 연결할 수 없습니다.", detail=str(exc)) from exc
     except jwt.ExpiredSignatureError as exc:
         # ER-007. 만료는 재로그인으로 풀리는 상태이므로 구분해 알려준다.
         raise UnauthorizedError("세션이 만료되었습니다. 다시 로그인해 주세요.") from exc
@@ -85,7 +121,7 @@ async def get_current_user(
     user = (
         _dev_user(settings, x_user_id)
         if settings.auth_mode == "dev"
-        else _supabase_user(settings, _bearer_token(authorization))
+        else await _supabase_user(settings, _bearer_token(authorization))
     )
     if not user.user_id:
         raise UnauthorizedError()

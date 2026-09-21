@@ -6,8 +6,9 @@ import Link from "next/link";
 import { Button, Card, Spinner, StateMessage } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/display";
+import { AuthGate } from "@/components/auth-gate";
 
-export default function SavedPage() {
+function SavedPageContent() {
   const queryClient = useQueryClient();
   const saved = useQuery({ queryKey: ["saved"], queryFn: () => api.listSaved() });
   const remove = useMutation({
@@ -53,5 +54,13 @@ export default function SavedPage() {
         ))}
       </ul>
     </div>
+  );
+}
+
+export default function SavedPage() {
+  return (
+    <AuthGate>
+      <SavedPageContent />
+    </AuthGate>
   );
 }
