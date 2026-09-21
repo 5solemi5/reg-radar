@@ -9,7 +9,13 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        # 값 앞뒤 공백을 걷어낸다. 로컬 .env는 dotenv가 알아서 해 주지만 호스팅
+        # 대시보드에 붙여넣을 때는 그대로 들어간다. URL 앞의 공백 하나로
+        # JWKS 조회가 실패하는데, 그 원인을 찾기까지가 오래 걸린다.
+        str_strip_whitespace=True,
     )
 
     app_env: Literal["local", "staging", "production"] = "local"
