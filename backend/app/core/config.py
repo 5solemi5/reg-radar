@@ -80,7 +80,9 @@ class Settings(BaseSettings):
 
     # --- Supabase / 인증 ---
     supabase_url: str = ""
-    supabase_service_key: str = ""
+    # service_role 키는 두지 않는다. 인증은 JWKS 공개키로 JWT를 검증하는 방식이라
+    # 필요가 없는데, 설정에 자리가 있으면 배포할 때 누군가 채우게 된다. 그 키는
+    # RLS를 통째로 우회하므로, 쓰지도 않을 것을 한 곳 더 두는 것은 손해뿐이다.
     # Supabase는 이제 프로젝트마다 ES256 비대칭 키로 JWT를 서명한다. 공개키는
     # JWKS 엔드포인트에서 받는다. HS256 공유 시크릿은 레거시 방식이며,
     # 레거시 키를 아직 쓰는 프로젝트를 위해 함께 지원한다.

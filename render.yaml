@@ -63,13 +63,15 @@ services:
 
       # 아래는 값을 여기 적지 않는다. Render 대시보드에서 직접 넣는다.
       # 저장소가 공개라 커밋되는 파일에 비밀값이 들어가면 그대로 노출된다.
+      #
+      # SUPABASE_SERVICE_KEY는 없다. 인증은 JWKS 공개키로 JWT를 검증하므로
+      # service_role 키가 필요 없다. RLS를 우회하는 키를 쓰지도 않을 곳에
+      # 두지 않는다.
       - key: DATABASE_URL
         sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
         sync: false
       - key: LAW_API_OC
         sync: false
