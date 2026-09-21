@@ -6,6 +6,8 @@ FR-020 설계 원칙: 이 스키마에는 공식 사실 필드(법령명·조문
 그 문자열은 Validator가 snapshot 원문 substring인지 검증한다 (FR-021).
 """
 
+from enum import StrEnum
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.domain.enums import ActionGrade, Applicability
@@ -67,12 +69,57 @@ class TargetExtractionOutput(BaseModel):
         return [c.cited_span for c in self.conditions]
 
 
+class TargetGroupBasis(StrEnum):
+    """조문의 대상 집단 해당 여부를 **프로필로 판단할 수 있는가**.
+
+    '적용되는가'가 아니라 '판단할 정보가 있는가'에 대한 답이다. 둘을 섞으면
+    모델이 모르는 것도 결정한다 — holdout_v2에서 보류 재현율 40%가 나온 원인이다.
+    """
+
+    PROFILE_STATES = "profile_states"
+    """프로필이 대상임을 알려준다. (이커머스 소매 → 통신판매업자)"""
+
+    PROFILE_EXCLUDES = "profile_excludes"
+    """프로필이 대상이 아님을 알려준다. 별도 인허가가 필요한 특수 업종인데
+    사용자 업종이 그것이 아닌 경우다. (IT 서비스 → 유해화학물질 영업자 아님)"""
+
+    PROFILE_SILENT = "profile_silent"
+    """프로필로는 알 수 없다. 업종과 무관하게 흔한 거래 형태·활동이라 어느 업종이든
+    해당될 수 있는데 프로필에 그 활동 여부가 없는 경우다. (제조업 → 도급인인가?)"""
+
+
 class ApplicabilityOutput(BaseModel):
     """C4 Chain 출력. 사용자 ↔ 법령 매핑 판정 (FR-007)."""
 
     model_config = ConfigDict(extra="forbid")
 
     applicability: Applicability
+    target_group: str = Field(
+        ...,
+        description=(
+            "이 조문이 규율하는 대상 집단. 조문에 쓰인 용어 그대로. "
+            "예: 도급인, 통신판매업자"
+        ),
+    )
+    target_group_basis: TargetGroupBasis = Field(
+        ...,
+        description=(
+            "프로필이 대상 해당 여부를 말해 주는지. PROFILE_SILENT면 코드가 보류로 강등한다 "
+            "(AP-03: 판단 근거 유무는 코드가 강제한다)."
+        ),
+    )
+    profile_evidence: str | None = Field(
+        None,
+        description=(
+            "대상 여부를 가린 근거를 **프로필에서 그대로 복사**한 한 줄. "
+            "예: '- 업종: IT 서비스'. PROFILE_SILENT면 null."
+        ),
+    )
+
+    # 근거 누락을 스키마 예외로 막지 않는다. 여기서 던지면 구조화 출력 파싱이
+    # 실패해 분석 전체가 죽는다. 근거가 없거나 프로필에 없는 문장이면 코드가
+    # '판단 불가'로 보고 보류로 내린다(c4_mapping.unverifiable_target_reason).
+    # 실패해야 한다면 보류 쪽으로 실패하는 것이 맞다 (NFR-003).
     reason: str = Field(..., description="왜 그렇게 판정했는지. 사용자 프로필과의 연결을 명시.")
     matched_conditions: list[str] = Field(
         default_factory=list, description="사용자 프로필과 연결된 적용조건 서술"

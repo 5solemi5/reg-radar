@@ -6,7 +6,8 @@
     "gold_applicability는 '이 시스템이 주어진 입력으로 내려야 하는 판정'이다.",
     "따라서 구체 기준이 하위법령에 위임된 조문은 HOLD가 정답이다 (BR-003, Q5).",
     "조문 원문만으로 확정 가능한 규모 기준은 APPLICABLE/NOT_APPLICABLE로 확정해야 한다.",
-    "change_mode=as_new: 조문 전체를 신설로 간주해 입력한다. 이 평가셋은 '적용 판정' 품질을 측정하며, 신구법 변경 감지 정확도는 diff 단위 테스트가 담당한다."
+    "change_mode=as_new: 조문 전체를 신설로 간주해 입력한다. 이 평가셋은 '적용 판정' 품질을 측정하며, 신구법 변경 감지 정확도는 diff 단위 테스트가 담당한다.",
+    "지위 요건(도급인·영업자 등)은 두 가지를 구분한다. 별도 인허가·등록이 필요한 특수 업종이고 사용자 업종이 그것이 아니면 NOT_APPLICABLE(E12~E15), 업종과 무관하게 흔한 거래 형태·활동인데 프로필에 그 정보가 없으면 HOLD(E16~E19)."
   ],
   "profiles": {
     "solo_commerce": {
@@ -195,6 +196,46 @@
       "gold_applicability": "NOT_APPLICABLE",
       "expects_delegation": true,
       "note": "일반 제조업은 식품위생교육 대상 영업자가 아니다."
+    },
+    {
+      "id": "E16",
+      "law_name": "근로기준법",
+      "article_no": "제44조",
+      "profile": "mfg_ops_150",
+      "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "도급",
+      "expects_delegation": true,
+      "note": "직상 수급인의 연대책임. 대상은 '도급에 따라 행해지는 사업'의 수급인이다. 제조업은 도급 구조가 흔하지만 이 회사가 도급을 주는지는 프로필에 없다. 업종만으로 확정도 배제도 할 수 없다."
+    },
+    {
+      "id": "E17",
+      "law_name": "근로기준법",
+      "article_no": "제44조",
+      "profile": "it_hr",
+      "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "도급",
+      "expects_delegation": true,
+      "note": "IT 서비스도 개발 외주를 도급으로 주는 일이 흔하다. 여부가 프로필에 없으므로 보류다."
+    },
+    {
+      "id": "E18",
+      "law_name": "산업안전보건법",
+      "article_no": "제63조",
+      "profile": "mfg_ops_150",
+      "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "도급",
+      "expects_delegation": false,
+      "note": "도급인의 안전조치 의무. 사업장에서 관계수급인 근로자가 작업하는지가 프로필에 없다. 위임도 규모 조건도 없으니 순수하게 '역할 정보 부족'만으로 보류가 나와야 한다."
+    },
+    {
+      "id": "E19",
+      "law_name": "산업안전보건법",
+      "article_no": "제63조",
+      "profile": "it_hr",
+      "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "도급",
+      "expects_delegation": false,
+      "note": "IT 서비스 사업장에도 상주 협력업체 인력이 있을 수 있다. 여부를 알 수 없으므로 보류다."
     }
   ],
   "known_limitations": [
@@ -225,6 +266,7 @@
       "over_hold_rate": 0.0,
       "q4_recall": 0.6,
       "change": "'적용 여부'와 '의무 수준'을 구분하는 원칙 추가. 보류는 사라졌으나 재현율이 80%→60%로 악화 — 임계값 이동이지 능력 향상이 아님. 여기서 튜닝 중단."
-    }
+    },
+    "2026-09-21: '역할 미상' 케이스 4건 추가(E16~E19). holdout_v2에서 보류 재현율 40%가 나왔는데 놓친 3건이 전부 이 유형이었고 개발셋에는 한 건도 없었다. 고칠 신호가 없어서 먼저 셋을 넓혔다."
   ]
 }

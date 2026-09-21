@@ -16,7 +16,12 @@ from app.diff.headcount import SizeVerdict
 from app.diff.headcount import evaluate as evaluate_headcount
 from app.domain.context import ContextPacket
 from app.domain.enums import Applicability
-from app.domain.outputs import ApplicabilityOutput, TargetExtractionOutput
+from app.domain.outputs import (
+    ApplicabilityOutput,
+    TargetExtractionOutput,
+    TargetGroupBasis,
+)
+from app.validator.rules import normalize_for_match
 
 CHAIN_NAME = "C4_applicability_mapping"
 
@@ -78,17 +83,63 @@ def deterministic_hold_reasons(packet: ContextPacket) -> list[str]:
     return reasons
 
 
-def apply_hold_policy(
-    output: ApplicabilityOutput, hold_reasons: list[str]
-) -> ApplicabilityOutput:
-    """HOLD 사유가 있으면 APPLICABLE을 HOLD로 강등한다.
+def unverifiable_target_reason(
+    output: ApplicabilityOutput, packet: ContextPacket | None = None
+) -> str | None:
+    """대상 집단 해당 여부를 프로필로 판단할 수 없으면 그 사유를 만든다 (AP-03).
 
-    NOT_APPLICABLE은 강등하지 않는다. '적용되지 않는다'는 판단은 추가정보가 없어도
-    성립할 수 있고, 무관 항목까지 HOLD로 만들면 대시보드가 보류로 가득 차기 때문이다.
+    규모 기준은 코드가 계산해 강제하는데, '이 회사가 도급인인가'처럼 지위에 관한
+    미지수는 LLM에 맡겨져 있었다. 그리고 프롬프트가 "보류를 남용하지 마십시오"로
+    강하게 눌러 놓아서, 모르는 것도 업종만 보고 결정했다. holdout_v2에서 보류
+    재현율 40%로 나타났고 놓친 3건이 전부 이 유형이었다.
+
+    판단은 LLM이 하되(의미 해석) 그 결과를 강제하는 것은 코드다. 모델에게 묻는
+    질문이 '적용되는가'가 아니라 '판단할 정보가 있는가'로 바뀐 것이 핵심이다.
     """
-    if not hold_reasons or output.applicability is not Applicability.APPLICABLE:
+    target = output.target_group.strip() or "이 조문의 대상"
+    unknown = f"귀사가 '{target}'에 해당하는지가 프로필에 없어 확인할 수 없습니다."
+
+    if output.target_group_basis is TargetGroupBasis.PROFILE_SILENT:
+        return unknown
+
+    # 확정했다면 프로필의 어느 줄을 보고 그랬는지 대조한다 (FR-021과 같은 방식).
+    # 스키마가 값을 요구하지만 그 값이 **실제 프로필에 있는지**는 코드가 본다.
+    # 요구만 했을 때 모델은 그럴듯한 문장을 지어냈다.
+    if packet is None:
+        return None
+    evidence = normalize_for_match(output.profile_evidence or "")
+    if evidence and evidence in normalize_for_match(packet.user.to_prompt_block()):
+        return None
+    return unknown
+
+
+def apply_hold_policy(
+    output: ApplicabilityOutput,
+    hold_reasons: list[str],
+    *,
+    target_reason: str | None = None,
+) -> ApplicabilityOutput:
+    """HOLD 사유가 있으면 판정을 HOLD로 강등한다.
+
+    강등 범위가 사유에 따라 다르다.
+
+    - `hold_reasons`(위임·규모 미상)는 **APPLICABLE만** 강등한다. '적용되지 않는다'는
+      판단은 추가정보가 없어도 성립할 수 있고, 무관까지 HOLD로 만들면 대시보드가
+      보류로 가득 찬다.
+    - `target_reason`(대상 집단 판단 불가)은 **무관도** 강등한다. 대상인지 알 수 없는데
+      '무관'이라고 말하는 것은 근거 없는 확정이기 때문이다. 관련 규제를 놓치는 쪽이
+      보류보다 나쁘다 (NFR-003).
+    """
+    reasons = [*hold_reasons]
+    demotable = {Applicability.APPLICABLE}
+    if target_reason:
+        reasons.append(target_reason)
+        demotable.add(Applicability.NOT_APPLICABLE)
+
+    if not reasons or output.applicability not in demotable:
         return output
 
+    hold_reasons = reasons
     merged = list(dict.fromkeys([*output.missing_context, *hold_reasons]))
     return output.model_copy(
         update={

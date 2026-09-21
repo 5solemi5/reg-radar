@@ -6,7 +6,7 @@ import pytest
 
 from app.domain.context import ChangeContext, ContextPacket, LegalContext, RagContext, UserContext
 from app.domain.enums import Applicability, ChangeType, CompanySize, DocType, ResultStatus
-from app.domain.outputs import ApplicabilityOutput, ChecklistItem, ImpactOutput
+from app.domain.outputs import ApplicabilityOutput, ChecklistItem, ImpactOutput, TargetGroupBasis
 from app.validator.core import validate
 from app.validator.rules import verify_citations
 
@@ -50,6 +50,9 @@ def packet():
 def applicable(**kw) -> ApplicabilityOutput:
     base = dict(
         applicability=Applicability.APPLICABLE,
+        target_group="사용자",
+        target_group_basis=TargetGroupBasis.PROFILE_STATES,
+        profile_evidence="- 업종: IT 서비스",
         reason="상시 30명 이상을 사용하는 사업장이므로 고충처리위원을 두어야 합니다.",
         cited_spans=["고충처리위원을 두어야 한다"],
         confidence=0.9,
@@ -119,6 +122,9 @@ class TestFabricationBlocking:
             p,
             ApplicabilityOutput(
                 applicability=Applicability.APPLICABLE,
+                target_group="사용자",
+                target_group_basis=TargetGroupBasis.PROFILE_STATES,
+                profile_evidence="- 업종: IT 서비스",
                 reason="제10조에 따른 사업장에 해당합니다.",
                 cited_spans=["제10조에 따른 사업장에 적용한다"],
                 confidence=0.8,
@@ -177,6 +183,9 @@ class TestSubstantiation:
             packet,
             ApplicabilityOutput(
                 applicability=Applicability.NOT_APPLICABLE,
+                target_group="사용자",
+                target_group_basis=TargetGroupBasis.PROFILE_STATES,
+                profile_evidence="- 업종: IT 서비스",
                 reason="이 조문은 사업장 규모와 무관한 내용입니다.",
                 cited_spans=[],
                 confidence=0.7,
@@ -189,6 +198,9 @@ class TestSubstantiation:
             packet,
             ApplicabilityOutput(
                 applicability=Applicability.HOLD,
+                target_group="사용자",
+                target_group_basis=TargetGroupBasis.PROFILE_STATES,
+                profile_evidence="- 업종: IT 서비스",
                 reason="구체 기준이 대통령령에 위임되어 있습니다.",
                 missing_context=["대통령령이 정하는 선임 기준"],
                 cited_spans=[],
@@ -210,8 +222,13 @@ class TestReport:
         out = validate(
             packet,
             ApplicabilityOutput(
-                applicability=Applicability.HOLD, reason="정보 부족",
-                missing_context=["상시근로자 수"], confidence=0.4,
+                applicability=Applicability.HOLD,
+                target_group="사용자",
+                target_group_basis=TargetGroupBasis.PROFILE_STATES,
+                profile_evidence="- 업종: IT 서비스",
+                reason="정보 부족",
+                missing_context=["상시근로자 수"],
+                confidence=0.4,
             ),
         )
         assert out.report.downgraded_to_hold

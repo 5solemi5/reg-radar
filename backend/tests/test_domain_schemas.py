@@ -13,6 +13,7 @@ from app.domain.outputs import (
     ApplicabilityOutput,
     ImpactOutput,
     TargetExtractionOutput,
+    TargetGroupBasis,
     assert_no_forbidden_fields,
 )
 
@@ -51,12 +52,20 @@ class TestHoldRule:
     def test_HOLD는_missing_context가_필수(self):
         with pytest.raises(ValidationError, match="missing_context"):
             ApplicabilityOutput(
-                applicability=Applicability.HOLD, reason="규모 기준 불명", confidence=0.4
+                applicability=Applicability.HOLD,
+                target_group="사용자",
+                target_group_basis=TargetGroupBasis.PROFILE_STATES,
+                profile_evidence="- 업종: IT 서비스",
+                reason="규모 기준 불명",
+                confidence=0.4,
             )
 
     def test_HOLD에_missing_context가_있으면_통과(self):
         out = ApplicabilityOutput(
             applicability=Applicability.HOLD,
+            target_group="사용자",
+            target_group_basis=TargetGroupBasis.PROFILE_STATES,
+            profile_evidence="- 업종: IT 서비스",
             reason="상시근로자 수를 알 수 없음",
             missing_context=["상시근로자 수"],
             confidence=0.4,
@@ -65,7 +74,12 @@ class TestHoldRule:
 
     def test_APPLICABLE은_missing_context_없이_가능(self):
         out = ApplicabilityOutput(
-            applicability=Applicability.APPLICABLE, reason="업종 일치", confidence=0.9
+            applicability=Applicability.APPLICABLE,
+            target_group="사용자",
+            target_group_basis=TargetGroupBasis.PROFILE_STATES,
+            profile_evidence="- 업종: IT 서비스",
+            reason="업종 일치",
+            confidence=0.9,
         )
         assert out.missing_context == []
 
@@ -73,7 +87,12 @@ class TestHoldRule:
     def test_confidence_범위(self, bad):
         with pytest.raises(ValidationError):
             ApplicabilityOutput(
-                applicability=Applicability.NOT_APPLICABLE, reason="x", confidence=bad
+                applicability=Applicability.NOT_APPLICABLE,
+                target_group="사용자",
+                target_group_basis=TargetGroupBasis.PROFILE_STATES,
+                profile_evidence="- 업종: IT 서비스",
+                reason="x",
+                confidence=bad,
             )
 
 

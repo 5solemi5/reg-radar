@@ -14,6 +14,7 @@ from app.ai.chains.c4_mapping import (
     apply_hold_policy,
     deterministic_hold_reasons,
     map_applicability,
+    unverifiable_target_reason,
 )
 from app.ai.chains.c5_impact import generate_impact
 from app.domain.context import ContextPacket
@@ -133,7 +134,12 @@ async def analyze_article(
 
     # 코드가 확정할 수 있는 HOLD 사유를 LLM 판정 위에 덮어쓴다 (AP-03, AP-04, BR-003).
     hold_reasons = deterministic_hold_reasons(packet)
-    applicability = apply_hold_policy(applicability, hold_reasons)
+    applicability = apply_hold_policy(
+        applicability,
+        hold_reasons,
+        # 대상 집단 해당 여부를 프로필로 알 수 없으면 무관도 확정하지 않는다.
+        target_reason=unverifiable_target_reason(applicability, packet),
+    )
 
     # C5. 실무 영향 — 무관 항목에는 생성하지 않는다 (불필요한 서술 = 오탐 표면).
     impact = None
