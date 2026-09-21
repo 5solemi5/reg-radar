@@ -64,6 +64,8 @@ class Metrics:
 
     over_hold_rate: float | None
     hold_explains_itself: float | None
+    hold_recall: float | None
+    hold_precision: float | None
     rag_coverage: float | None
     rag_docs_total: int
     delegated_coverage: float | None
@@ -146,6 +148,15 @@ def compute(outcomes: list[CaseOutcome]) -> Metrics:
     explained = [o for o in predicted_hold if o.missing_context]
     hold_explains = _rate(len(explained), len(predicted_hold))
 
+    # 보류를 '놓치지 않는가(재현율)'와 '헛보류가 아닌가(정밀도)'는 다른 질문이다.
+    # 과도한 보류율만 보면 정밀도만 보는 셈이라, 보류해야 할 것을 확정해 버리는
+    # 반대 방향 실패가 안 보인다. holdout_v2에서 정밀도 100% / 재현율 40%가 나왔다.
+    gold_hold = [o for o in executed if o.gold is Applicability.HOLD]
+    pred_hold = [o for o in executed if o.predicted is Applicability.HOLD]
+    caught = [o for o in gold_hold if o.predicted is Applicability.HOLD]
+    hold_recall = _rate(len(caught), len(gold_hold))
+    hold_precision = _rate(len(caught), len(pred_hold))
+
     # 참고자료가 붙은 케이스 비율. 0건이 정상이므로 '커버리지'로만 본다 (BR-005).
     with_rag = [o for o in executed if o.rag_count > 0]
     rag_coverage = _rate(len(with_rag), len(executed))
@@ -183,6 +194,8 @@ def compute(outcomes: list[CaseOutcome]) -> Metrics:
         q6_forbidden_field_leaks=q6,
         over_hold_rate=over_hold,
         hold_explains_itself=hold_explains,
+        hold_recall=hold_recall,
+        hold_precision=hold_precision,
         rag_coverage=rag_coverage,
         rag_docs_total=rag_docs_total,
         delegated_coverage=delegated_coverage,

@@ -66,6 +66,11 @@ def render(metrics: Metrics, outcomes: list[CaseOutcome], model: str) -> str:
     add(f"{'보류가 해소방법 제시':<26}{'100%':>10}{_pct(metrics.hold_explains_itself):>12}")
     add("")
 
+    recall = _pct(metrics.hold_recall)
+    precision = _pct(metrics.hold_precision)
+    add(f"{'보류 재현율 (놓치지 않는가)':<26}{'높을수록 좋음':>10}{recall:>12}")
+    add(f"{'보류 정밀도 (헛보류 아닌가)':<26}{'높을수록 좋음':>10}{precision:>12}")
+    add("")
     add("── 위임 하위법령 (ADR-025) ──────────────────────────────────────────")
     add(f"{'위임 케이스 중 조문 확보':<26}{'':>10}{_pct(metrics.delegated_coverage):>12}")
     add(f"{'위임 조문 총 건수':<26}{'':>10}{str(metrics.delegated_docs_total) + '건':>12}")

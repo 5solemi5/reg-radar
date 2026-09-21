@@ -1,0 +1,215 @@
+{
+  "dataset_id": "holdout_v2",
+  "created_at": "2026-09-21",
+  "description": "두 번째 홀드아웃. holdout_v1이 소진되어 새로 만들었다.",
+  "purpose": [
+    "holdout_v1은 세 번 실행됐고 ADR-025~027 설계에 그 실패 양상이 반영됐다. 더 이상 미지의 데이터가 아니다.",
+    "v1의 약점 둘을 메운다: HOLD 케이스가 2건뿐이라 보류 '정밀도'를 못 쟀고, 법률↔시행령 페어링이 처음 보는 법령에서도 되는지 확인하지 못했다."
+  ],
+  "rules": [
+    "이 데이터셋의 결과를 보고 프롬프트를 수정하지 않는다. 수정하는 순간 홀드아웃이 아니게 된다.",
+    "라벨은 실행 전에 확정했다. 결과를 보고 라벨을 바꾸지 않는다.",
+    "개발셋(applicability_v1)과도, holdout_v1과도 법령이 겹치지 않는다.",
+    "실행 횟수를 세어 기록한다. 의사결정에 두세 번 쓰면 holdout_v3를 만든다."
+  ],
+  "labeling_policy": [
+    "gold_applicability는 '이 시스템이 주어진 입력으로 내려야 하는 판정'이다. 시스템이 실제로 무엇을 내는지와 무관하게 조문을 읽고 정했다.",
+    "적용을 가르는 핵심 기준이 조문 밖에 있고 확인할 수 없으면 HOLD (ADR-011).",
+    "위임이 방법·절차·비율·예외 사유 등 부수적 사항이면 HOLD 사유가 아니다.",
+    "조문에 규모 기준이 없으면 사용자 인원이 미상이어도 HOLD가 아니다.",
+    "사용자가 값 하나를 더 주면 풀리는 상태만 HOLD다. 대상 집단이 아니면 NOT_APPLICABLE이다."
+  ],
+  "design_notes": [
+    "HOLD 5건: 인원 미상 2건(규모 기준 있는 조문), 사업 형태 미상 3건(원사업자·통신판매업자 해당 여부).",
+    "위임이 있으면서 정답이 APPLICABLE인 케이스 8건 — v1에서 5/5 전부 틀렸던 유형이다.",
+    "규모 기준을 '배제 단서'로 쓰는 조문(근로자참여법 제4조)을 넣었다. 적용 조건과 방향이 반대여서 ADR-028 이전에는 80인 회사를 놓쳤을 형태다.",
+    "의료 프로필에 약사법·전자상거래법·하도급법을 물려 '업종이 비슷해 보이면 적용'이라는 오판을 시험한다."
+  ],
+  "profiles": {
+    "it_hr": {
+      "label": "80인 IT기업 HR 실무자 (개발셋과 동일)",
+      "job": "HR 담당자 (채용·근태·취업규칙)",
+      "industry": "IT 서비스",
+      "company_size": "MEDIUM",
+      "employee_count": 80,
+      "interests": ["노동", "근로계약"]
+    },
+    "solo_commerce": {
+      "label": "4인 온라인 생활용품 쇼핑몰 대표 (개발셋과 동일)",
+      "job": "쇼핑몰 운영·총무",
+      "industry": "이커머스 소매",
+      "company_size": "MICRO",
+      "employee_count": 4,
+      "interests": ["개인정보", "노동"]
+    },
+    "mfg_ops_150": {
+      "label": "150인 제조기업 운영팀장 (개발셋과 동일)",
+      "job": "운영·경영지원 팀장",
+      "industry": "제조",
+      "company_size": "MEDIUM",
+      "employee_count": 150,
+      "interests": ["안전", "노동"]
+    },
+    "mfg_ops_unknown": {
+      "label": "제조기업 운영팀장 (상시근로자 수 미입력)",
+      "job": "운영·경영지원 팀장",
+      "industry": "제조",
+      "company_size": "MEDIUM",
+      "employee_count": null,
+      "interests": ["안전", "노동"]
+    },
+    "clinic_admin": {
+      "label": "15인 의원 행정실장 (holdout_v1과 동일)",
+      "job": "의원 행정·총무",
+      "industry": "의료",
+      "company_size": "SMALL",
+      "employee_count": 15,
+      "interests": ["노동·인사"]
+    }
+  },
+  "cases": [
+    {
+      "id": "J01", "law_name": "근로자참여 및 협력증진에 관한 법률", "article_no": "제4조",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expected_action_grade": ["ACTION", "DECISION", "AWARENESS"],
+      "expects_delegation": false,
+      "note": "노사협의회 설치 의무. '상시 30명 미만은 그러하지 아니하다'는 배제 단서이므로 80명은 배제되지 않는다. 배제 단서를 적용 조건으로 오독하면 정확히 거꾸로 나온다 (ADR-028)."
+    },
+    {
+      "id": "J02", "law_name": "근로자참여 및 협력증진에 관한 법률", "article_no": "제4조",
+      "profile": "solo_commerce", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": false,
+      "note": "4명은 상시 30명 미만이므로 배제 단서에 해당한다. 규모만으로 확정되므로 보류가 아니다."
+    },
+    {
+      "id": "J03", "law_name": "근로자참여 및 협력증진에 관한 법률", "article_no": "제4조",
+      "profile": "mfg_ops_unknown", "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "근로자",
+      "expects_delegation": false,
+      "note": "규모 기준은 있는데 상시근로자 수가 미상. 값 하나로 풀리는 보류."
+    },
+    {
+      "id": "J04", "law_name": "장애인고용촉진 및 직업재활법", "article_no": "제28조",
+      "profile": "mfg_ops_150", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "상시 50명 이상 사업주의 장애인 고용 의무. 150명은 충족. 위임된 것은 의무고용률(몇 %)이지 적용 여부가 아니다."
+    },
+    {
+      "id": "J05", "law_name": "장애인고용촉진 및 직업재활법", "article_no": "제28조",
+      "profile": "solo_commerce", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "4명은 상시 50명 이상 기준 미충족. 위임이 있어도 규모 미달이면 무관이다."
+    },
+    {
+      "id": "J06", "law_name": "장애인고용촉진 및 직업재활법", "article_no": "제28조",
+      "profile": "mfg_ops_unknown", "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "근로자",
+      "expects_delegation": true,
+      "note": "규모 기준이 있는데 인원 미상. 위임이 아니라 사용자 정보가 없어서 보류다."
+    },
+    {
+      "id": "J07", "law_name": "고용상 연령차별금지 및 고령자고용촉진에 관한 법률", "article_no": "제19조",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "정년 60세 이상 의무. 위임도 규모 조건도 없고 대상은 모든 사업주다."
+    },
+    {
+      "id": "J08", "law_name": "고용상 연령차별금지 및 고령자고용촉진에 관한 법률", "article_no": "제19조",
+      "profile": "solo_commerce", "gold_applicability": "APPLICABLE",
+      "expects_delegation": false,
+      "note": "소규모 사업장이라는 이유로 무관 처리하면 오답이다. 조문에 규모 조건이 없다."
+    },
+    {
+      "id": "J09", "law_name": "기간제 및 단시간근로자 보호 등에 관한 법률", "article_no": "제4조",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "2년 초과 사용 금지 원칙은 조문에 명확하다. 위임된 것은 예외 사유(제1항 제5호·제6호)이지 원칙의 적용 여부가 아니다."
+    },
+    {
+      "id": "J10", "law_name": "기간제 및 단시간근로자 보호 등에 관한 법률", "article_no": "제4조",
+      "profile": "mfg_ops_unknown", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "회귀 확인: 조문에 규모 기준이 없으므로 인원이 미상이어도 보류할 이유가 없다."
+    },
+    {
+      "id": "J11", "law_name": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률", "article_no": "제18조의2",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "배우자 출산전후휴가 20일 부여 의무. 규모 조건이 없고 위임은 급여 관련 부수 사항이다."
+    },
+    {
+      "id": "J12", "law_name": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률", "article_no": "제22조의2",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "가족돌봄휴직 허용 의무. 단서의 예외 사유가 대통령령에 위임돼 있으나 허용 의무 자체는 조문에 명확하다. 예외가 위임됐다는 이유로 원칙을 보류하면 안 된다."
+    },
+    {
+      "id": "J13", "law_name": "고용보험법", "article_no": "제8조",
+      "profile": "it_hr", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "'근로자를 사용하는 모든 사업에 적용한다'가 원칙이다. 단서의 적용제외 사업은 대통령령에 위임돼 있지만 시행령 제2조의 목록(농림어업 소규모·소액 건설공사 등)에 IT 서비스는 없다."
+    },
+    {
+      "id": "J14", "law_name": "중대재해 처벌 등에 관한 법률", "article_no": "제4조",
+      "profile": "mfg_ops_150", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "사업주·경영책임자의 안전보건 확보의무. 위임된 것은 조치의 '구체적인 사항'이지 의무의 적용 여부가 아니다. 150인 제조업은 제3조의 5명 미만 제외에도 걸리지 않는다."
+    },
+    {
+      "id": "J15", "law_name": "하도급거래 공정화에 관한 법률", "article_no": "제3조",
+      "profile": "mfg_ops_150", "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "위탁",
+      "expects_delegation": true,
+      "note": "서면 발급 의무는 '원사업자'에게 있다. 제조업체가 제조위탁을 하는지 여부는 프로필에 없다. 위탁 여부 하나를 알면 풀리는 보류다."
+    },
+    {
+      "id": "J16", "law_name": "하도급거래 공정화에 관한 법률", "article_no": "제3조",
+      "profile": "clinic_admin", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "의료업은 제조·수리·건설·용역 위탁을 업으로 하는 사업자가 아니므로 원사업자가 될 수 없다. 대상 집단이 아니면 보류가 아니라 무관이다."
+    },
+    {
+      "id": "J17", "law_name": "전자상거래 등에서의 소비자보호에 관한 법률", "article_no": "제17조",
+      "profile": "solo_commerce", "gold_applicability": "APPLICABLE",
+      "expects_delegation": true,
+      "note": "온라인 쇼핑몰은 통신판매업자다. 청약철회 규정이 직접 적용된다."
+    },
+    {
+      "id": "J18", "law_name": "전자상거래 등에서의 소비자보호에 관한 법률", "article_no": "제17조",
+      "profile": "clinic_admin", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "의원은 통신판매업자가 아니다."
+    },
+    {
+      "id": "J19", "law_name": "하도급거래 공정화에 관한 법률", "article_no": "제3조",
+      "profile": "it_hr", "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "위탁",
+      "expects_delegation": true,
+      "note": "IT 서비스업은 용역위탁의 원사업자가 될 수 있다(소프트웨어 개발 위탁 등). 실제로 위탁을 하는지가 프로필에 없다."
+    },
+    {
+      "id": "J20", "law_name": "전자상거래 등에서의 소비자보호에 관한 법률", "article_no": "제17조",
+      "profile": "it_hr", "gold_applicability": "HOLD",
+      "expected_missing_context_keyword": "통신판매",
+      "expects_delegation": true,
+      "note": "IT 서비스 회사가 소비자에게 직접 재화·용역을 판매하는 통신판매업자인지는 프로필로 알 수 없다. 업종만으로는 확정도 배제도 할 수 없다."
+    },
+    {
+      "id": "J21", "law_name": "약사법", "article_no": "제20조",
+      "profile": "it_hr", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "약국 개설등록 의무는 약사·한약사에게 있다. IT 서비스 HR 담당자는 대상이 아니다."
+    },
+    {
+      "id": "J22", "law_name": "약사법", "article_no": "제20조",
+      "profile": "clinic_admin", "gold_applicability": "NOT_APPLICABLE",
+      "expects_delegation": true,
+      "note": "업종이 의료라고 약사법 약국 조항이 적용되지는 않는다. 의원은 약국이 아니고, 오히려 제5항은 의료기관 구내 약국 개설을 막는다. '비슷한 업종이면 적용'이라는 오판을 시험한다."
+    }
+  ],
+  "known_limitations": [
+    "중대재해처벌법 제4조(J14)는 조문 문언에 규모 조건이 없지만 같은 법 제3조가 상시 5명 미만을 제외한다. 150인 프로필만 사용해 조문 단독 판단으로도 정답이 같도록 했다.",
+    "고용보험법 제8조(J13)는 적용제외 목록이 시행령에 있다. 페어링이 그 조문을 붙이지 못하면 보류가 나올 수 있는데, 그래도 라벨은 법에 따라 APPLICABLE로 두었다. 시스템에 맞춘 라벨은 측정이 아니다.",
+    "HOLD 5건 중 3건이 '사업 형태 미상' 유형이다. 보류 정밀도를 재기에 v1보다는 낫지만 여전히 표본이 작다."
+  ]
+}

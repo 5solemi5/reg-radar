@@ -1,0 +1,396 @@
+{
+  "model": "gpt-4o",
+  "rag": true,
+  "ran_at": "20260921T103444Z",
+  "metrics": {
+    "total": 22,
+    "executed": 22,
+    "errors": 0,
+    "accuracy": 0.6818181818181818,
+    "confusion": {
+      "APPLICABLE": {
+        "APPLICABLE": 6,
+        "HOLD": 5,
+        "NOT_APPLICABLE": 0
+      },
+      "HOLD": {
+        "APPLICABLE": 0,
+        "HOLD": 3,
+        "NOT_APPLICABLE": 2
+      },
+      "NOT_APPLICABLE": {
+        "APPLICABLE": 0,
+        "HOLD": 0,
+        "NOT_APPLICABLE": 6
+      }
+    },
+    "q1_model_citation_accuracy": 0.9333333333333333,
+    "q1_displayed_citation_accuracy": 1.0,
+    "q2_false_positive_rate": 0.0,
+    "q3_action_conversion_rate": 1.0,
+    "q4_recall": 1.0,
+    "q5_delegation_detection": 1.0,
+    "q6_forbidden_field_leaks": 0,
+    "over_hold_rate": 0.29411764705882354,
+    "hold_explains_itself": 1.0,
+    "rag_coverage": 0.2727272727272727,
+    "rag_docs_total": 8,
+    "delegated_coverage": 1.0,
+    "delegated_docs_total": 46,
+    "delegation_hold_rate": 0.4117647058823529,
+    "latency_p50": 7705,
+    "latency_p95": 13222
+  },
+  "cases": [
+    {
+      "id": "J01",
+      "law": "근로자참여 및 협력증진에 관한 법률",
+      "article": "제4조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 6168,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J02",
+      "law": "근로자참여 및 협력증진에 관한 법률",
+      "article": "제4조",
+      "profile": "solo_commerce",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 3009,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J03",
+      "law": "근로자참여 및 협력증진에 관한 법률",
+      "article": "제4조",
+      "profile": "mfg_ops_unknown",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "상시근로자 수"
+      ],
+      "dropped_spans": [],
+      "latency_ms": 5793,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J04",
+      "law": "장애인고용촉진 및 직업재활법",
+      "article": "제28조",
+      "profile": "mfg_ops_150",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [
+        "그 근로자의 총수의 100분의 5의 범위에서 대통령령으로 정하는 비율 이상에 해당하는 장애인을 고용하여야 한다."
+      ],
+      "latency_ms": 6877,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J05",
+      "law": "장애인고용촉진 및 직업재활법",
+      "article": "제28조",
+      "profile": "solo_commerce",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 4872,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J06",
+      "law": "장애인고용촉진 및 직업재활법",
+      "article": "제28조",
+      "profile": "mfg_ops_unknown",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "상시근로자 수"
+      ],
+      "dropped_spans": [
+        "제28조(사업주의 장애인 고용 의무) ① 상시 50명 이상의 근로자를 고용하는 사업주 ... 장애인을 고용하여야 한다."
+      ],
+      "latency_ms": 6800,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J07",
+      "law": "고용상 연령차별금지 및 고령자고용촉진에 관한 법률",
+      "article": "제19조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 6272,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J08",
+      "law": "고용상 연령차별금지 및 고령자고용촉진에 관한 법률",
+      "article": "제19조",
+      "profile": "solo_commerce",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 7724,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J09",
+      "law": "기간제 및 단시간근로자 보호 등에 관한 법률",
+      "article": "제4조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 11526,
+      "rag_count": 2,
+      "error": null
+    },
+    {
+      "id": "J10",
+      "law": "기간제 및 단시간근로자 보호 등에 관한 법률",
+      "article": "제4조",
+      "profile": "mfg_ops_unknown",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 10073,
+      "rag_count": 2,
+      "error": null
+    },
+    {
+      "id": "J11",
+      "law": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률",
+      "article": "제18조의2",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 8839,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J12",
+      "law": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률",
+      "article": "제22조의2",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 12752,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J13",
+      "law": "고용보험법",
+      "article": "제8조",
+      "profile": "it_hr",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 6209,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J14",
+      "law": "중대재해 처벌 등에 관한 법률",
+      "article": "제4조",
+      "profile": "mfg_ops_150",
+      "gold": "APPLICABLE",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 10822,
+      "rag_count": 1,
+      "error": null
+    },
+    {
+      "id": "J15",
+      "law": "하도급거래 공정화에 관한 법률",
+      "article": "제3조",
+      "profile": "mfg_ops_150",
+      "gold": "HOLD",
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "missing_context": [
+        "구체적 기준이 대통령령에 위임되어 조문만으로 확정할 수 없습니다."
+      ],
+      "dropped_spans": [],
+      "latency_ms": 15372,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J16",
+      "law": "하도급거래 공정화에 관한 법률",
+      "article": "제3조",
+      "profile": "clinic_admin",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 8319,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J17",
+      "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+      "article": "제17조",
+      "profile": "solo_commerce",
+      "gold": "APPLICABLE",
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 13222,
+      "rag_count": 1,
+      "error": null
+    },
+    {
+      "id": "J18",
+      "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+      "article": "제17조",
+      "profile": "clinic_admin",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 8118,
+      "rag_count": 1,
+      "error": null
+    },
+    {
+      "id": "J19",
+      "law": "하도급거래 공정화에 관한 법률",
+      "article": "제3조",
+      "profile": "it_hr",
+      "gold": "HOLD",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 7715,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J20",
+      "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+      "article": "제17조",
+      "profile": "it_hr",
+      "gold": "HOLD",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 7705,
+      "rag_count": 1,
+      "error": null
+    },
+    {
+      "id": "J21",
+      "law": "약사법",
+      "article": "제20조",
+      "profile": "it_hr",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 4625,
+      "rag_count": 0,
+      "error": null
+    },
+    {
+      "id": "J22",
+      "law": "약사법",
+      "article": "제20조",
+      "profile": "clinic_admin",
+      "gold": "NOT_APPLICABLE",
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "missing_context": [],
+      "dropped_spans": [],
+      "latency_ms": 5093,
+      "rag_count": 0,
+      "error": null
+    }
+  ]
+}

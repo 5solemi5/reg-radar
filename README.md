@@ -86,7 +86,7 @@ AI가 제시한 조문 인용이 실제 원문에 존재하는 문자열인지 s
 | Backend | FastAPI · Pydantic · LangChain · asyncpg |
 | Data | Supabase (PostgreSQL + Auth) · 법제처 OPEN API |
 | AI | OpenAI (gpt-4o) · Chroma (벡터 검색) |
-| Test | pytest 387 · Playwright E2E 15 |
+| Test | pytest 405 · Playwright E2E 15 |
 
 기본 모델이 `gpt-4o`인 이유는 측정 결과다. `gpt-4o-mini`는 같은 데이터셋에서
 Q4 재현율 60%로 요구사항(≥90%)을 충족하지 못했다.
@@ -125,7 +125,7 @@ Postgres·Supabase 연동과 배포는 [`backend/README.md`](backend/README.md)�
 | [01 기획서](docs/규제변화_AI도우미_MD_문서/01_규제변화_AI도우미_기획서.md) | 문제 정의, 범위, 평가 체계 |
 | [02 페르소나·유스케이스](docs/규제변화_AI도우미_MD_문서/02_사용자_페르소나_유스케이스_정의서.md) | 사용자와 시나리오 |
 | [03 요구사항](docs/규제변화_AI도우미_MD_문서/03_요구사항_정의서.md) | FR·NFR·수용 기준 |
-| [04 아키텍처](docs/규제변화_AI도우미_MD_문서/04_시스템_아키텍처_설계서.md) | 구조와 ADR 29건 |
+| [04 아키텍처](docs/규제변화_AI도우미_MD_문서/04_시스템_아키텍처_설계서.md) | 구조와 ADR 30건 |
 | [05 API 명세](docs/규제변화_AI도우미_MD_문서/05_API_명세서.md) | 엔드포인트와 계약 |
 | [06 데이터 모델](docs/규제변화_AI도우미_MD_문서/06_데이터_모델_ERD.md) | 스키마와 제약 |
 | [07 RAG 설계](docs/규제변화_AI도우미_MD_문서/07_RAG_설계서.md) | 수집·청킹·검색 |

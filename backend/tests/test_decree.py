@@ -214,3 +214,109 @@ class TestIndex:
         )
         index = build_back_reference_index(decree)
         assert set(index) == {"제11조", "제7조"}
+
+
+class TestBasisScopedResolution:
+    """'기준을 담았는가'는 **위임을 이행하는 문장**에서 판단한다.
+
+    조문 전체를 보면 호·목 안의 무관한 별표·고시 참조까지 걸려 기능이 통째로
+    꺼진다. holdout_v2 실측에서 위임 케이스의 41%가 이 때문에 보류로 갔다.
+    """
+
+    PUNTS_IN_BASIS = (
+        "제16조(안전관리자의 선임 등) ① 법 제17조제1항에 따라 안전관리자를 두어야 하는 "
+        "사업의 종류와 사업장의 상시근로자 수, 안전관리자의 수 및 선임방법은 별표 3과 같다."
+    )
+    PUNTS_DEEP_INSIDE = (
+        "제4조(안전보건관리체계의 구축 및 이행 조치) 법 제4조제1항제1호에 따른 조치의 "
+        "구체적인 사항은 다음 각 호와 같다. "
+        "1. 안전ㆍ보건에 관한 목표와 경영방침을 설정할 것 "
+        "2. 별표 1에 해당하는 직업성 질병자가 발생한 경우 재발방지 대책을 수립할 것"
+    )
+
+    def test_근거_문장이_넘기면_미해소(self) -> None:
+        assert not resolves_criterion(self.PUNTS_IN_BASIS, "제17조")
+
+    def test_호_안쪽의_별표는_해소를_막지_않는다(self) -> None:
+        assert resolves_criterion(self.PUNTS_DEEP_INSIDE, "제4조")
+
+    def test_조문_전체를_보면_구분이_사라진다(self) -> None:
+        """왜 문장 단위로 보는지에 대한 증거.
+
+        조문 전체를 한 덩어리로 보면 둘 다 '별표'를 포함해 구분되지 않는다.
+        그러면 기준을 담은 조문까지 미해소로 잡혀 기능이 사실상 꺼진다.
+        """
+        assert "별표" in self.PUNTS_IN_BASIS
+        assert "별표" in self.PUNTS_DEEP_INSIDE
+        # 문장 단위로 보면 갈린다
+        assert not resolves_criterion(self.PUNTS_IN_BASIS, "제17조")
+        assert resolves_criterion(self.PUNTS_DEEP_INSIDE, "제4조")
+
+
+class TestRankingByTitle:
+    """맨 앞 조문이 보류 해제를 결정하므로 순위가 곧 판정이다."""
+
+    def test_제목이_겹치는_조문이_앞에_온다(self) -> None:
+        """실제 실패: 장애인고용법 제28조에 공사 실적액 조문이 1순위로 붙었다.
+
+        참조 수가 같으면 조문번호 순으로 밀려 제24조가 제25조를 앞섰고, 엉뚱한
+        조문의 '별표/고시'로 보류 여부가 결정됐다.
+        """
+        decree = LawSnapshot(
+            law_id="x", law_name="장애인고용촉진 및 직업재활법 시행령",
+            law_type="대통령령",
+            articles=[
+                article(
+                    "제24조", "공사 실적액의 산정 등",
+                    "제24조(공사 실적액의 산정 등) ① 법 제28조제1항에 따른 건설업의 "
+                    "공사 실적액은 고용노동부장관이 고시하는 바에 따른다.",
+                ),
+                article(
+                    "제25조", "사업주의 의무고용률",
+                    "제25조(사업주의 의무고용률) 법 제28조제1항에 따른 장애인 고용의무가 "
+                    "있는 사업주의 의무고용률은 다음 각 호와 같다. 1. 1000분의 33",
+                ),
+            ],
+        )
+        pairs = pair_articles("제28조", "사업주의 장애인 고용 의무", decree)
+        assert pairs[0].article_no == "제25조"
+        assert pairs[0].resolves_criterion is True
+
+
+class TestSelfDefinedReference:
+    """하위법령이 모법을 처음 부를 때는 낫표를 쓴다.
+
+        「파견근로자 보호 등에 관한 법률」(이하 "법"이라 한다) 제5조제1항
+
+    이 형태를 못 읽으면 위임을 이행하는 **첫 문장**을 통째로 건너뛴다. 실제로
+    파견법 시행령 제2조 ①("…란 별표1의 업무를 말한다")을 놓쳐 '기준을 확보했다'고
+    잘못 판단했고, 보류가 풀려 holdout_v1이 회귀했다.
+    """
+
+    TEXT = (
+        "제2조(근로자파견의 대상 및 금지업무) "
+        '①「파견근로자 보호 등에 관한 법률」(이하 "법"이라 한다) 제5조제1항에서 '
+        '"대통령령으로 정하는 업무"란 별표1의 업무를 말한다. '
+        '②법 제5조제3항제5호에서 "대통령령으로 정하는 업무"란 다음 각 호와 같다. 1. 건설공사'
+    )
+
+    def test_낫표_자기정의_참조를_인식한다(self) -> None:
+        assert "제5조" in back_references(self.TEXT)
+
+    def test_별표로_넘기는_항을_놓치지_않는다(self) -> None:
+        """②항만 보면 '각 호와 같다'라 해소로 보인다. ①항이 별표로 넘긴다."""
+        assert not resolves_criterion(self.TEXT, "제5조")
+
+    def test_타법_인용은_여전히_모법으로_보지_않는다(self) -> None:
+        """자기정의 괄호가 없으면 낫표 안은 다른 법이다."""
+        assert back_references("제1조(목적) 「근로기준법」 제50조에 따른") == set()
+
+
+class TestConservativeFallback:
+    def test_근거_문장을_못_찾으면_조문_전체를_본다(self) -> None:
+        """어디가 근거인지 모르겠으면 넓게 본다. 놓치는 것이 보류보다 나쁘다."""
+        text = (
+            "제9조(시설 기준) 시설 기준은 다음과 같다. "
+            "1. 면적은 별표 5에서 정하는 기준에 따를 것"
+        )
+        assert not resolves_criterion(text, "제99조")

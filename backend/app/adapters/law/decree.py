@@ -33,6 +33,19 @@ from app.domain.context import DelegatedContext
 # '이 법'은 하위법령 자기 자신을 뜻하므로 함께 제외한다.
 _BACK_REF = re.compile(r"(?<![가-힣])(?<!이\s)법\s*제\s*(\d+)\s*조(?:\s*의\s*(\d+))?")
 
+# 하위법령이 모법을 처음 부를 때 쓰는 형태.
+#   「파견근로자 보호 등에 관한 법률」(이하 "법"이라 한다) 제5조제1항
+# 낫표가 끼어 있어 위 _BACK_REF가 잡지 못한다. 그런데 바로 이 자리가 위임을
+# 이행하는 첫 문장인 경우가 많다. 실제로 파견법 시행령 제2조 ①("…란 별표1의
+# 업무를 말한다")을 놓쳐 '기준을 확보했다'고 잘못 판단했다.
+#
+# '(이하 "법"이라 한다)'가 붙은 경우에만 인정한다. 그 괄호가 곧 "이 낫표 안이
+# 모법이다"라는 선언이므로, 「근로기준법」 같은 타법 인용과 섞이지 않는다.
+_SELF_DEFINED_REF = re.compile(
+    r"「[^」]{2,60}」\s*\(\s*이하\s*[\"\u201c\u201d']?\s*법\s*[\"\u201c\u201d']?\s*이라\s*한다\s*\)"
+    r"\s*제\s*(\d+)\s*조(?:\s*의\s*(\d+))?"
+)
+
 # 조문 첫머리의 "제31조(제목)" 부분. 근거 절을 재기 전에 떼어낸다.
 _ARTICLE_HEAD = re.compile(r"^\s*제\s*\d+\s*조(?:\s*의\s*\d+)?\s*(?:\([^)]*\))?\s*")
 
@@ -108,8 +121,15 @@ def back_references(text: str, *, basis_only: bool = True) -> set[str]:
     """
     if not text:
         return set()
+    def found_in(chunk: str) -> set[str]:
+        return {
+            _normalize_ref(m.group(1), m.group(2))
+            for pattern in (_BACK_REF, _SELF_DEFINED_REF)
+            for m in pattern.finditer(chunk)
+        }
+
     if not basis_only:
-        return {_normalize_ref(m.group(1), m.group(2)) for m in _BACK_REF.finditer(text)}
+        return found_in(text)
 
     body = _ARTICLE_HEAD.sub("", text, count=1)
     # 항이 없으면(제1항만 있는 조문) 본문 전체가 하나의 항이다.
@@ -120,18 +140,50 @@ def back_references(text: str, *, basis_only: bool = True) -> set[str]:
     refs: set[str] = set()
     for start in starts:
         clause = body[start : start + BASIS_WINDOW]
-        for m in _BACK_REF.finditer(clause):
-            refs.add(_normalize_ref(m.group(1), m.group(2)))
+        refs |= found_in(clause)
     return refs
 
 
-def resolves_criterion(text: str) -> bool:
+_SENTENCE_SPLIT = re.compile(r"(?<=다\.)\s+|[①-⑳]|\n")
+
+
+def _basis_sentences(text: str, parent_article_no: str | None) -> list[str]:
+    """모법을 근거로 대는 문장만 골라낸다.
+
+    하위법령 조문은 길고, 호·목 안에는 이 위임과 무관한 별표·고시 참조가 흔하다.
+    위임이 해소됐는지는 **위임을 이행하는 문장**에서 봐야 한다.
+    """
+    segments = [s for s in _SENTENCE_SPLIT.split(text) if s and s.strip()]
+    matched = [
+        s for s in segments
+        if (parent_article_no in back_references(s, basis_only=False))
+        if parent_article_no
+    ]
+    if matched:
+        return matched
+    # 근거 문장을 특정하지 못하면 조문 전체를 본다.
+    #
+    # 첫 문장만 보게 했더니 조문제목만 훑고 "기준 있음"으로 통과했다. 파견법
+    # 시행령 제2조가 그랬다 — 정작 별표로 넘기는 ①항을 못 보고 보류가 풀렸다.
+    # 어디가 근거인지 모르겠으면 넓게 보는 쪽이 안전하다. 놓치는 것이 보류보다
+    # 나쁘기 때문이다 (NFR-003).
+    return segments or [text]
+
+
+def resolves_criterion(text: str, parent_article_no: str | None = None) -> bool:
     """이 하위법령 조문이 기준을 실제로 담고 있는가.
 
     "별표 3과 같다"로 넘기면 기준은 별표에 있고 별표는 조문 본문에 딸려 오지
     않는다. 산업안전보건법 제17조에서 실제로 이 일이 났다 — 시행령 제16조를
     붙였더니 모델이 "별표 3"만 보고 150인 제조업을 무관으로 판정했다. 보류보다
     나쁜 결과다. 기준을 못 담은 조문은 확보하지 못한 것으로 친다.
+
+    **위임을 이행하는 문장만 본다.** 조문 전체를 보면 호·목 안의 무관한 별표·고시
+    참조까지 걸려 기능이 통째로 꺼진다. 실측에서 그렇게 됐다 — 중대재해처벌법
+    시행령 제4조는 "법 제4조제1항제1호에 따른 조치의 구체적인 사항은 다음 각 호와
+    같다"로 기준을 **담고 있는데**, 한참 뒤 호 안의 "별표 1" 때문에 미해소로 잡혔다.
+    반면 산업안전보건법 시행령 제16조는 근거 문장 자체가 "…상시근로자 수는 별표
+    3과 같다"이므로 여전히 미해소다. 이 차이를 문장 단위로 가른다.
 
     따옴표 안은 먼저 지운다. 하위법령이 위임을 이행하는 전형적인 문장이
     `법 제31조제8항에서 "대통령령으로 정하는 공동의 사업"이란 ...`인데, 여기서
@@ -140,8 +192,10 @@ def resolves_criterion(text: str) -> bool:
     """
     if not text:
         return False
-    stripped = _QUOTED.sub(" ", text)
-    return not _STILL_UNRESOLVED.search(stripped)
+    for sentence in _basis_sentences(text, parent_article_no):
+        if _STILL_UNRESOLVED.search(_QUOTED.sub(" ", sentence)):
+            return False
+    return True
 
 
 def build_back_reference_index(decree: LawSnapshot) -> dict[str, list[LawArticle]]:
@@ -156,6 +210,24 @@ def build_back_reference_index(decree: LawSnapshot) -> dict[str, list[LawArticle
         for ref in back_references(article.original_text):
             index.setdefault(ref, []).append(article)
     return index
+
+
+def _bigrams(text: str | None) -> set[str]:
+    cleaned = re.sub(r"[^가-힣A-Za-z0-9]", "", text or "")
+    return {cleaned[i : i + 2] for i in range(len(cleaned) - 1)}
+
+
+def _title_overlap(parent_title: str | None, decree_title: str | None) -> float:
+    """조문제목이 얼마나 같은 주제를 가리키는지 (자카드 유사도).
+
+    형태소 분석 없이 글자 2-gram으로 잰다. "사업주의 장애인 고용 의무"와
+    "사업주의 의무고용률"은 겹치고 "공사 실적액의 산정 등"은 겹치지 않는다.
+    이 정도면 1순위를 고르는 데 충분하고, 사전이나 외부 의존성도 필요 없다.
+    """
+    a, b = _bigrams(parent_title), _bigrams(decree_title)
+    if not a or not b:
+        return 0.0
+    return len(a & b) / len(a | b)
 
 
 def pair_articles(
@@ -179,12 +251,22 @@ def pair_articles(
     """
     index = build_back_reference_index(decree)
 
-    # 참조하는 모법 조문이 적을수록 그 조문에 관한 규정일 가능성이 높다.
-    # 최저임금법 시행령 제11조는 법 제6조·제7조·제10조·제11조를 한꺼번에 참조하므로
-    # 제6조를 조회할 때 제5조의2(법 제6조만 참조)보다 뒤에 와야 한다.
+    # 어느 것이 '그 위임을 이행하는 조문'인지 정하는 순서다. 맨 앞 조문으로 보류
+    # 해제를 결정하므로 순서가 곧 판정을 바꾼다.
+    #
+    #   1. 조문제목이 모법 조문제목과 겹칠수록 앞. 장애인고용법 제28조(사업주의
+    #      장애인 고용 의무)를 조회하면 시행령 제25조(사업주의 의무고용률)가
+    #      제24조(공사 실적액의 산정 등)보다 먼저 와야 하는데, 참조 수가 같아
+    #      조문번호 순으로 밀려 제24조가 1순위였다. 엉뚱한 조문으로 보류 여부를
+    #      결정하고 있었다.
+    #   2. 참조하는 모법 조문이 적을수록 앞 (그 조문 전용 규정일 가능성이 높다).
     by_specificity = sorted(
         index.get(parent_article_no, []),
-        key=lambda a: (len(back_references(a.original_text)), a.article_no),
+        key=lambda a: (
+            -_title_overlap(parent_article_title, a.article_title),
+            len(back_references(a.original_text)),
+            a.article_no,
+        ),
     )
     matched: list[tuple[LawArticle, str]] = [
         (article, "back_reference") for article in by_specificity
@@ -210,7 +292,9 @@ def pair_articles(
             original_text=article.original_text,
             source_url=decree.source_url,
             matched_by=matched_by,
-            resolves_criterion=resolves_criterion(article.original_text),
+            resolves_criterion=resolves_criterion(
+                article.original_text, parent_article_no
+            ),
         )
         for article, matched_by in matched[:limit]
     ]
