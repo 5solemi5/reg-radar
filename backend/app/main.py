@@ -66,6 +66,24 @@ async def report_rag_index(settings: Settings) -> int:
     BR-005에 따라 그것이 '정상 상태'로 조용히 처리된다. 즉 설정 실수를
     알아챌 방법이 로그밖에 없다.
     """
+    if settings.postgres_enabled:
+        from app.repositories.db import get_database
+        from app.repositories.schema_state import pending_migrations
+
+        db = get_database(settings)
+        if db.is_connected:
+            pending = await pending_migrations(db)
+            if pending:
+                # 여기서 직접 적용하지는 않는다. 기동 중 마이그레이션은 실패하면
+                # 서비스를 못 뜨게 만들고, 인스턴스가 여럿이면 서로 경쟁한다.
+                logger.warning(
+                    "적용되지 않은 마이그레이션 %d건: %s — "
+                    "`python scripts/migrate.py`를 실행하십시오. "
+                    "스키마가 코드보다 뒤처진 상태로 동작 중입니다.",
+                    len(pending),
+                    ", ".join(pending),
+                )
+
     if not settings.rag_enabled:
         logger.info("RAG 비활성 — 참고자료 없이 동작합니다")
         return 0

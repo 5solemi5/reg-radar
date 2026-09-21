@@ -16,6 +16,13 @@ class HealthOut(BaseModel):
     auth_mode: str
     storage: str
     database_connected: bool
+    pending_migrations: list[str] = Field(
+        default_factory=list,
+        description=(
+            "파일로는 있는데 DB에 적용되지 않은 마이그레이션. "
+            "비어 있지 않으면 스키마가 코드보다 뒤처져 있다."
+        ),
+    )
     rag_enabled: bool = Field(..., description="설정 플래그(RAG_ENABLED)")
     rag_operational: bool = Field(
         ..., description="실제로 참고자료 검색이 가능한 상태인지. 플래그와 별개다."
@@ -35,6 +42,14 @@ async def health(settings: Settings = Depends(get_settings)) -> HealthOut:
     from app.repositories.db import get_database
 
     connected = settings.postgres_enabled and get_database(settings).is_connected
+
+    # 무료 호스팅은 pre-deploy를 지원하지 않아 마이그레이션이 자동으로 돌지 않는다.
+    # 그 사실이 조용하면 새 칼럼을 읽는 순간에야 드러난다. 여기서 먼저 말한다.
+    pending: list[str] = []
+    if connected:
+        from app.repositories.schema_state import pending_migrations
+
+        pending = await pending_migrations(get_database(settings))
 
     # 인덱스가 비어 있으면 참고자료가 항상 0건이 된다. 설정 실수를 알아챌 수
     # 있도록 노출한다 (BR-005는 0건을 정상으로 처리하므로 조용히 묻힌다).
@@ -60,6 +75,7 @@ async def health(settings: Settings = Depends(get_settings)) -> HealthOut:
         auth_mode=settings.auth_mode,
         storage=settings.storage,
         database_connected=connected,
+        pending_migrations=pending,
         rag_enabled=settings.rag_enabled,
         rag_operational=operational,
         rag_indexed_chunks=indexed,

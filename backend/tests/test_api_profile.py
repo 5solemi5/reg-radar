@@ -104,3 +104,54 @@ class TestHealth:
         assert body["llm_configured"] is True
         # 키 값 자체가 응답에 없어야 한다 (NFR-008)
         assert "testoc" not in r.text and "test-key" not in r.text
+
+
+class TestPendingMigrationDetection:
+    """무료 호스팅은 pre-deploy를 지원하지 않아 마이그레이션이 자동으로 돌지 않는다.
+
+    그 사실이 조용하면 스키마가 코드보다 뒤처진 채 서비스가 정상인 척 뜨고,
+    새 칼럼을 읽는 순간 UndefinedColumnError로 처음 드러난다.
+    """
+
+    async def test_추적_테이블이_없으면_전부_미적용으로_본다(self):
+        from app.repositories.schema_state import migration_filenames, pending_migrations
+
+        class NoTable:
+            async def fetch(self, *_):
+                raise RuntimeError('relation "schema_migrations" does not exist')
+
+        assert await pending_migrations(NoTable()) == migration_filenames()
+
+    async def test_모두_적용됐으면_빈_목록(self):
+        from app.repositories.schema_state import migration_filenames, pending_migrations
+
+        class AllApplied:
+            async def fetch(self, *_):
+                return [{"filename": n} for n in migration_filenames()]
+
+        assert await pending_migrations(AllApplied()) == []
+
+    async def test_누락된_것만_돌려준다(self):
+        from app.repositories.schema_state import migration_filenames, pending_migrations
+
+        names = migration_filenames()
+        assert len(names) >= 2, "이 테스트는 마이그레이션이 2개 이상이어야 의미가 있다"
+
+        class PartiallyApplied:
+            async def fetch(self, *_):
+                return [{"filename": n} for n in names[:-1]]
+
+        assert await pending_migrations(PartiallyApplied()) == [names[-1]]
+
+    async def test_조회_실패는_빈_목록으로_흡수한다(self):
+        """이 정보 때문에 헬스 체크가 죽으면 안 된다.
+
+        없는 것을 있다고 말하는 쪽이 모르는 것보다 나쁘다.
+        """
+        from app.repositories.schema_state import pending_migrations
+
+        class Broken:
+            async def fetch(self, *_):
+                raise RuntimeError("연결이 끊겼습니다")
+
+        assert await pending_migrations(Broken()) == []
