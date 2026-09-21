@@ -20,6 +20,19 @@
 
 ---
 
+
+## 배포
+
+| | 주소 |
+|---|---|
+| 서비스 | https://reg-radar-brown.vercel.app |
+| API | https://reg-radar-api.onrender.com/api/v1 |
+| 상태 확인 | https://reg-radar-api.onrender.com/api/v1/health |
+
+무료 호스팅이라 15분간 요청이 없으면 백엔드가 잠듭니다. 첫 요청은 30~60초
+걸리며, 화면이 그 사실을 배너로 알립니다. 자세한 구성은
+[08 배포/운영 가이드](docs/규제변화_AI도우미_MD_문서/08_배포_운영_가이드.md)에 있습니다.
+
 ## 이 프로젝트가 다르게 한 것
 
 ### 1. AI가 법령 사실을 만들 수 없다 — 구조로 막았다
