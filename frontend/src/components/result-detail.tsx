@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { ActionGradeChip, ApplicabilityChip, Button, Card, SectionTitle, Spinner, StateMessage } from "@/components/ui";
 import { api } from "@/lib/api";
+import type { ReferenceEvidence } from "@/lib/schemas";
 import {
   ACTION_GRADE_META,
   APPLICABILITY_META,
@@ -202,18 +203,13 @@ export function ResultDetail({ resultId }: { resultId: string }) {
             >
               {evidence.data.reference_evidence.length === 0 ? (
                 <p className="text-sm text-slate-500">
-                  관련 참고자료를 찾지 못했습니다. (참고자료 검색은 다음 단계에서 연결됩니다.)
+                  관련 참고자료를 찾지 못했습니다. 조문만으로 판단했다는 뜻이며,
+                  없는 출처를 지어내지 않습니다.
                 </p>
               ) : (
-                <ul className="space-y-3">
+                <ul className="space-y-2">
                   {evidence.data.reference_evidence.map((doc) => (
-                    <li key={doc.doc_id} className="text-sm">
-                      <p className="font-medium">{doc.title ?? doc.source}</p>
-                      <p className="text-xs text-slate-500">
-                        {[doc.agency, doc.doc_type, doc.published_at].filter(Boolean).join(" · ")}
-                      </p>
-                      <p className="mt-1 text-slate-600 dark:text-slate-400">{doc.snippet}</p>
-                    </li>
+                    <ReferenceItem key={doc.doc_id} doc={doc} />
                   ))}
                 </ul>
               )}
@@ -295,6 +291,53 @@ export function ResultDetail({ resultId }: { resultId: string }) {
         )}
       </section>
     </article>
+  );
+}
+
+const DOC_TYPE_LABEL: Record<string, string> = {
+  INTERPRETATION: "법령해석례",
+  GUIDE: "행정규칙",
+  CASE: "판례",
+  FAQ: "FAQ",
+  PRESS: "보도자료",
+};
+
+/**
+ * 참고자료 1건.
+ *
+ * 기본은 접어 둔다. 참고자료는 보조 정보인데 본문이 길어 펼쳐 두면 법적 근거보다
+ * 화면을 크게 차지한다. 어떤 문서인지(기관·유형·일자)는 접힌 상태에서도 보인다.
+ */
+function ReferenceItem({ doc }: { doc: ReferenceEvidence }) {
+  return (
+    <li>
+      <details className="group rounded-lg border border-slate-200 dark:border-slate-800">
+        <summary className="cursor-pointer list-none p-3 text-sm">
+          <span className="font-medium group-open:block">{doc.title ?? doc.source}</span>
+          <span className="mt-1 block text-xs text-slate-500">
+            {[
+              doc.agency,
+              DOC_TYPE_LABEL[doc.doc_type] ?? doc.doc_type,
+              doc.published_at,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+            <span className="ml-2 text-slate-400 group-open:hidden">· 펼쳐 보기</span>
+          </span>
+        </summary>
+        <div className="border-t border-slate-200 p-3 text-sm leading-relaxed text-slate-600 dark:border-slate-800 dark:text-slate-400">
+          <p className="whitespace-pre-wrap">{doc.snippet}</p>
+          <a
+            href={doc.source}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-block text-xs font-medium text-sky-700 hover:underline dark:text-sky-400"
+          >
+            법제처에서 원문 보기 ↗
+          </a>
+        </div>
+      </details>
+    </li>
   );
 }
 

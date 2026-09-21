@@ -49,6 +49,7 @@ cp .env.example .env     # LAW_API_OC, OPENAI_API_KEY 입력
 | `app/repositories/` | 저장소 Protocol + 인메모리/Postgres 구현 | NFR-011 |
 | `migrations/` | DB 스키마·RLS. 도메인 규칙을 제약으로 이중화 | BR-003, BR-007, FR-003 |
 | `app/services/analysis_runner.py` | 분석 orchestration: 수집 → 분석 → 저장 | 04 §5-2 |
+| `app/rag/` | 참고자료 수집·청킹·임베딩·검색 | FR-013, BR-004~005 |
 | `evaluation/` | 평가 데이터셋·지표·리포트 ([README](evaluation/README.md)) | 기획서 §11 |
 
 ## 설계상 지켜지는 불변식
@@ -119,6 +120,20 @@ Supabase도 Postgres이므로 같은 마이그레이션을 쓴다. 상세는
 
 `APP_ENV=production` + `AUTH_MODE=dev` 조합은 앱 기동 자체를 거부한다 — dev 모드는
 헤더를 그대로 믿으므로 운영에서는 인증이 없는 것과 같다.
+
+### 참고자료(RAG) 인덱스
+
+```bash
+.venv/bin/python scripts/ingest_rag.py            # 기본 검색어로 수집·색인
+.venv/bin/python scripts/ingest_rag.py --status   # 인덱스 현황
+```
+
+법제처의 법령해석례(`expc`)·행정규칙(`admrul`)·판례(`prec`)를 수집한다. 정부
+사이트를 스크래핑하지 않는 이유와 검색 설계는
+`docs/규제변화_AI도우미_MD_문서/07_RAG_설계서.md` 참조.
+
+`RAG_ENABLED=false`(기본값)이면 참고자료 없이 동작한다. **참고자료 없음은
+오류가 아니라 정상 상태다** (BR-005).
 
 ### 저장소 테스트
 

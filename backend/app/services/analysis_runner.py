@@ -29,6 +29,7 @@ from app.domain.context import ContextPacket
 from app.domain.entities import Analysis, Profile, ResultCounts
 from app.domain.enums import ActionGrade, AnalysisStatus, Applicability, ResultStatus
 from app.domain.result import AnalysisResult
+from app.rag.retriever import NullRetriever
 from app.repositories.base import (
     AnalysisRepository,
     ResultRepository,
@@ -96,6 +97,7 @@ class AnalysisRunner:
         settings: Settings | None = None,
         llm_gateway: LlmGateway | None = None,
         client_factory=None,
+        retriever=None,
     ):
         self.analysis_repo = analysis_repo
         self.result_repo = result_repo
@@ -105,6 +107,26 @@ class AnalysisRunner:
         self._client_factory = client_factory or (
             lambda: LawApiClient(settings=self.settings)
         )
+        # RAG가 꺼져 있거나 인덱스가 없으면 참고자료 없이 분석한다 (BR-005).
+        self._retriever = retriever or self._build_retriever()
+
+    def _build_retriever(self):
+        if not self.settings.rag_enabled:
+            return NullRetriever()
+        try:
+            from app.rag.embeddings import OpenAIEmbedder
+            from app.rag.retriever import Retriever
+            from app.rag.store import build_store
+
+            return Retriever(
+                OpenAIEmbedder(self.settings),
+                build_store(self.settings),
+                top_k=self.settings.rag_top_k,
+            )
+        except Exception as exc:
+            # 참고자료는 없어도 분석이 성립한다. 구성 실패로 분석을 막지 않는다.
+            logger.warning("RAG 구성 실패 — 참고자료 없이 동작합니다: %s", exc)
+            return NullRetriever()
 
     # ── 법령 수집 ─────────────────────────────────────────────────────
 
@@ -194,7 +216,7 @@ class AnalysisRunner:
 
     # ── 조문 분석 ─────────────────────────────────────────────────────
 
-    def build_packets(
+    async def build_packets(
         self, item: LawWorkItem, profile: Profile
     ) -> list[tuple[str, ContextPacket]]:
         """변경 조문을 AI 입력 packet으로 바꾼다. (조문번호, packet) 목록."""
@@ -210,18 +232,22 @@ class AnalysisRunner:
                 )
                 continue
 
+            legal = item.snapshot.to_legal_context(changed.article_no)
+            # 참고자료 검색 실패는 빈 목록으로 흡수된다 (BR-005).
+            rag = await self._retriever.retrieve(legal, user_context)
+
             packets.append((
                 changed.article_no,
                 ContextPacket(
                     user=user_context,
-                    law=item.snapshot.to_legal_context(changed.article_no),
+                    law=legal,
                     change=change_from_official_marks(
                         before_text=changed.old_text,
                         after_text=changed.new_text,
                         additions=changed.additions,
                         deletions=changed.deletions,
                     ),
-                    rag=[],  # W5에서 Retriever 연결
+                    rag=rag,
                 ),
             ))
         return packets
@@ -276,7 +302,7 @@ class AnalysisRunner:
 
         # 법령을 번갈아 가며 조문을 뽑아 총량 상한을 채운다. 한 법령이 상한을
         # 독식하면 다른 법령의 변화는 아예 보이지 않는다.
-        per_law = [self.build_packets(item, profile) for item in items]
+        per_law = [await self.build_packets(item, profile) for item in items]
         packets: list[tuple[str, ContextPacket]] = []
         for index in range(MAX_ARTICLES_PER_ANALYSIS):
             added = False

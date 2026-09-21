@@ -228,4 +228,16 @@ class LawPortalLoader:
                 documents.extend(await coroutine)
             except LawApiError as exc:
                 logger.info("%s 수집 실패 query=%s: %s", label, query, exc)
-        return [d for d in documents if d.is_usable]
+
+        # 수집 검색어를 관련 법령에 넣는다. 판례 제목은 「」로 법령을 인용하지
+        # 않아(예: '개인정보보호법위반[...]') 본문 추출만으로는 태그가 비어 있고,
+        # 그러면 법령명 필터에서 전부 탈락한다.
+        tagged: list[RagDocument] = []
+        for document in documents:
+            if not document.is_usable:
+                continue
+            names = document.related_law_names
+            if query not in names:
+                names = [*names, query]
+            tagged.append(document.model_copy(update={"related_law_names": names}))
+        return tagged
