@@ -76,7 +76,11 @@ services:
       - key: LAW_API_OC
         sync: false
 
-      # 프론트엔드 도메인이 정해진 뒤에 넣는다. 순서가 어긋나면 화면은 뜨는데
-      # API 호출이 전부 CORS로 막힌다.
+      # 허용할 프론트엔드 출처. 비밀이 아니라 공개 도메인 목록이므로 여기 적는다.
+      # 대시보드에서 관리하면 값이 코드 리뷰를 거치지 않고, Render의 환경변수
+      # 편집 폼은 저장 시 다른 값까지 함께 보내는 구조라 비밀값을 지울 위험이 있다.
+      #
+      # Vercel은 배포마다 고유 URL을 만들고 그와 별개로 안정적인 alias를 준다.
+      # alias를 쓴다 — 배포할 때마다 여기를 고칠 수는 없다.
       - key: CORS_ORIGINS
-        sync: false
+        value: https://reg-radar-brown.vercel.app,https://reg-radar-428.vercel.app
