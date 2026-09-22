@@ -107,7 +107,8 @@ function DashboardPageContent() {
         <Card>
           <Spinner label="법제처에서 변경된 조문을 찾고 AI가 판단하는 중입니다…" />
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            법령 조회와 조문별 판단이 이어지므로 보통 15~40초 걸립니다.
+            법령을 가져와 조문마다 판단합니다. <strong className="font-medium">보통 2~4분</strong> 걸리며,
+            무료 서버라 더 느릴 수 있습니다. 창을 닫았다 와도 진행 상황이 이어집니다.
           </p>
         </Card>
       )}

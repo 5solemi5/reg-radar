@@ -123,37 +123,36 @@ export async function openHoldResult(page: Page): Promise<boolean> {
 }
 
 /**
- * 보류가 확실히 나오도록 프로필을 비운다.
+ * 보류가 잘 나오는 프로필로 되돌린다.
  *
  * 재판정 테스트는 보류 결과가 있어야 의미가 있는데, 그것을 법제처가 이번에
- * 무엇을 개정했는지에 맡기면 테스트가 조용히 건너뛰어진다. 실제로 그렇게 됐고,
- * **건너뛰는 테스트는 실패하는 테스트보다 나쁘다** — 초록불인데 아무것도
- * 검증하지 않는다.
+ * 무엇을 개정했는지에 맡기면 테스트가 조용히 건너뛰어진다. **건너뛰는 테스트는
+ * 실패하는 테스트보다 나쁘다** — 초록불인데 아무것도 검증하지 않는다.
  *
- * 상시근로자 수를 비우면 규모 조건이 있는 조문은 코드가 보류로 강등한다
- * (AP-03). LLM 판단이 아니라 결정적 계층이라 흔들리지 않는다.
+ * 두 가지를 되돌린다.
+ *
+ * - **상시근로자 수를 비운다.** 규모 조건이 있는 조문은 코드가 보류로 강등한다(AP-03).
+ * - **사업 활동을 전부 '모름'으로 되돌린다.** 답이 채워져 있으면 대상 집단이
+ *   확정되어 보류가 나오지 않는다. 앞선 스펙이 같은 데모 계정의 프로필을
+ *   채워 두는 탓에 실제로 이것 때문에 실패했다 — 스펙 사이의 상태 누수다.
  */
-export async function clearHeadcount(page: Page): Promise<void> {
+export async function makeHoldProne(page: Page): Promise<void> {
   await page.goto("/settings");
+
   const field = page.getByLabel(/상시근로자 수/);
   await field.waitFor({ state: "visible", timeout: 20_000 });
   await field.fill("");
+
+  const unknowns = page.locator('[data-testid$="-UNKNOWN"]');
+  const count = await unknowns.count();
+  for (let i = 0; i < count; i += 1) {
+    await unknowns.nth(i).click();
+  }
+
   await page.getByRole("button", { name: /변경 사항 저장/ }).click();
   await expect(page.getByText("저장되었습니다.")).toBeVisible({ timeout: 20_000 });
 }
 
-/**
- * 보류 결과가 나올 때까지 법령을 바꿔 가며 분석한다.
- *
- * 보류가 나오려면 (1) 규모 조건이나 지위 요건이 있는 조문이 (2) 최근 개정되어야
- * 하는데, 뒤쪽은 법제처 데이터에 달려 있어 고를 수 없다. 한 법령만 보고
- * 건너뛰면 테스트가 조용히 초록불이 된다 — **건너뛰는 테스트는 실패하는
- * 테스트보다 나쁘다.**
- *
- * 그래서 여러 법령을 시도하고, 그래도 없으면 실패시킨다. 세 법령 모두에서
- * 보류가 하나도 안 나오는 것은 데이터 사정이 아니라 보류 정책이 깨진 신호일
- * 가능성이 높다.
- */
 export async function findHoldResult(
   page: Page,
   laws: string[] = ["근로기준법", "산업안전보건법", "개인정보 보호법"],

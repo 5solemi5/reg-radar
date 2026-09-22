@@ -22,6 +22,25 @@ export function useRunAnalysis() {
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
 
+  /**
+   * 화면에 들어올 때 가장 최근 분석을 이어받는다.
+   *
+   * activeId는 React 상태라서 새로고침하거나 다른 화면에 갔다 오면 사라진다.
+   * 그러면 분석이 돌고 있거나 이미 끝났는데도 대시보드가 "아직 분석한 규제
+   * 변화가 없습니다"로 돌아간다. 무료 호스팅에서 분석이 몇 분 걸리는 탓에
+   * 기다리다 새로고침하면 바로 이 상태가 됐다.
+   *
+   * 분석 결과는 서버에 남아 있다. 화면이 그것을 못 찾고 있었을 뿐이다.
+   */
+  const latest = useQuery({
+    queryKey: [...analysisKeys.list, "latest"],
+    queryFn: () => api.listAnalyses(1, 0),
+    staleTime: 0,
+  });
+
+  const latestId = latest.data?.items[0]?.analysis_id ?? null;
+  const effectiveId = activeId ?? latestId;
+
   const start = useMutation({
     mutationFn: (input: { law_query?: string; max_laws?: number }) =>
       api.createAnalysis(input),
@@ -39,9 +58,9 @@ export function useRunAnalysis() {
   });
 
   const tracked = useQuery({
-    queryKey: analysisKeys.detail(activeId ?? ""),
-    queryFn: () => api.getAnalysis(activeId!),
-    enabled: Boolean(activeId),
+    queryKey: analysisKeys.detail(effectiveId ?? ""),
+    queryFn: () => api.getAnalysis(effectiveId!),
+    enabled: Boolean(effectiveId),
     // 끝나면 폴링을 멈춘다.
     refetchInterval: (query) => {
       const status = query.state.data?.status;
@@ -57,7 +76,7 @@ export function useRunAnalysis() {
   return {
     start,
     analysis,
-    activeId,
+    activeId: effectiveId,
     isRunning,
     reset: () => setActiveId(null),
     startError: start.error instanceof ApiError ? start.error : null,

@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { runAnalysis } from "./helpers";
+
 /**
  * 가입 없이 둘러보기 (체험 모드).
  *
@@ -56,5 +58,37 @@ test.describe("체험 모드", () => {
 
     await first.close();
     await second.close();
+  });
+
+  test("새로고침해도 진행 중인 분석을 이어받는다", async ({ browser }) => {
+    /**
+     * activeId가 React 상태라서 새로고침하면 사라지고, 분석이 돌고 있거나
+     * 이미 끝났는데도 대시보드가 "아직 분석한 규제 변화가 없습니다"로
+     * 돌아갔다. 무료 호스팅에서 분석이 몇 분 걸리는 탓에 기다리다
+     * 새로고침하면 바로 이 상태가 됐다.
+     *
+     * 결과는 서버에 남아 있다. 화면이 그것을 못 찾고 있었을 뿐이다.
+     */
+    const page = await browser.newPage();
+    await page.goto("/login");
+    await page.getByTestId("guest-login").click();
+    await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 30_000 });
+
+    await page.getByTestId("preset-p02_it_hr").click({ timeout: 20_000 });
+    await page.getByRole("button", { name: /저장하고 시작하기|변경 사항 저장/ }).click();
+    await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
+
+    await runAnalysis(page, "근로기준법");
+    const before = await page.locator('[data-testid="result-card"]').count();
+    expect(before).toBeGreaterThan(0);
+
+    // 새로고침 — 여기서 빈 화면으로 돌아가면 안 된다.
+    await page.reload();
+    await expect(page.locator('[data-testid="result-card"]').first()).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByText("아직 분석한 규제 변화가 없습니다")).toHaveCount(0);
+
+    await page.close();
   });
 });

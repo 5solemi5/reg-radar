@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { clearHeadcount, ensureProfile, findHoldResult, signIn } from "./helpers";
+import { ensureProfile, findHoldResult, makeHoldProne, signIn } from "./helpers";
 
 /**
  * 보류 재판정 (FR-008, BR-008).
@@ -18,9 +18,9 @@ test.describe("보류 재판정", () => {
     await signIn(page);
     await ensureProfile(page);
 
-    // 보류를 법제처가 이번에 무엇을 개정했는지에 맡기지 않는다. 상시근로자 수를
-    // 비우면 규모 조건이 있는 조문은 코드가 보류로 강등한다(AP-03).
-    await clearHeadcount(page);
+    // 보류를 법제처가 이번에 무엇을 개정했는지에 맡기지 않는다. 앞선 스펙이
+    // 같은 데모 계정의 프로필을 채워 두므로 명시적으로 되돌린다.
+    await makeHoldProne(page);
     await findHoldResult(page);
   });
 
