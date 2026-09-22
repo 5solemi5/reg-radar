@@ -109,7 +109,7 @@ AI가 제시한 조문 인용이 실제 원문에 존재하는 문자열인지 s
 | Backend | FastAPI · Pydantic · LangChain · asyncpg |
 | Data | Supabase (PostgreSQL + Auth) · 법제처 OPEN API |
 | AI | OpenAI (gpt-4o) · Chroma (벡터 검색) |
-| Test | pytest 460 · Playwright E2E 18 |
+| Test | pytest 465 · Playwright E2E 19 |
 
 기본 모델이 `gpt-4o`인 이유는 측정 결과다. `gpt-4o-mini`는 같은 데이터셋에서
 Q4 재현율 60%로 요구사항(≥90%)을 충족하지 못했다.

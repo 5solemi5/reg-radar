@@ -23,6 +23,26 @@ test.describe("신뢰성 표시", () => {
     await page.close();
   });
 
+  test("예시 프로필을 한 번 눌러 채운다", async () => {
+    /**
+     * 직무·업종·규모에 활동 8개까지 채워야 첫 화면을 보는 것은, 데모나 심사에서
+     * 서비스를 보기도 전에 포기하게 만드는 문턱이다.
+     */
+    await page.goto("/settings");
+    await page.getByTestId("preset-p03_manufacturing").click({ timeout: 20_000 });
+
+    await expect(page.getByLabel(/업종/)).toHaveValue("제조");
+    await expect(page.getByLabel(/상시근로자 수/)).toHaveValue("150");
+    // 활동도 함께 채워진다 — 이게 없으면 보류만 잔뜩 나온다.
+    await expect(
+      page.getByTestId("activity-WORKPLACE_WASTE-YES"),
+    ).toHaveAttribute("aria-checked", "true");
+    // 일부러 비워 둔 항목은 '모름'으로 남아 재판정을 보여줄 수 있다.
+    await expect(
+      page.getByTestId("activity-HAZARDOUS_CHEMICALS-UNKNOWN"),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
   test("사업 활동은 '아니오'와 '모름'을 따로 받는다", async () => {
     /**
      * 체크박스 하나로 받으면 체크하지 않은 것이 '아니오'인지 '아직 답하지
@@ -39,16 +59,25 @@ test.describe("신뢰성 표시", () => {
       await expect(group.getByRole("radio", { name: label })).toBeVisible();
     }
 
-    // 답하지 않은 상태는 '모름'으로 드러난다. 비어 있거나 '아니오'로 보이면 안 된다.
-    await expect(
-      page.getByTestId("activity-SUBCONTRACTING-UNKNOWN"),
-    ).toHaveAttribute("aria-checked", "true");
+    // '모름'이 선택 가능한 상태로 존재해야 한다. 체크박스 하나였다면 이 상태를
+    // 표현할 수 없고, 답하지 않은 것과 '아니오'가 같아진다.
+    //
+    // 기본값이 '모름'인지는 여기서 보지 않는다 — 직렬 테스트라 앞 테스트가
+    // 프로필을 이미 채워 놓았을 수 있다. 프리셋 테스트가 그 축을 본다.
+    const unknown = page.getByTestId("activity-SUBCONTRACTING-UNKNOWN");
+    await unknown.click();
+    await expect(unknown).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("activity-SUBCONTRACTING-NO")).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
   });
 
   test("활동에 답하면 저장되고 다시 열어도 남는다", async () => {
     await page.goto("/settings");
     await page.getByTestId("activity-SUBCONTRACTING-YES").click();
-    await page.getByRole("button", { name: /저장/ }).first().click();
+    await page.getByRole("button", { name: /변경 사항 저장/ }).click();
+    await expect(page.getByText("저장되었습니다.")).toBeVisible({ timeout: 20_000 });
 
     await page.goto("/settings");
     await expect(page.getByTestId("activity-SUBCONTRACTING-YES")).toHaveAttribute(

@@ -12,6 +12,7 @@ import {
   type ActivityAnswers,
   type CompanySize,
   type Profile,
+  type ProfilePreset,
 } from "@/lib/schemas";
 
 /**
@@ -63,6 +64,26 @@ export function ProfileForm({
     staleTime: Infinity,
   });
 
+  // 예시 프로필. 직무·업종·규모에 활동 8개까지 채워야 첫 화면을 보는 것은
+  // 서비스를 보기도 전에 포기하게 만드는 문턱이다.
+  const presets = useQuery({
+    queryKey: ["profile-presets"],
+    queryFn: () => api.getProfilePresets(),
+    staleTime: Infinity,
+  });
+
+  function applyPreset(preset: ProfilePreset) {
+    setJob(preset.job);
+    setIndustry(preset.industry);
+    setCompanySize(preset.company_size);
+    setEmployeeCount(
+      preset.employee_count != null ? String(preset.employee_count) : "",
+    );
+    setInterests(preset.interests);
+    setActivities(preset.activities);
+    setErrors({});
+  }
+
   function toggleInterest(value: string) {
     setInterests((prev) =>
       prev.includes(value) ? prev.filter((i) => i !== value) : [...prev, value],
@@ -94,6 +115,34 @@ export function ProfileForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+      {/* 처음 쓰는 사람이 바로 서비스를 볼 수 있게 한다. 채운 뒤 고칠 수 있다. */}
+      {presets.data && presets.data.items.length > 0 && (
+        <Card className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium">예시로 채우기</h2>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              눌러서 채우고 바로 분석해 보세요. 채운 뒤 값을 고쳐도 됩니다.
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {presets.data.items.map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                data-testid={`preset-${preset.key}`}
+                onClick={() => applyPreset(preset)}
+                className="rounded-lg border border-slate-300 p-3 text-left transition hover:border-slate-900 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-sky-500 dark:hover:bg-slate-800"
+              >
+                <span className="block text-sm font-medium">{preset.label}</span>
+                <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                  {preset.summary}
+                </span>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <Card className="space-y-5">
         <Field
           label="직무"

@@ -17,6 +17,7 @@ import {
   Health,
   Profile,
   type ProfileInput,
+  ProfilePresetList,
   ReassessResult,
   Result,
   ResultList,
@@ -199,6 +200,8 @@ export const api = {
   getProfile: () => request("/profile", Profile),
   /** 온보딩 질문 목록. 문구는 백엔드가 유일한 출처다 (ADR-033). */
   getActivityQuestions: () => request("/profile/activities", ActivityQuestionList),
+  /** 예시 프로필. 입력 문턱을 낮추기 위한 것이며 백엔드가 유일한 출처다. */
+  getProfilePresets: () => request("/profile/presets", ProfilePresetList),
   putProfile: (input: ProfileInput) =>
     request("/profile", Profile, { method: "PUT", ...json(input) }),
   patchProfile: (input: Partial<ProfileInput>) =>

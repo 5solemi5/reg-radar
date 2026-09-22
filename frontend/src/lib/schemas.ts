@@ -60,6 +60,24 @@ export const ActivityQuestionList = z.object({
   items: z.array(ActivityQuestion),
 });
 
+/** 온보딩에서 한 번에 채우는 예시 프로필 (02 페르소나 P01~P03). */
+export const ProfilePreset = z.object({
+  key: z.string(),
+  label: z.string(),
+  summary: z.string(),
+  job: z.string(),
+  industry: z.string(),
+  company_size: CompanySize,
+  employee_count: z.number().nullable(),
+  interests: z.array(z.string()),
+  activities: ActivityAnswers,
+});
+export type ProfilePreset = z.infer<typeof ProfilePreset>;
+
+export const ProfilePresetList = z.object({
+  items: z.array(ProfilePreset),
+});
+
 export const Profile = z.object({
   user_id: z.string(),
   job: z.string(),

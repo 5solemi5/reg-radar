@@ -252,3 +252,57 @@ class TestActivityPromptRendering:
         block = self._context().to_prompt_block()
         for q in ACTIVITY_QUESTIONS:
             assert f"- {q.label}:" in block
+
+
+class TestProfilePresets:
+    """예시 프로필로 입력 문턱을 낮춘다 (02 페르소나 P01~P03)."""
+
+    async def test_인증_없이_받을_수_있다(self, client):
+        r = await client.get("/api/v1/profile/presets")
+        assert r.status_code == 200
+        assert len(r.json()["items"]) >= 3
+
+    async def test_그대로_저장할_수_있다(self, client):
+        """프리셋이 ProfileIn 스키마를 통과해야 '한 번에 채우기'가 성립한다."""
+        presets = (await client.get("/api/v1/profile/presets")).json()["items"]
+        for preset in presets:
+            payload = {
+                k: v for k, v in preset.items() if k not in {"key", "label", "summary"}
+            }
+            r = await client.put("/api/v1/profile", json=payload)
+            assert r.status_code == 200, f"{preset['key']} 저장 실패: {r.text}"
+            assert r.json()["activities"] == preset["activities"]
+
+    async def test_활동_코드가_모두_유효하다(self, client):
+        """프리셋에 없는 코드가 섞이면 화면은 멀쩡한데 판정만 달라진다."""
+        from app.domain.enums import BusinessActivity
+
+        valid = {a.value for a in BusinessActivity}
+        for preset in (await client.get("/api/v1/profile/presets")).json()["items"]:
+            assert set(preset["activities"]) <= valid, preset["key"]
+
+    async def test_각_프리셋에_답하지_않은_활동이_남아_있다(self, client):
+        """전부 채우면 보류가 거의 없어 재판정(FR-008)을 보여줄 수 없다.
+
+        데모에서 이 서비스의 핵심 차별점을 못 보게 되는 것이므로 의도적으로 남긴다.
+        """
+        from app.domain.enums import BusinessActivity
+
+        for preset in (await client.get("/api/v1/profile/presets")).json()["items"]:
+            unanswered = set(a.value for a in BusinessActivity) - set(preset["activities"])
+            assert unanswered, f"{preset['key']}에 답하지 않은 활동이 없습니다"
+
+    async def test_규모와_인원이_어긋나지_않는다(self, client):
+        """'4명인데 MEDIUM' 같은 예시는 설명하는 것보다 헷갈리게 만든다."""
+        bounds = {
+            "SOLO": (1, 1), "MICRO": (1, 4), "SMALL": (5, 49),
+            "MEDIUM": (50, 299), "LARGE": (300, 1_000_000),
+        }
+        for preset in (await client.get("/api/v1/profile/presets")).json()["items"]:
+            count = preset["employee_count"]
+            if count is None:
+                continue
+            low, high = bounds[preset["company_size"]]
+            assert low <= count <= high, (
+                f"{preset['key']}: {preset['company_size']}인데 {count}명"
+            )

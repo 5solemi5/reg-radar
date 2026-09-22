@@ -102,6 +102,24 @@ class ActivityQuestionListOut(BaseModel):
     items: list[ActivityQuestionOut]
 
 
+class ProfilePresetOut(BaseModel):
+    """온보딩에서 한 번에 채울 수 있는 예시 프로필 (02 페르소나 문서 P01~P03)."""
+
+    key: str
+    label: str
+    summary: str
+    job: str
+    industry: str
+    company_size: CompanySize
+    employee_count: int | None
+    interests: list[str]
+    activities: dict[BusinessActivity, ActivityAnswer]
+
+
+class ProfilePresetListOut(BaseModel):
+    items: list[ProfilePresetOut]
+
+
 # ── 분석 ──────────────────────────────────────────────────────────────
 
 

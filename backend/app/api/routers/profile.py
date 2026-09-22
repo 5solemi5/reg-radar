@@ -15,9 +15,12 @@ from app.api.schemas import (
     ProfileIn,
     ProfileOut,
     ProfilePatch,
+    ProfilePresetListOut,
+    ProfilePresetOut,
 )
 from app.domain.activities import ACTIVITY_QUESTIONS
 from app.domain.entities import Profile
+from app.domain.personas import PROFILE_PRESETS
 from app.repositories.memory import InMemoryProfileRepository
 
 router = APIRouter(tags=["profile"])
@@ -35,6 +38,21 @@ async def list_activity_questions() -> ActivityQuestionListOut:
     """
     return ActivityQuestionListOut(
         items=[ActivityQuestionOut(**q.model_dump()) for q in ACTIVITY_QUESTIONS]
+    )
+
+
+@router.get("/profile/presets", response_model=ProfilePresetListOut)
+async def list_profile_presets() -> ProfilePresetListOut:
+    """예시 프로필 (02 페르소나 문서 P01~P03).
+
+    처음 쓰는 사람이 직무·업종·규모에 활동 8개까지 채워야 첫 화면을 본다.
+    데모나 심사에서는 그 입력이 서비스를 보기도 전에 포기하게 만드는 문턱이다.
+
+    인증이 필요 없다. 예시 프로필은 비밀이 아니고, 온보딩 화면이 로그인 직후
+    프로필 조회(404)와 함께 받아야 한다.
+    """
+    return ProfilePresetListOut(
+        items=[ProfilePresetOut(**p.model_dump()) for p in PROFILE_PRESETS]
     )
 
 

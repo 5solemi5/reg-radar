@@ -138,8 +138,8 @@ export async function clearHeadcount(page: Page): Promise<void> {
   const field = page.getByLabel(/상시근로자 수/);
   await field.waitFor({ state: "visible", timeout: 20_000 });
   await field.fill("");
-  await page.getByRole("button", { name: /저장/ }).first().click();
-  await expect(page.getByText(/저장했습니다|저장 중/)).toBeVisible({ timeout: 20_000 });
+  await page.getByRole("button", { name: /변경 사항 저장/ }).click();
+  await expect(page.getByText("저장되었습니다.")).toBeVisible({ timeout: 20_000 });
 }
 
 /**
