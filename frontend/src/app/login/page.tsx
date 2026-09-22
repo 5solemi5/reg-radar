@@ -5,7 +5,12 @@ import { Suspense, useEffect, useState } from "react";
 
 import { Button, Card, Spinner, StateMessage } from "@/components/ui";
 import { useSession } from "@/hooks/use-session";
-import { authErrorMessage, getSupabase, isAuthConfigured } from "@/lib/supabase";
+import {
+  authErrorMessage,
+  getSupabase,
+  isAuthConfigured,
+  signInAsGuest,
+} from "@/lib/supabase";
 
 type Mode = "signin" | "signup";
 
@@ -22,6 +27,20 @@ function LoginForm() {
   const [notice, setNotice] = useState<string | null>(null);
 
   const next = params.get("next") || "/dashboard";
+
+  async function handleGuest() {
+    setError(null);
+    setNotice(null);
+    setPending(true);
+    try {
+      await signInAsGuest();
+      router.replace(next);
+    } catch (e) {
+      setError(authErrorMessage(e instanceof Error ? e.message : String(e)));
+    } finally {
+      setPending(false);
+    }
+  }
 
   useEffect(() => {
     if (session) router.replace(next);
@@ -92,6 +111,25 @@ function LoginForm() {
           내 업무에 영향을 주는 규제 변화만 골라 근거와 함께 보여줍니다.
         </p>
       </header>
+
+      <Card className="mb-4 space-y-3">
+        <div>
+          <h2 className="text-sm font-medium">가입 없이 둘러보기</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            이메일 없이 바로 들어갑니다. 예시 프로필을 한 번 눌러 채우고 분석까지
+            해볼 수 있습니다. 이 브라우저에만 남으며 다른 기기에서는 이어지지 않습니다.
+          </p>
+        </div>
+        <Button
+          type="button"
+          onClick={handleGuest}
+          disabled={pending}
+          data-testid="guest-login"
+          className="w-full"
+        >
+          {pending ? "들어가는 중…" : "체험하기"}
+        </Button>
+      </Card>
 
       <Card>
         <div className="mb-5 flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">

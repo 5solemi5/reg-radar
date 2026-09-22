@@ -11,6 +11,13 @@ export type SessionState = {
   loading: boolean;
   /** 인증이 설정되지 않은 환경(로컬 dev 모드)에서는 로그인을 요구하지 않는다. */
   authRequired: boolean;
+  /**
+   * 익명(체험) 사용자인가.
+   *
+   * 이 세션의 데이터는 이 브라우저에만 남는다. 다른 기기에서 이어서 볼 수 없고,
+   * 브라우저 데이터를 지우면 되돌릴 방법이 없다. 화면이 그 사실을 말해 줘야 한다.
+   */
+  isGuest: boolean;
 };
 
 export function useSession(): SessionState {
@@ -39,5 +46,6 @@ export function useSession(): SessionState {
     email: session?.user?.email ?? null,
     loading,
     authRequired: isAuthConfigured,
+    isGuest: Boolean(session?.user?.is_anonymous),
   };
 }

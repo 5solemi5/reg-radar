@@ -16,7 +16,7 @@ const NAV = [
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const { email, authRequired, session } = useSession();
+  const { email, authRequired, session, isGuest } = useSession();
 
   // 로그인 화면에서는 네비게이션을 숨긴다.
   if (pathname === "/login") return null;
@@ -52,7 +52,17 @@ export function AppHeader() {
 
         {authRequired && session && (
           <div className="ml-auto flex items-center gap-3 text-sm">
-            <span className="text-slate-500 dark:text-slate-400">{email}</span>
+            {isGuest ? (
+              <span
+                data-testid="guest-badge"
+                title="체험 세션입니다. 데이터가 이 브라우저에만 남고 다른 기기에서는 이어지지 않습니다."
+                className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950/60 dark:text-amber-300"
+              >
+                체험 모드
+              </span>
+            ) : (
+              <span className="text-slate-500 dark:text-slate-400">{email}</span>
+            )}
             <button
               onClick={signOut}
               className="rounded-md px-3 py-1.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
