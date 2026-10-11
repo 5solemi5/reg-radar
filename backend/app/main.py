@@ -7,13 +7,14 @@ modular monolith: Application Service와 AI Core를 한 프로세스 안에 두�
 from __future__ import annotations
 
 import logging
+import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errors import ApiError, api_error_handler, unhandled_error_handler
-from app.api.routers import analyses, health, profile, results
+from app.api.routers import analyses, health, policy, profile, results
 from app.core.config import Settings, get_settings
 from app.repositories.db import get_database
 
@@ -105,6 +106,27 @@ async def report_rag_index(settings: Settings) -> int:
     return count
 
 
+SLOW_REQUEST_MS = 5000
+
+
+async def request_timing(request: Request, call_next):
+    """요청 단위 지연 (R4). 응답에 Server-Timing 헤더를 달고 한 줄 로그를 남긴다.
+
+    경로는 실제 URL이 아니라 라우트 템플릿(/results/{result_id})으로 남긴다 — ID가
+    로그에 쌓이지 않고, 같은 엔드포인트끼리 묶어 볼 수 있다.
+    """
+    started = time.perf_counter()
+    response = await call_next(request)
+    ms = (time.perf_counter() - started) * 1000
+    route = request.scope.get("route")
+    path = getattr(route, "path", None) or "(unmatched)"
+    response.headers["Server-Timing"] = f"app;dur={ms:.1f}"
+    log = logger.warning if ms >= SLOW_REQUEST_MS else logger.info
+    log("request method=%s route=%s status=%d ms=%.1f",
+        request.method, path, response.status_code, ms)
+    return response
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings)
@@ -131,6 +153,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "X-User-Id"],
     )
 
+    app.middleware("http")(request_timing)
     app.add_exception_handler(ApiError, api_error_handler)
     app.add_exception_handler(Exception, unhandled_error_handler)
 
@@ -139,6 +162,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(profile.router, prefix=prefix)
     app.include_router(analyses.router, prefix=prefix)
     app.include_router(results.router, prefix=prefix)
+    app.include_router(policy.router, prefix=prefix)
 
     logger.info(
         "앱 기동 env=%s auth=%s storage=%s law_api=%s llm=%s",

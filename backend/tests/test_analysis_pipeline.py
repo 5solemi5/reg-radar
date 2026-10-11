@@ -335,3 +335,52 @@ class TestTargetGroupPolicy:
             evidence="- 업종: 존재하지 않는 업종",
         )
         assert unverifiable_target_reason(out, packet) is not None
+
+
+# ── REJECT 재생성 (문서 11 §11-4) ─────────────────────────────────────
+class SequenceRunner(FakeChainRunner):
+    """C4 응답을 차례로 돌려주고, 받은 프롬프트를 기록한다."""
+
+    def __init__(self, c4_answers):
+        super().__init__({TargetExtractionOutput: SIZE_EXTRACTION, ImpactOutput: IMPACT_OUT})
+        self.c4_answers = list(c4_answers)
+        self.c4_prompts: list[str] = []
+
+    async def invoke(self, *, chain, prompt, schema):
+        if schema is ApplicabilityOutput:
+            self.c4_prompts.append(prompt)
+            return self.c4_answers[min(len(self.c4_prompts), len(self.c4_answers)) - 1]
+        return await super().invoke(chain=chain, prompt=prompt, schema=schema)
+
+
+FAKE_CITATION = APPLICABLE_OUT.model_copy(update={"cited_spans": ["원문에 없는 문장"]})
+
+
+async def test_REJECT되면_거부_사유를_되먹여_다시_생성한다():
+    runner = SequenceRunner([FAKE_CITATION, APPLICABLE_OUT])
+    out = await analyze_article(runner, make_packet(employee_count=80), max_retries=2)
+    assert out.result.status is ResultStatus.VALIDATED
+    assert out.result.validation.retries == 1
+    assert "직전 답변이 검증에서 거부된 이유" not in runner.c4_prompts[0]
+    assert "원문에 없는 문장" in runner.c4_prompts[1]  # 탈락 인용을 문장째 보여준다
+    assert out.result.validation.rejected_failures
+
+
+async def test_재생성은_상한까지만_하고_REJECT를_그대로_낸다():
+    runner = SequenceRunner([FAKE_CITATION])
+    out = await analyze_article(runner, make_packet(employee_count=80), max_retries=2)
+    assert out.result.status is ResultStatus.REJECTED
+    assert len(runner.c4_prompts) == 3 and out.result.validation.retries == 2
+
+
+async def test_상한이_0이면_재생성하지_않는다():
+    runner = SequenceRunner([FAKE_CITATION, APPLICABLE_OUT])
+    out = await analyze_article(runner, make_packet(employee_count=80), max_retries=0)
+    assert out.result.status is ResultStatus.REJECTED and len(runner.c4_prompts) == 1
+    assert out.result.validation.retries == 0
+
+
+async def test_통과한_판정은_다시_부르지_않는다():
+    runner = SequenceRunner([APPLICABLE_OUT])
+    await analyze_article(runner, make_packet(employee_count=80), max_retries=2)
+    assert len(runner.c4_prompts) == 1

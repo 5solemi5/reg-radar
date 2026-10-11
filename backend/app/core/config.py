@@ -125,8 +125,28 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
 
     # --- 판정 정책 (BR-003) ---
-    hold_confidence_threshold: float = Field(
-        0.6, description="이 값 미만의 confidence는 APPLICABLE로 확정하지 않고 HOLD로 내린다."
+    # --- 사내 규정 영향 분석 (문서 12 §4, R3) ---
+    policy_org_id: str = Field("virtual-card-co", description="승인 흐름의 조직 ID")
+    policy_corpus: str = Field(
+        "virtual-card-co-v4", description="app/policies/corpus의 규정집 ID (가상 규정집)"
+    )
+    policy_members: str = Field(
+        "",
+        description=(
+            "메모리 저장소용 구성원 시드. 'user:ROLE,user:ROLE'. ROLE은 STAFF|COMPLIANCE_OFFICER. "
+            "Postgres에서는 org_members 테이블을 직접 관리한다."
+        ),
+    )
+
+    # hold_confidence_threshold(0.6)는 정의만 있고 어디서도 쓰이지 않아 지웠다(2026-10-11).
+    # 보류 강등은 confidence가 아니라 코드가 확인한 사실(위임·규모·대상 집단)로 한다.
+    reject_retry_max: int = Field(
+        2,
+        ge=0,
+        description=(
+            "Validator가 REJECT하면 거부 사유를 되먹여 C4(+C5)를 다시 생성하는 최대 횟수. "
+            "0이면 재생성하지 않는다."
+        ),
     )
 
     @model_validator(mode="after")

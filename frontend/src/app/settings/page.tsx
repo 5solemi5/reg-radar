@@ -4,6 +4,7 @@ import { ProfileForm } from "@/components/profile-form";
 import { Spinner, StateMessage } from "@/components/ui";
 import { useProfile, useSaveProfile } from "@/hooks/use-profile";
 import { AuthGate } from "@/components/auth-gate";
+import { DevIdentitySwitch } from "@/components/policy/dev-identity";
 
 function SettingsPageContent() {
   const { profile, isLoading, needsOnboarding } = useProfile();
@@ -39,6 +40,7 @@ function SettingsPageContent() {
       {save.isSuccess && (
         <p className="mt-4 text-sm text-emerald-600 dark:text-emerald-400">저장되었습니다.</p>
       )}
+      <DevIdentitySwitch />
     </div>
   );
 }

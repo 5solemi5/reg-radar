@@ -100,6 +100,9 @@ dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없�
 | `analysis_in_progress` | 409 | 이미 진행 중인 분석 존재 | FR-003 |
 | `validation_rejected` | 422 | Validator 차단 | ER-004 |
 | `upstream_unavailable` | 503 | 법제처·LLM 등 외부 실패 | ER-001, ER-002 |
+| `policy_forbidden` | 403 | 조직 구성원이 아님, 역할 부족, 4-eyes 위반 | 문서 12 §4 |
+| `policy_conflict` | 409 | 지금 상태에서 불가능한 전이, 다른 사람이 먼저 결정 | 문서 12 §4 |
+| `policy_invalid` | 422 | 개정 대상이 아닌 조항, 빈 반려 사유 등 | 문서 12 §4 |
 | `internal_error` | 500 | 그 외 | — |
 
 요청 본문 스키마 위반은 FastAPI 기본 422로 응답한다. 모든 입력 스키마는
@@ -399,6 +402,32 @@ dev 모드는 헤더를 그대로 신뢰하므로 운영에서는 인증이 없�
 | `POST /saved-regulations` | `{result_id, note?}` → `201`. 법령 정보를 함께 기록 | FR-017 |
 | `GET /saved-regulations` | 최신순 목록 | FR-017 |
 | `DELETE /saved-regulations/{id}` | `204` | FR-017 |
+
+### 4-7. 사내 규정 영향 분석·개정 초안 승인 (문서 12 §4, R3)
+
+Agent는 규정을 고치지 않는다. 영향 판단과 초안까지만 만들고, 승인은 준법감시인이 한다.
+사내 규정집은 **가상**이며 응답의 `corpus_label`이 그렇게 밝힌다.
+
+- 역할은 요청이 아니라 조직 구성원 저장소(`org_members`, 메모리 모드에서는 `POLICY_MEMBERS`)에서 읽는다.
+  구성원이 아니면 모든 엔드포인트가 `403 policy_forbidden`.
+- `STAFF`: 영향 판단·초안 생성·제출·의견·수정. `COMPLIANCE_OFFICER`: 위 + 승인·반려.
+- **4-eyes**: 제출자는 같은 초안을 승인·반려할 수 없다. DB CHECK 제약으로도 막는다(migrations/008).
+- 상태: `DRAFTED → IN_REVIEW → APPROVED | REJECTED`, `REJECTED → DRAFTED`(사람이 수정).
+- 초안에 검증 문제(`issues`)가 있으면 `acknowledged_issues: true` 없이는 승인되지 않는다(`409`).
+- 상태 전이와 감사 이벤트는 한 트랜잭션에 저장된다. 두 사람이 동시에 결정하면 하나만 성공하고 나머지는 `409`.
+
+| Endpoint | 역할 | 비고 |
+|---|---|---|
+| `POST /policy/impact` | `{law_id, article_no}` → 후보 사내 규정 조항별 판단 | C7 → 인용 검증 → C7b 반론 검토. 상태는 `ACTIONABLE`(양쪽 원문 근거 확인) / `NEEDS_REVIEW` / `NO_ACTION`. LLM이 꺼져 있으면 `503` |
+| `POST /policy/drafts` | `{law_id, article_no, policy_ref}` → `201` 초안 | 서버가 영향 판단을 **다시** 돌려 개정 대상일 때만 C8 초안을 만든다. 아니면 `422 policy_invalid` |
+| `GET /policy/drafts` | 조직의 초안 목록 | |
+| `GET /policy/drafts/{id}` | 초안 상세(현행·개정안·검증 문제·의견) | |
+| `POST /policy/drafts/{id}/submit` | 검토 요청 | `DRAFTED`에서만 |
+| `POST /policy/drafts/{id}/approve` | `{acknowledged_issues?}` | 준법감시인, 제출자 아님 |
+| `POST /policy/drafts/{id}/reject` | `{reason}` | 사유 필수 |
+| `POST /policy/drafts/{id}/revise` | `{proposed_text}` | `REJECTED`에서만. 이전 본문은 감사 로그에 해시로 남는다 |
+| `POST /policy/drafts/{id}/comments` | `{text}` | 감사 로그에 본문 해시가 남는다 |
+| `GET /policy/audit` | `{intact, broken_at, events}` | 추가 전용 해시 체인과 그 검증 결과. DB 트리거가 UPDATE·DELETE를 거부한다 |
 
 ---
 

@@ -1,0 +1,92 @@
+케이스 12건 (오류 0) · gold ACTION 4건
+검색 재현율 (후보 top-k에 정답 포함)   100.0%
+조치 재현율 (양쪽 근거 확인된 ACTIONABLE) 50.0%
+사람 검토 포함 재현율                   100.0%
+조치 정밀도                             50.0%
+음성 대조군 오조치                       0/3건
+인용 정확도 (모델 인용 중 원문 확인)     79.3%
+NEEDS_REVIEW 비율                        6.7%
+초안 2건 · 검증 문제 있음 1 · 필수 수정 충족 2
+
+── 케이스 ─────────────────────────────────────────────────────────
+S1 [sealed] 채용절차의 공정화에 관한 법률 제11조
+   HR-02 제9조      gold=ACTION    CONFLICT           NEEDS_REVIEW  ← 사람 검토로
+      · 사내 규정 원문 인용이 확인되지 않았다
+   HR-02 제12조     gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 사내 규정 원문 인용이 확인되지 않았다
+   PR-01 제5조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제4조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+S2 [sealed] 남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률 제22조의2
+   HR-01 제27조     gold=ACTION    UPDATE_RECOMMENDED NEEDS_REVIEW  ← 사람 검토로
+      · 법령 원문 인용이 확인되지 않았다
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제12조     gold=NO_ACTION UNRELATED          NO_ACTION
+S3 [sealed] 근로기준법 제76조의3
+   HR-01 제35조     gold=ACTION    UPDATE_RECOMMENDED ACTIONABLE
+   PR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   IS-01 제8조      gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 HR-01 제35조: 문제 없음 · 누락 없음 · 잔존 없음
+S4 [sealed] 개인정보 보호법 제34조
+   PR-01 제11조     gold=ACTION    UPDATE_RECOMMENDED ACTIONABLE
+   PR-01 제5조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제4조      gold=NO_ACTION UNRELATED          NO_ACTION
+   IS-01 제8조      gold=NO_ACTION UNRELATED          NO_ACTION
+   CP-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 PR-01 제11조: 문제 ['원문에 없는 법령 인용 1건 제거'] · 누락 없음 · 잔존 없음
+S5 [sealed] 최저임금법 제6조
+   PY-01 제7조      gold=NO_ACTION ALIGNED            NO_ACTION
+   HR-01 제10조     gold=NO_ACTION UNRELATED          NO_ACTION
+   PY-01 제12조     gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 법령 원문 인용이 확인되지 않았다
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-03 제2조      gold=NO_ACTION UNRELATED          NO_ACTION
+S6 [sealed] 근로자참여 및 협력증진에 관한 법률 제4조
+   LR-01 제3조      gold=NO_ACTION ALIGNED            NO_ACTION
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-02 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-03 제2조      gold=NO_ACTION UNRELATED          NO_ACTION
+S7 [sealed] 채용절차의 공정화에 관한 법률 제10조
+   HR-02 제12조     gold=NO_ACTION ALIGNED            NO_ACTION
+   HR-02 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제4조      gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+S8 [sealed] 산업안전보건법 제24조
+   SH-01 제6조      gold=NO_ACTION UPDATE_RECOMMENDED ACTIONABLE  ← 오조치
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제4조      gold=NO_ACTION UNRELATED          NO_ACTION
+   LR-01 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+S9 [sealed] 정보통신망 이용촉진 및 정보보호 등에 관한 법률 제45조
+   IS-01 제8조      gold=NO_ACTION UPDATE_RECOMMENDED ACTIONABLE  ← 오조치
+   PR-01 제5조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제4조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   IS-01 제15조     gold=NO_ACTION UNRELATED          NO_ACTION
+S10 [sealed] 약사법 제20조
+   CP-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   LR-01 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제27조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+S11 [sealed] 의료법 제33조
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-02 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제35조     gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+S12 [sealed] 건설산업기본법 제40조
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제35조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-02 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제5조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제27조     gold=NO_ACTION UNRELATED          NO_ACTION
+
+※ 사내 규정집은 가상이다. 표본이 작다(케이스 12건, ACTION 4건) — 방향 확인용이다.
+※ ALIGNED·UNRELATED는 원문 근거로 검증할 수 없어 런타임에서 막지 못한다. 놓침은 이 평가로만 보인다.

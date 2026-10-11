@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ActionGradeChip, ApplicabilityChip, Button, Card, SectionTitle, Spinner, StateMessage } from "@/components/ui";
+import { PolicyImpactPanel } from "@/components/policy/impact-panel";
 import { ReassessForm } from "@/components/reassess-form";
 import { api } from "@/lib/api";
 import type { ReferenceEvidence } from "@/lib/schemas";
@@ -303,6 +304,16 @@ export function ResultDetail({ resultId }: { resultId: string }) {
           </div>
         )}
       </section>
+
+      {/* ④ 사내 규정 영향 — 금융사 준법감시 확장 (문서 12 §4). 판정이 '해당'일 때만 */}
+      {data.applicability === "APPLICABLE" && (
+        <section>
+          <SectionTitle hint="AI는 규정을 고치지 않습니다. 초안을 내고, 승인은 준법감시인이 합니다.">
+            사내 규정 영향
+          </SectionTitle>
+          <PolicyImpactPanel lawId={legal.law_id} articleNo={legal.article_no} />
+        </section>
+      )}
 
       <section className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6 dark:border-slate-800">
         <input

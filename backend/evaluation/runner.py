@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from app.adapters.law.client import LawApiClient, LawApiError
 from app.adapters.law.decree import decree_names, pair_articles
 from app.adapters.law.models import LawSnapshot
 from app.adapters.law.store import FileSnapshotStore
+from app.ai.cassette import Cassette
 from app.ai.chains.base import ChainRunner
 from app.ai.llm import LlmGateway
 from app.core.config import Settings, get_settings
@@ -33,7 +35,10 @@ from evaluation.metrics import CaseOutcome, Metrics, compute
 
 logger = logging.getLogger(__name__)
 
-EVAL_SNAPSHOT_DIR = Path(__file__).parent / ".snapshots"
+# CI는 커밋된 고정 snapshot(evaluation/ci/snapshots)을 쓴다. 로컬 기본값은 캐시 폴더(.gitignore).
+EVAL_SNAPSHOT_DIR = Path(
+    os.environ.get("REG_RADAR_EVAL_SNAPSHOTS", Path(__file__).parent / ".snapshots")
+)
 
 
 @dataclass
@@ -126,6 +131,18 @@ async def fetch_by_names(
     return by_name
 
 
+def independent_contains(span: str, text: str) -> bool:
+    """Validator(`normalize_for_match`)와 일부러 다른 방식의 원문 대조.
+
+    모든 공백을 지우고 포함 여부만 본다. Validator가 통과시킨 인용이면
+    이 검사도 반드시 통과해야 한다(공백 정규화의 상위 집합).
+    """
+    if not span.strip():
+        return False
+    squash = lambda s: "".join(s.split())  # noqa: E731
+    return squash(span) in squash(text)
+
+
 async def run_case(
     case: dict,
     dataset: Dataset,
@@ -133,6 +150,7 @@ async def run_case(
     gateway: LlmGateway,
     retriever=None,
     decrees: dict[str, LawSnapshot] | None = None,
+    cassette: Cassette | None = None,
 ) -> CaseOutcome:
     law_name, article_no = case["law_name"], case["article_no"]
     gold = Applicability(case["gold_applicability"])
@@ -180,11 +198,15 @@ async def run_case(
         user=user, law=legal, change=change, delegated=delegated, rag=rag
     )
 
+    runner = ChainRunner(llm=gateway, cassette=cassette)
     try:
-        outcome = await analyze_article(ChainRunner(llm=gateway), packet)
+        outcome = await analyze_article(runner, packet)
     except Exception as exc:
         base.error = str(exc)
         return base
+    finally:
+        base.input_tokens = sum(t.input_tokens for t in runner.traces)
+        base.output_tokens = sum(t.output_tokens for t in runner.traces)
 
     r = outcome.result
     ai = r.ai_interpretation
@@ -195,6 +217,13 @@ async def run_case(
     base.cited_verified = len(r.legal_evidence.quoted_spans)
     base.cited_total = len(r.legal_evidence.quoted_spans) + len(r.validation.dropped_spans)
     base.dropped_spans = r.validation.dropped_spans
+    # Q1 노출 정확도: 노출되는 인용을 Validator와 다른 구현으로 다시 대조한다
+    shown = [(s, legal.original_text) for s in r.legal_evidence.quoted_spans]
+    decree_text = {(d.law_name, d.article_no): d.original_text for d in delegated}
+    for ev in r.delegated_evidence:
+        shown += [(s, decree_text.get((ev.law_name, ev.article_no), "")) for s in ev.quoted_spans]
+    base.displayed_total = len(shown)
+    base.displayed_verified = sum(independent_contains(s, text) for s, text in shown)
     base.fabrication_failures = [
         f for f in r.validation.failures if "생성했습니다" in f or "인용했습니다" in f
     ]
@@ -220,6 +249,7 @@ async def run_dataset(
     offline: bool = False,
     concurrency: int = 3,
     use_rag: bool = False,
+    cassette: Cassette | None = None,
 ) -> tuple[Metrics, list[CaseOutcome]]:
     settings = settings or get_settings()
     dataset = Dataset.load(dataset_path)
@@ -264,7 +294,7 @@ async def run_dataset(
     async def guarded(case: dict) -> CaseOutcome:
         async with semaphore:
             result = await run_case(
-                case, dataset, snapshots, gateway, retriever, decrees
+                case, dataset, snapshots, gateway, retriever, decrees, cassette
             )
             mark = "✓" if result.correct else ("!" if result.error else "✗")
             predicted = result.predicted.value if result.predicted else f"ERROR({result.error})"

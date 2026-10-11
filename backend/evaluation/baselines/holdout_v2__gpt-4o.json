@@ -1,0 +1,265 @@
+{
+  "metrics": {
+    "total": 22,
+    "executed": 22,
+    "errors": 0,
+    "accuracy": 0.9090909090909091,
+    "confusion": {
+      "APPLICABLE": {
+        "APPLICABLE": 10,
+        "HOLD": 1,
+        "NOT_APPLICABLE": 0
+      },
+      "HOLD": {
+        "APPLICABLE": 0,
+        "HOLD": 4,
+        "NOT_APPLICABLE": 1
+      },
+      "NOT_APPLICABLE": {
+        "APPLICABLE": 0,
+        "HOLD": 0,
+        "NOT_APPLICABLE": 6
+      }
+    },
+    "q1_model_citation_accuracy": 0.90625,
+    "q1_displayed_citation_accuracy": 1.0,
+    "q2_false_positive_rate": 0.0,
+    "q3_action_conversion_rate": 0.8,
+    "q4_recall": 1.0,
+    "q5_delegation_detection": 1.0,
+    "q6_forbidden_field_leaks": 0,
+    "over_hold_rate": 0.058823529411764705,
+    "hold_explains_itself": 1.0,
+    "hold_recall": 0.8,
+    "hold_precision": 0.8,
+    "rag_coverage": 0.0,
+    "rag_docs_total": 0,
+    "delegated_coverage": 1.0,
+    "delegated_docs_total": 46,
+    "delegation_hold_rate": 0.23529411764705882,
+    "latency_p50": 5646,
+    "latency_p95": 8555
+  },
+  "cases": {
+    "J01": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "cited_verified": 2,
+      "cited_total": 2,
+      "displayed_verified": 2,
+      "displayed_total": 2,
+      "error": null
+    },
+    "J02": {
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J03": {
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "cited_verified": 2,
+      "cited_total": 2,
+      "displayed_verified": 2,
+      "displayed_total": 2,
+      "error": null
+    },
+    "J04": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "cited_verified": 1,
+      "cited_total": 2,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J05": {
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J06": {
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 2,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J07": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "cited_verified": 2,
+      "cited_total": 2,
+      "displayed_verified": 2,
+      "displayed_total": 2,
+      "error": null
+    },
+    "J08": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "cited_verified": 2,
+      "cited_total": 2,
+      "displayed_verified": 2,
+      "displayed_total": 2,
+      "error": null
+    },
+    "J09": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J10": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "AWARENESS",
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J11": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "cited_verified": 3,
+      "cited_total": 4,
+      "displayed_verified": 3,
+      "displayed_total": 3,
+      "error": null
+    },
+    "J12": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "cited_verified": 2,
+      "cited_total": 2,
+      "displayed_verified": 2,
+      "displayed_total": 2,
+      "error": null
+    },
+    "J13": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "AWARENESS",
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J14": {
+      "predicted": "APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": "ACTION",
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J15": {
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J16": {
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J17": {
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J18": {
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J19": {
+      "predicted": "HOLD",
+      "status": "HOLD",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J20": {
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J21": {
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    },
+    "J22": {
+      "predicted": "NOT_APPLICABLE",
+      "status": "VALIDATED",
+      "action_grade": null,
+      "cited_verified": 1,
+      "cited_total": 1,
+      "displayed_verified": 1,
+      "displayed_total": 1,
+      "error": null
+    }
+  }
+}

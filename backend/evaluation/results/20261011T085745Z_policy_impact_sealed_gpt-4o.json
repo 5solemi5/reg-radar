@@ -1,0 +1,749 @@
+{
+  "provenance": {
+    "dataset_sha256": "b9e86d0a3488d12bd60c6d742ceae8ccd53f909a280a8de61369f1e90841788f",
+    "policy_files_sha256": {
+      "prompts.py": "75a3a43ed911",
+      "virtual_card_co.json": "97e1e0ebc88e"
+    },
+    "split": "sealed",
+    "model": "gpt-4o",
+    "git": {
+      "commit": "659ced6",
+      "dirty": true
+    },
+    "cassette": {
+      "mode": "record",
+      "file": "policy_impact_v1__gpt-4o.jsonl",
+      "entries": 29,
+      "hits": 0,
+      "misses": 0,
+      "recorded": 14
+    }
+  },
+  "metrics": {
+    "cases": 12,
+    "errors": 0,
+    "gold_action": 4,
+    "retrieval_recall": 1.0,
+    "action_recall": 0.5,
+    "surfaced_recall": 1.0,
+    "action_precision": 0.5,
+    "negative_cases": 3,
+    "negative_false_action": 0,
+    "citation_accuracy": 0.7931,
+    "needs_review_rate": 0.0667,
+    "drafts": 2,
+    "drafts_with_issues": 1,
+    "drafts_fix_complete": 2,
+    "input_tokens": 33498,
+    "output_tokens": 6564,
+    "cost_usd_estimate": 0.1494
+  },
+  "cases": [
+    {
+      "case_id": "S1",
+      "split": "sealed",
+      "law_ref": "채용절차의 공정화에 관한 법률 제11조",
+      "candidates": [
+        "HR-02 제9조",
+        "HR-02 제12조",
+        "PR-01 제5조",
+        "PR-01 제4조",
+        "HR-01 제25조"
+      ],
+      "findings": {
+        "HR-02 제9조": {
+          "relation": "CONFLICT",
+          "status": "NEEDS_REVIEW",
+          "issues": [
+            "사내 규정 원문 인용이 확인되지 않았다"
+          ],
+          "dropped": [
+            "채용관리지침 제9조(채용서류의 보관 및 파기) · 소관 인사팀\n불합격자의 채용서류는 채용 결정일부터 30일간 보관한 후 파기한다. 불합격자가 서류의 반환을 요청하는 경우에는 반환하지 아니하고 파기 사실을 안내한다."
+          ],
+          "cited": 1
+        },
+        "HR-02 제12조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "NEEDS_REVIEW",
+          "issues": [
+            "사내 규정 원문 인용이 확인되지 않았다"
+          ],
+          "dropped": [
+            "채용관리지침 제12조(채용 결과 통지) · 소관 인사팀\n회사는 채용 여부가 확정된 경우 지체 없이 구직자에게 결과를 문자 또는 전자우편으로 알린다."
+          ],
+          "cited": 1
+        },
+        "PR-01 제5조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "PR-01 제4조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {
+        "HR-02 제9조": "ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2270,
+      "output_tokens": 540
+    },
+    {
+      "case_id": "S2",
+      "split": "sealed",
+      "law_ref": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률 제22조의2",
+      "candidates": [
+        "HR-01 제27조",
+        "HR-01 제25조",
+        "HR-01 제40조",
+        "SH-01 제9조",
+        "HR-01 제12조"
+      ],
+      "findings": {
+        "HR-01 제27조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "NEEDS_REVIEW",
+          "issues": [
+            "법령 원문 인용이 확인되지 않았다"
+          ],
+          "dropped": [
+            "제22조의2(근로자의 가족 돌봄 등을 위한 지원) ③ 사업주는 제1항 단서에 따라 가족돌봄휴직을 허용하지 아니하는 경우에는 해당 근로자에게 그 사유를 서면으로 통보하고, 다음 각 호의 어느 하나에 해당하는 조치를 하도록 노력하여야 한다. 1. 업무를 시작하고 마치는 시간 조정 2. 연장근로의 제한 3. 근로시간의 단축, 탄력적 운영 등 근로시간의 조정 4. 그 밖에 사업장 사정에 맞는 지원조치"
+          ],
+          "cited": 1
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제12조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {
+        "HR-01 제27조": "ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 3594,
+      "output_tokens": 522
+    },
+    {
+      "case_id": "S3",
+      "split": "sealed",
+      "law_ref": "근로기준법 제76조의3",
+      "candidates": [
+        "HR-01 제35조",
+        "PR-01 제11조",
+        "HR-01 제40조",
+        "HR-01 제25조",
+        "IS-01 제8조"
+      ],
+      "findings": {
+        "HR-01 제35조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 4
+        },
+        "PR-01 제11조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "IS-01 제8조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {
+        "HR-01 제35조": "ACTION"
+      },
+      "drafts": {
+        "HR-01 제35조": {
+          "issues": [],
+          "missing": [],
+          "leftover": [],
+          "proposed_text": "[개정 후] 취업규칙 제35조(직장 내 괴롭힘의 금지) · 소관 인사팀\n직원은 직장에서의 지위 또는 관계 등의 우위를 이용하여 업무상 적정범위를 넘어 다른 직원에게 신체적·정신적 고통을 주거나 근무환경을 악화시키는 행위를 하여서는 아니 된다. 회사는 신고를 접수하면 지체 없이 사실 확인을 위한 조사를 하여야 한다. 조사 기간 동안 피해근로자등을 보호하기 위하여 필요한 경우 근무장소의 변경, 유급휴가 명령 등 적절한 조치를 하여야 하며, 피해근로자의 의사에 반하는 조치를 하여서는 아니 된다. 조사 결과 직장 내 괴롭힘 발생 사실이 확인된 때에는 피해근로자가 요청하면 근무장소의 변경, 배치전환, 유급휴가 명령 등 적절한 조치를 하여야 한다. 또한, 행위자에 대하여 징계, 근무장소의 변경 등 필요한 조치를 하여야 하며, 징계 등의 조치를 하기 전에 피해근로자의 의견을 들어야 한다. 직장 내 괴롭힘 발생 사실을 신고한 근로자 및 피해근로자등에게 해고나 그 밖의 불리한 처우를 하여서는 아니 된다.",
+          "open_questions": []
+        }
+      },
+      "error": null,
+      "input_tokens": 4136,
+      "output_tokens": 1369
+    },
+    {
+      "case_id": "S4",
+      "split": "sealed",
+      "law_ref": "개인정보 보호법 제34조",
+      "candidates": [
+        "PR-01 제11조",
+        "PR-01 제5조",
+        "PR-01 제4조",
+        "IS-01 제8조",
+        "CP-01 제6조"
+      ],
+      "findings": {
+        "PR-01 제11조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 3
+        },
+        "PR-01 제5조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "PR-01 제4조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "IS-01 제8조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "CP-01 제6조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {
+        "PR-01 제11조": "ACTION"
+      },
+      "drafts": {
+        "PR-01 제11조": {
+          "issues": [
+            "원문에 없는 법령 인용 1건 제거"
+          ],
+          "missing": [],
+          "leftover": [],
+          "proposed_text": "[개정] 개인정보 내부관리계획 제11조(개인정보 유출 시 대응) · 소관 정보보호실\\n개인정보가 유출된 사실을 알게 된 때에는 지체 없이 해당 정보주체에게 유출 항목, 시점과 경위, 피해 최소화 방법, 개인정보처리자의 대응조치 및 피해 구제절차, 피해가 발생한 경우 신고 등을 접수할 수 있는 담당부서 및 연락처, 법적 권리와 그 행사 방법 등에 관한 정보를 알리고 관계 기관에 신고한다.",
+          "open_questions": [
+            "통지 및 신고의 구체적인 시기, 방법, 절차는 대통령령으로 정한다고 되어 있으나, 해당 내용이 사내 규정에 반영되어야 하는지 여부."
+          ]
+        }
+      },
+      "error": null,
+      "input_tokens": 4368,
+      "output_tokens": 842
+    },
+    {
+      "case_id": "S5",
+      "split": "sealed",
+      "law_ref": "최저임금법 제6조",
+      "candidates": [
+        "PY-01 제7조",
+        "HR-01 제10조",
+        "PY-01 제12조",
+        "HR-01 제25조",
+        "HR-03 제2조"
+      ],
+      "findings": {
+        "PY-01 제7조": {
+          "relation": "ALIGNED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [
+            "제6조(최저임금의 효력) ② 사용자는 이 법에 따른 최저임금을 이유로 종전의 임금수준을 낮추어서는 아니 된다."
+          ],
+          "cited": 2
+        },
+        "HR-01 제10조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "PY-01 제12조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "NEEDS_REVIEW",
+          "issues": [
+            "법령 원문 인용이 확인되지 않았다"
+          ],
+          "dropped": [
+            "제6조(최저임금의 효력) ④ 제1항과 제3항에 따른 임금에는 매월 1회 이상 정기적으로 지급하는 임금을 산입(算入)한다. 다만, 다음 각 호의 어느 하나에 해당하는 임금은 산입하지 아니한다. <개정 2018.6.12>",
+            "제6조(최저임금의 효력) ④ 2. 상여금, 그 밖에 이에 준하는 것으로서 고용노동부령으로 정하는 임금의 월 지급액 중 해당 연도 시간급 최저임금액을 기준으로 산정된 월 환산액의 100분의 25에 해당하는 부분"
+          ],
+          "cited": 1
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-03 제2조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {
+        "PY-01 제7조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2735,
+      "output_tokens": 588
+    },
+    {
+      "case_id": "S6",
+      "split": "sealed",
+      "law_ref": "근로자참여 및 협력증진에 관한 법률 제4조",
+      "candidates": [
+        "LR-01 제3조",
+        "SH-01 제9조",
+        "SH-01 제6조",
+        "HR-02 제9조",
+        "HR-03 제2조"
+      ],
+      "findings": {
+        "LR-01 제3조": {
+          "relation": "ALIGNED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 2
+        },
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "SH-01 제6조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-02 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-03 제2조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {
+        "LR-01 제3조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 1958,
+      "output_tokens": 354
+    },
+    {
+      "case_id": "S7",
+      "split": "sealed",
+      "law_ref": "채용절차의 공정화에 관한 법률 제10조",
+      "candidates": [
+        "HR-02 제12조",
+        "HR-02 제9조",
+        "PR-01 제4조",
+        "SH-01 제9조",
+        "PR-01 제11조"
+      ],
+      "findings": {
+        "HR-02 제12조": {
+          "relation": "ALIGNED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 2
+        },
+        "HR-02 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "PR-01 제4조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "PR-01 제11조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {
+        "HR-02 제12조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 1907,
+      "output_tokens": 339
+    },
+    {
+      "case_id": "S8",
+      "split": "sealed",
+      "law_ref": "산업안전보건법 제24조",
+      "candidates": [
+        "SH-01 제6조",
+        "SH-01 제9조",
+        "SH-01 제4조",
+        "LR-01 제3조",
+        "HR-01 제40조"
+      ],
+      "findings": {
+        "SH-01 제6조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 3
+        },
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "SH-01 제4조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "LR-01 제3조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {
+        "SH-01 제6조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2314,
+      "output_tokens": 432
+    },
+    {
+      "case_id": "S9",
+      "split": "sealed",
+      "law_ref": "정보통신망 이용촉진 및 정보보호 등에 관한 법률 제45조",
+      "candidates": [
+        "IS-01 제8조",
+        "PR-01 제5조",
+        "PR-01 제4조",
+        "PR-01 제11조",
+        "IS-01 제15조"
+      ],
+      "findings": {
+        "IS-01 제8조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 3
+        },
+        "PR-01 제5조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "PR-01 제4조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "PR-01 제11조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "IS-01 제15조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {
+        "IS-01 제8조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2390,
+      "output_tokens": 661
+    },
+    {
+      "case_id": "S10",
+      "split": "sealed",
+      "law_ref": "약사법 제20조",
+      "candidates": [
+        "CP-01 제6조",
+        "LR-01 제3조",
+        "HR-01 제27조",
+        "HR-01 제25조",
+        "HR-01 제40조"
+      ],
+      "findings": {
+        "CP-01 제6조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "LR-01 제3조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제27조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {},
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2270,
+      "output_tokens": 312
+    },
+    {
+      "case_id": "S11",
+      "split": "sealed",
+      "law_ref": "의료법 제33조",
+      "candidates": [
+        "HR-01 제40조",
+        "HR-02 제9조",
+        "SH-01 제6조",
+        "HR-01 제35조",
+        "PR-01 제11조"
+      ],
+      "findings": {
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-02 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "SH-01 제6조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제35조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "PR-01 제11조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {},
+      "drafts": {},
+      "error": null,
+      "input_tokens": 3296,
+      "output_tokens": 284
+    },
+    {
+      "case_id": "S12",
+      "split": "sealed",
+      "law_ref": "건설산업기본법 제40조",
+      "candidates": [
+        "SH-01 제9조",
+        "HR-01 제35조",
+        "HR-02 제9조",
+        "PR-01 제5조",
+        "HR-01 제27조"
+      ],
+      "findings": {
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제35조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-02 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "PR-01 제5조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        },
+        "HR-01 제27조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0
+        }
+      },
+      "gold": {},
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2260,
+      "output_tokens": 321
+    }
+  ]
+}

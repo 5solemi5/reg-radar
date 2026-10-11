@@ -1,0 +1,89 @@
+케이스 11건 (오류 0) · gold ACTION 4건
+검색 재현율 (후보 top-k에 정답 포함)   100.0%
+조치 재현율 (양쪽 근거 확인된 ACTIONABLE) 100.0%
+사람 검토 포함 재현율                   100.0%
+조치 정밀도                             80.0%
+음성 대조군 오조치                       0/3건
+인용 정확도 (모델 인용 중 원문 확인)     100.0%
+NEEDS_REVIEW 비율                        9.1%
+초안 4건 · 검증 문제 있음 0 · 필수 수정 충족 4
+
+── 케이스 ─────────────────────────────────────────────────────────
+U1 [sealed] 근로기준법 제26조
+   HR-01 제32조     gold=ACTION    CONFLICT           ACTIONABLE
+   PY-02 제5조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+   PY-01 제7조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-02 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 HR-01 제32조: 문제 없음 · 누락 없음 · 잔존 없음
+U2 [sealed] 근로기준법 제74조
+   HR-01 제26조     gold=ACTION    UPDATE_RECOMMENDED ACTIONABLE
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제10조     gold=NO_ACTION UPDATE_RECOMMENDED ACTIONABLE  ← 오조치
+   HR-01 제12조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 HR-01 제26조: 문제 없음 · 누락 없음 · 잔존 없음
+U3 [sealed] 근로기준법 제56조
+   PY-01 제10조     gold=ACTION    UPDATE_RECOMMENDED ACTIONABLE
+   HR-01 제11조     gold=NO_ACTION ALIGNED            NO_ACTION
+   HR-01 제10조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+   PY-01 제7조      gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 PY-01 제10조: 문제 없음 · 누락 없음 · 잔존 없음
+U4 [sealed] 개인정보 보호법 제21조
+   PR-01 제9조      gold=ACTION    CONFLICT           ACTIONABLE
+   PR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제5조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제4조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-02 제9조      gold=NO_ACTION ALIGNED            NO_ACTION
+   초안 PR-01 제9조: 문제 없음 · 누락 없음 · 잔존 없음
+U5 [sealed] 근로기준법 제55조
+   HR-01 제14조     gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 보완 근거로 든 법 문장이 모두 허용 규정이다(…할 수 있다) — 누락이 아닐 수 있다
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제8조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PY-02 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+U6 [sealed] 근로기준법 제57조
+   PY-01 제10조     gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 보완 근거로 든 법 문장이 모두 허용 규정이다(…할 수 있다) — 누락이 아닐 수 있다
+   HR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제8조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+U7 [sealed] 근로기준법 제51조
+   HR-01 제11조     gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 검토자 반론: 사내 규정은 연장근로에 대한 일반적인 합의를 다루고 있으며, 이는 탄력적 근로시간제와는 별개의 사항이다. 탄력적 근로시간제는 법령에서 허용하는 제도로, 사내 규정에 반드시 포함되어야 하는 의무사항이 아니다.
+   HR-01 제10조     gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 검토자 반론: 법령 조문은 탄력적 근로시간제를 허용하는 조건을 명시하고 있지만, 이는 선택적 제도로서 사내 규정에 반드시 포함되어야 하는 것은 아니다. 사내 규정은 기본적인 소정근로시간을 명시하고 있으며, 탄력적 근로시간제는 필요시 별도로 도입할 수 있다.
+   HR-01 제12조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-04 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+U8 [sealed] 근로자퇴직급여 보장법 제8조
+   PY-02 제5조      gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 검토자 반론: 법령은 퇴직금 중간정산을 허용하지만, 이는 선택사항으로 강제되지 않는다. 사내 규정이 이를 금지한다고 해서 법령을 위반하는 것은 아니다.
+   PY-02 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+   PY-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+U9 [sealed] 화학물질관리법 제13조
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제4조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-02 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   CP-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   IS-01 제15조     gold=NO_ACTION UNRELATED          NO_ACTION
+U10 [sealed] 화학물질관리법 제28조
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제35조     gold=NO_ACTION UNRELATED          NO_ACTION
+   CP-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+U11 [sealed] 식품위생법 제44조
+   HR-01 제35조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-03 제2조      gold=NO_ACTION UNRELATED          NO_ACTION
+   IS-01 제15조     gold=NO_ACTION UNRELATED          NO_ACTION
+   CP-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+
+※ 사내 규정집은 가상이다. 표본이 작다(케이스 11건, ACTION 4건) — 방향 확인용이다.
+※ ALIGNED·UNRELATED는 원문 근거로 검증할 수 없어 런타임에서 막지 못한다. 놓침은 이 평가로만 보인다.

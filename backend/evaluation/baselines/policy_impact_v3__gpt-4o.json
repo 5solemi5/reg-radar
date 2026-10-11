@@ -1,0 +1,38 @@
+{
+  "dev": {
+    "action_precision": 0.75,
+    "action_recall": 1.0,
+    "cases": 15,
+    "citation_accuracy": 0.9722,
+    "drafts": 6,
+    "drafts_fix_complete": 6,
+    "drafts_with_issues": 0,
+    "errors": 0,
+    "gold_action": 6,
+    "input_tokens": 63253,
+    "needs_review_rate": 0.0405,
+    "negative_cases": 3,
+    "negative_false_action": 0,
+    "output_tokens": 9291,
+    "retrieval_recall": 1.0,
+    "surfaced_recall": 1.0
+  },
+  "sealed": {
+    "action_precision": 0.8,
+    "action_recall": 1.0,
+    "cases": 11,
+    "citation_accuracy": 1.0,
+    "drafts": 4,
+    "drafts_fix_complete": 4,
+    "drafts_with_issues": 0,
+    "errors": 0,
+    "gold_action": 4,
+    "input_tokens": 46519,
+    "needs_review_rate": 0.0909,
+    "negative_cases": 3,
+    "negative_false_action": 0,
+    "output_tokens": 6663,
+    "retrieval_recall": 1.0,
+    "surfaced_recall": 1.0
+  }
+}

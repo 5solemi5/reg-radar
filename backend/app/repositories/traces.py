@@ -30,6 +30,14 @@ class TraceRecord:
     output_tokens: int = 0
     law_id: str | None = None
     article_no: str | None = None
+    cost_usd: float | None = None
+    prompt_version: str | None = None
+    attempt: int = 0
+
+    @property
+    def is_rule(self) -> bool:
+        """규칙 검증(C6) 행. LLM 호출 수·실패 수에 세지 않는다."""
+        return self.model == "rules"
 
     @classmethod
     def of(
@@ -56,6 +64,9 @@ class TraceRecord:
             output_tokens=trace.output_tokens,
             law_id=law_id,
             article_no=article_no,
+            cost_usd=trace.cost_usd,
+            prompt_version=trace.prompt_version,
+            attempt=trace.attempt,
         )
 
 
@@ -67,6 +78,9 @@ class TraceSummary:
     output_tokens: int = 0
     total_latency_ms: int = 0
     slowest_call_ms: int = 0
+    cost_usd: float = 0.0
+    validator_rejects: int = 0
+    regenerations: int = 0
 
     @property
     def total_tokens(self) -> int:
@@ -86,19 +100,24 @@ class InMemoryTraceRepository:
         self.records.extend(records)
 
     async def summarize(self, analysis_id: str, user_id: str) -> TraceSummary:
-        rows = [
+        mine = [
             r for r in self.records
             if r.analysis_id == analysis_id and r.user_id == user_id
         ]
-        if not rows:
+        rows = [r for r in mine if not r.is_rule]
+        rules = [r for r in mine if r.is_rule]
+        if not mine:
             return TraceSummary()
         return TraceSummary(
             chain_calls=len(rows),
             failures=sum(1 for r in rows if not r.ok),
             input_tokens=sum(r.input_tokens for r in rows),
             output_tokens=sum(r.output_tokens for r in rows),
-            total_latency_ms=sum(r.latency_ms for r in rows),
-            slowest_call_ms=max(r.latency_ms for r in rows),
+            total_latency_ms=sum(r.latency_ms for r in mine),
+            slowest_call_ms=max(r.latency_ms for r in mine),
+            cost_usd=round(sum(r.cost_usd or 0.0 for r in rows), 6),
+            validator_rejects=sum(1 for r in rules if not r.ok),
+            regenerations=sum(1 for r in rules if r.attempt > 0),
         )
 
     def clear(self) -> None:
@@ -117,9 +136,11 @@ class PostgresTraceRepository:
                 """
                 INSERT INTO ai_traces (
                     trace_id, analysis_id, user_id, law_id, article_no,
-                    chain, model, latency_ms, ok, error, input_tokens, output_tokens
+                    chain, model, latency_ms, ok, error, input_tokens, output_tokens,
+                    cost_usd, prompt_version, attempt
                 ) VALUES (
-                    $1::uuid, $2::uuid, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+                    $1::uuid, $2::uuid, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+                    $13, $14, $15
                 )
                 """,
                 [
@@ -127,6 +148,7 @@ class PostgresTraceRepository:
                         r.trace_id, r.analysis_id, r.user_id, r.law_id, r.article_no,
                         r.chain, r.model, r.latency_ms, r.ok, r.error,
                         r.input_tokens, r.output_tokens,
+                        r.cost_usd, r.prompt_version, r.attempt,
                     )
                     for r in records
                 ],
@@ -139,12 +161,16 @@ class PostgresTraceRepository:
         try:
             row = await self._db.fetchrow(
                 """
-                SELECT count(*) AS chain_calls,
-                       count(*) FILTER (WHERE NOT ok) AS failures,
+                SELECT count(*) AS all_rows,
+                       count(*) FILTER (WHERE model <> 'rules') AS chain_calls,
+                       count(*) FILTER (WHERE NOT ok AND model <> 'rules') AS failures,
                        coalesce(sum(input_tokens), 0) AS input_tokens,
                        coalesce(sum(output_tokens), 0) AS output_tokens,
                        coalesce(sum(latency_ms), 0) AS total_latency_ms,
-                       coalesce(max(latency_ms), 0) AS slowest_call_ms
+                       coalesce(max(latency_ms), 0) AS slowest_call_ms,
+                       coalesce(sum(cost_usd), 0) AS cost_usd,
+                       count(*) FILTER (WHERE model = 'rules' AND NOT ok) AS validator_rejects,
+                       count(*) FILTER (WHERE model = 'rules' AND attempt > 0) AS regenerations
                 FROM ai_traces
                 WHERE analysis_id = $1::uuid AND user_id = $2
                 """,
@@ -154,7 +180,7 @@ class PostgresTraceRepository:
         except Exception as exc:
             logger.warning("trace 집계 실패: %s", exc)
             return TraceSummary()
-        if row is None or not row["chain_calls"]:
+        if row is None or not row["all_rows"]:
             return TraceSummary()
         return TraceSummary(
             chain_calls=int(row["chain_calls"]),
@@ -163,6 +189,9 @@ class PostgresTraceRepository:
             output_tokens=int(row["output_tokens"]),
             total_latency_ms=int(row["total_latency_ms"]),
             slowest_call_ms=int(row["slowest_call_ms"]),
+            cost_usd=float(row["cost_usd"]),
+            validator_rejects=int(row["validator_rejects"]),
+            regenerations=int(row["regenerations"]),
         )
 
 

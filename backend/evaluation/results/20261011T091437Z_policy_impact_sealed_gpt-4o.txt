@@ -1,0 +1,113 @@
+케이스 15건 (오류 0) · gold ACTION 6건
+검색 재현율 (후보 top-k에 정답 포함)   100.0%
+조치 재현율 (양쪽 근거 확인된 ACTIONABLE) 100.0%
+사람 검토 포함 재현율                   100.0%
+조치 정밀도                             75.0%
+음성 대조군 오조치                       0/3건
+인용 정확도 (모델 인용 중 원문 확인)     97.4%
+NEEDS_REVIEW 비율                        5.4%
+초안 6건 · 검증 문제 있음 0 · 필수 수정 충족 6
+
+── 케이스 ─────────────────────────────────────────────────────────
+T1 [sealed] 근로기준법 제60조
+   HR-01 제22조     gold=ACTION    CONFLICT           ACTIONABLE
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제8조      gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 검토자 반론: 사내 규정은 근로조건을 명시한 서면을 교부하도록 하고 있으며, 이는 법령의 요구를 포괄적으로 담고 있다. 법령의 구체적인 휴가 청구 시기 관련 요구는 다른 사내 규정에서 다룰 수 있다.
+   HR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-03 제2조      gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 HR-01 제22조: 문제 없음 · 누락 없음 · 잔존 없음
+T2 [sealed] 남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률 제19조
+   HR-01 제28조     gold=ACTION    UPDATE_RECOMMENDED ACTIONABLE
+   HR-01 제27조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-04 제3조      gold=NO_ACTION UPDATE_RECOMMENDED ACTIONABLE  ← 오조치
+   초안 HR-01 제28조: 문제 없음 · 누락 없음 · 잔존 없음
+T3 [sealed] 남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률 제14조
+   HR-01 제36조     gold=ACTION    UPDATE_RECOMMENDED ACTIONABLE
+   HR-01 제35조     gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제8조      gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 HR-01 제36조: 문제 없음 · 누락 없음 · 잔존 없음
+T4 [sealed] 근로기준법 제48조
+   PY-01 제7조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제8조      gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 검토자 반론: 사내 규정은 근로계약 체결 시 임금의 구성항목, 계산방법 등을 명시하도록 하고 있으며, 이는 법령의 요구사항을 포괄적으로 반영하고 있다. 법령의 구체적 요구사항은 임금 지급 시 임금명세서에 대한 것이며, 이는 다른 규정에서 다룰 수 있다.
+   PY-01 제9조      gold=ACTION    UPDATE_RECOMMENDED ACTIONABLE
+   SH-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 PY-01 제9조: 문제 없음 · 누락 없음 · 잔존 없음
+T5 [sealed] 기간제 및 단시간근로자 보호 등에 관한 법률 제4조
+   HR-04 제3조      gold=ACTION    CONFLICT           ACTIONABLE
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제8조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PY-02 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 HR-04 제3조: 문제 없음 · 누락 없음 · 잔존 없음
+T6 [sealed] 산업안전보건법 제14조
+   SH-01 제4조      gold=ACTION    UPDATE_RECOMMENDED ACTIONABLE
+   PR-01 제4조      gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제9조      gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 검토자 반론: 사내 규정은 안전관리자 선임 여부를 확인하는 절차를 규정하고 있으며, 이는 법령의 요구와 직접적인 충돌이 없다. 법령의 구체적인 계획 수립 요구는 다른 사내 규정에서 다룰 수 있다.
+   SH-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-03 제2조      gold=NO_ACTION UNRELATED          NO_ACTION
+   초안 SH-01 제4조: 문제 없음 · 누락 없음 · 잔존 없음
+T7 [sealed] 근로기준법 제53조
+   HR-01 제11조     gold=NO_ACTION UPDATE_RECOMMENDED ACTIONABLE  ← 오조치
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제10조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제12조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+T8 [sealed] 근로기준법 제17조
+   HR-01 제8조      gold=NO_ACTION ALIGNED            NO_ACTION
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-04 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+T9 [sealed] 근로자퇴직급여 보장법 제4조
+   PY-02 제3조      gold=NO_ACTION UPDATE_RECOMMENDED NEEDS_REVIEW
+      · 검토자 반론: 사내 규정은 퇴직급여제도 변경 시 근로자대표의 동의를 받도록 하고 있어, 법령의 요구사항을 충족하고 있다. 법령에서 요구하는 '의견을 들어야 한다'는 부분은 사내 규정에서 동의 절차로 대체되어 있으며, 이는 법령의 최소 요구사항을 초과하는 것으로 볼 수 있다.
+   HR-01 제40조     gold=NO_ACTION ALIGNED            NO_ACTION
+   HR-01 제8조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제10조     gold=NO_ACTION UNRELATED          NO_ACTION
+T10 [sealed] 근로기준법 제76조의2
+   HR-01 제35조     gold=NO_ACTION ALIGNED            NO_ACTION
+   HR-01 제36조     gold=NO_ACTION UNRELATED          NO_ACTION
+   IS-01 제15조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-03 제2조      gold=NO_ACTION UNRELATED          NO_ACTION
+T11 [sealed] 장애인고용촉진 및 직업재활법 제28조
+   HR-03 제2조      gold=NO_ACTION ALIGNED            NO_ACTION
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PY-02 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제35조     gold=NO_ACTION UNRELATED          NO_ACTION
+T12 [sealed] 근로기준법 제50조
+   HR-01 제10조     gold=NO_ACTION ALIGNED            NO_ACTION
+   HR-01 제12조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제11조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제8조      gold=NO_ACTION UNRELATED          NO_ACTION
+T13 [sealed] 폐기물관리법 제18조
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제35조     gold=NO_ACTION UNRELATED          NO_ACTION
+   LR-01 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제25조     gold=NO_ACTION UNRELATED          NO_ACTION
+   PR-01 제5조      gold=NO_ACTION UNRELATED          NO_ACTION
+T14 [sealed] 자동차관리법 제53조
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PY-02 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   CP-01 제6조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제40조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+T15 [sealed] 공인중개사법 제9조
+   HR-01 제28조     gold=NO_ACTION UNRELATED          NO_ACTION
+   SH-01 제9조      gold=NO_ACTION UNRELATED          NO_ACTION
+   PY-02 제3조      gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제27조     gold=NO_ACTION UNRELATED          NO_ACTION
+   HR-01 제22조     gold=NO_ACTION UNRELATED          NO_ACTION
+
+※ 사내 규정집은 가상이다. 표본이 작다(케이스 15건, ACTION 6건) — 방향 확인용이다.
+※ ALIGNED·UNRELATED는 원문 근거로 검증할 수 없어 런타임에서 막지 못한다. 놓침은 이 평가로만 보인다.

@@ -30,7 +30,11 @@ async def map_applicability(
     runner: ChainRunner,
     packet: ContextPacket,
     extraction: TargetExtractionOutput,
+    feedback: list[str] | None = None,
 ) -> ApplicabilityOutput:
+    """`feedback`은 직전 답변이 Validator에서 거부된 사유다(REJECT 재생성, 문서 11 §11-4).
+    없으면 프롬프트가 한 글자도 바뀌지 않는다 — 기존 녹화(cassette)와 그대로 맞는다.
+    """
     blocks = build_blocks(packet)
     prompt = C4_MAPPING.format(
         user_block=blocks["user_block"],
@@ -41,7 +45,21 @@ async def map_applicability(
         size_block=blocks["size_block"],
         conditions_block=render_conditions_block(extraction),
     )
+    if feedback:
+        prompt += render_rejection_feedback(feedback)
     return await runner.invoke(chain=CHAIN_NAME, prompt=prompt, schema=ApplicabilityOutput)
+
+
+def render_rejection_feedback(feedback: list[str]) -> str:
+    lines = "\n".join(f"- {f}" for f in feedback)
+    return (
+        "\n\n## 직전 답변이 검증에서 거부된 이유\n"
+        f"{lines}\n"
+        "같은 문제를 반복하지 마십시오. cited_spans는 위 조문 원문(또는 위임 조문 원문)에서 "
+        "끊기지 않은 한 구간을 글자 그대로 복사합니다. 원문에 없는 조문번호·날짜·참고자료 번호를 "
+        "쓰지 마십시오. 근거를 원문에서 댈 수 없으면 확정하지 말고 "
+        "HOLD와 missing_context를 쓰십시오.\n"
+    )
 
 
 def deterministic_hold_reasons(packet: ContextPacket) -> list[str]:

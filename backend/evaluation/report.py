@@ -119,8 +119,9 @@ def render(metrics: Metrics, outcomes: list[CaseOutcome], model: str) -> str:
             add(f"  {o.case_id}: {o.dropped_spans}")
         add("")
 
-    add("※ Q1: '노출 인용'은 Validator 통과분으로 구조적으로 100%다. 모델이 만든 인용")
-    add("   자체의 정확도는 그 아래 참고값이며, 둘의 차이가 Validator가 막아낸 양이다.")
+    add("※ Q1: '노출 인용'은 사용자에게 보이는 인용(모법·하위법령)을 Validator와 별개로")
+    add("   원문에서 다시 찾아 잰 실측값이다. 모델 생성 인용 정확도와의 차이가")
+    add("   Validator가 막아낸 양이다.")
     add("※ 목표값은 기획서 §11의 설계 목표이며 달성 보증이 아니다.")
     add("※ 실측값은 이 데이터셋·이 모델 기준이며 표본이 작다. 케이스 확대 시 재측정 필요.")
     return "\n".join(lines)

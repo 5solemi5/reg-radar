@@ -119,6 +119,13 @@ class ValidationReport(BaseModel):
         default_factory=list, description="원문에서 확인되지 않아 제거된 인용"
     )
     downgraded_to_hold: bool = False
+    retries: int = Field(
+        0, description="REJECT 뒤 거부 사유를 되먹여 다시 생성한 횟수 (문서 11 §11-4)"
+    )
+    rejected_failures: list[str] = Field(
+        default_factory=list,
+        description="재생성 전 시도들이 거부된 사유. 마지막 판정의 사유와 별개",
+    )
 
 
 class AnalysisResult(BaseModel):

@@ -1,0 +1,251 @@
+{
+ "dataset_id": "policy_impact_v4",
+ "created_at": "2026-10-11",
+ "corpus": "virtual-card-co-v4",
+ "description": "금융 고유 법령(금융소비자보호법·신용정보법·전자금융거래법·지배구조법)을 처음 넣은 셋. 아직 실행하지 않았다(과금 실행 보류).",
+ "rules": [
+  "sealed 7건은 조문 전문과 규정 원문을 읽고 첫 실행 전에 라벨을 확정했다.",
+  "dev는 v3 sealed 11건이다(소진).",
+  "sealed는 한 번만 돌린다."
+ ],
+ "labeling_policy": [
+  "ACTION: 사내 규정이 법령과 어긋나거나(CONFLICT) 법령이 요구하는 사항을 담지 못해(UPDATE_RECOMMENDED) 개정이 필요하다. 둘의 구분은 채점하지 않는다 — 실무에서 둘 다 '고친다'로 이어진다.",
+  "NO_ACTION: 부합하거나 관련이 없다. 후보로 검색됐지만 gold에 없는 조문은 NO_ACTION으로 본다.",
+  "EITHER: 사람마다 판단이 갈릴 수 있어 채점에서 뺀다. 예: 개인정보 보호법 제31조 ④ 업무 목록 대비 PR-01 제5조(일부 업무만 열거).",
+  "법이 '~할 수 있다'로 허용만 하는 제도·예외를 사내 규정이 두지 않은 것은 NO_ACTION이다. 회사가 쓰지 않기로 할 수 있다."
+ ],
+ "runs": {
+  "dev": 0,
+  "sealed": 0
+ },
+ "cases": [
+  {
+   "id": "v3-U1",
+   "law_name": "근로기준법",
+   "article_no": "제26조",
+   "gold": {
+    "HR-01 제32조": "ACTION"
+   },
+   "draft_must_contain": {
+    "HR-01 제32조": [
+     "30일"
+    ]
+   },
+   "draft_must_not_contain": {
+    "HR-01 제32조": [
+     "15일"
+    ]
+   },
+   "note": "예고 15일·15일분 vs 법 30일 — CONFLICT",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U2",
+   "law_name": "근로기준법",
+   "article_no": "제74조",
+   "gold": {
+    "HR-01 제26조": "ACTION"
+   },
+   "draft_must_contain": {
+    "HR-01 제26조": [
+     "120일"
+    ]
+   },
+   "note": "미숙아 100일·다태아 120일(출산 후 60일, 유급 75일)이 없다 — UPDATE",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U3",
+   "law_name": "근로기준법",
+   "article_no": "제56조",
+   "gold": {
+    "PY-01 제10조": "ACTION"
+   },
+   "draft_must_contain": {
+    "PY-01 제10조": [
+     "100분의 100"
+    ]
+   },
+   "note": "8시간 초과 휴일근로 100분의 100이 없다 — UPDATE",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U4",
+   "law_name": "개인정보 보호법",
+   "article_no": "제21조",
+   "gold": {
+    "PR-01 제9조": "ACTION"
+   },
+   "draft_must_contain": {
+    "PR-01 제9조": [
+     "지체 없이"
+    ]
+   },
+   "draft_must_not_contain": {
+    "PR-01 제9조": [
+     "매년 12월"
+    ]
+   },
+   "note": "매년 일괄 파기 vs 지체 없이 파기 — CONFLICT",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U5",
+   "law_name": "근로기준법",
+   "article_no": "제55조",
+   "gold": {
+    "HR-01 제14조": "NO_ACTION"
+   },
+   "note": "허용 규정 함정: ② 단서 '대체할 수 있다'를 쓰지 않은 것은 누락이 아니다. 유급휴일 보장은 부합",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U6",
+   "law_name": "근로기준법",
+   "article_no": "제57조",
+   "gold": {
+    "PY-01 제10조": "NO_ACTION",
+    "HR-01 제11조": "NO_ACTION"
+   },
+   "note": "허용 규정 함정: 보상휴가제는 '줄 수 있다'. 규정에 없어도 위반이 아니다. (PY-01 제10조의 휴일근로 가산 결함은 제56조 사안이라 이 조문으로는 짚을 수 없다)",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U7",
+   "law_name": "근로기준법",
+   "article_no": "제51조",
+   "gold": {
+    "HR-01 제10조": "NO_ACTION",
+    "HR-01 제11조": "NO_ACTION"
+   },
+   "note": "허용 규정 함정: 탄력적 근로시간제는 도입할 수 있다는 규정",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U8",
+   "law_name": "근로자퇴직급여 보장법",
+   "article_no": "제8조",
+   "gold": {
+    "PY-02 제5조": "NO_ACTION",
+    "PY-02 제3조": "NO_ACTION"
+   },
+   "note": "허용 규정 함정: 중간정산은 '지급할 수 있다'. 하지 않기로 한 것은 위반이 아니다. 30일분은 부합",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U9",
+   "law_name": "화학물질관리법",
+   "article_no": "제13조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U10",
+   "law_name": "화학물질관리법",
+   "article_no": "제28조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "dev"
+  },
+  {
+   "id": "v3-U11",
+   "law_name": "식품위생법",
+   "article_no": "제44조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "dev"
+  },
+  {
+   "id": "W1",
+   "law_name": "금융소비자 보호에 관한 법률",
+   "article_no": "제19조",
+   "gold": {
+    "CP-01 제6조": "ACTION"
+   },
+   "note": "② 설명서 제공·이해 확인(서명·녹취 등)이 없다 — UPDATE. 신용카드는 대출성 상품",
+   "split": "sealed"
+  },
+  {
+   "id": "W2",
+   "law_name": "금융소비자 보호에 관한 법률",
+   "article_no": "제46조",
+   "gold": {
+    "CP-01 제8조": "ACTION"
+   },
+   "draft_must_contain": {
+    "CP-01 제8조": [
+     "14일"
+    ]
+   },
+   "draft_must_not_contain": {
+    "CP-01 제8조": [
+     "7일"
+    ]
+   },
+   "note": "대출성 상품 청약철회 14일 vs 규정 7일 — CONFLICT",
+   "split": "sealed"
+  },
+  {
+   "id": "W3",
+   "law_name": "신용정보의 이용 및 보호에 관한 법률",
+   "article_no": "제20조의2",
+   "gold": {
+    "PR-01 제12조": "ACTION"
+   },
+   "draft_must_contain": {
+    "PR-01 제12조": [
+     "5년"
+    ]
+   },
+   "draft_must_not_contain": {
+    "PR-01 제12조": [
+     "10년"
+    ]
+   },
+   "note": "상거래관계 종료 후 최장 5년 이내 삭제 vs 10년 보관 — CONFLICT",
+   "split": "sealed"
+  },
+  {
+   "id": "W4",
+   "law_name": "전자금융거래법",
+   "article_no": "제22조",
+   "gold": {
+    "IS-01 제20조": "ACTION"
+   },
+   "note": "① 생성·보존(5년 범위)은 부합. ② 보존기간 경과·거래 종료 후 5년 이내 파기 의무가 없다 — UPDATE",
+   "split": "sealed"
+  },
+  {
+   "id": "W5",
+   "law_name": "금융회사의 지배구조에 관한 법률",
+   "article_no": "제25조",
+   "gold": {
+    "CP-02 제3조": "ACTION"
+   },
+   "draft_must_contain": {
+    "CP-02 제3조": [
+     "이사회"
+    ]
+   },
+   "note": "③ 임면은 이사회 의결(대표이사 임명 아님), ⑥ 재무성과와 연동하지 않는 별도 평가 — CONFLICT. ② 단서(직원 중 선임 '할 수 있다')는 허용 규정",
+   "split": "sealed"
+  },
+  {
+   "id": "W6",
+   "law_name": "화학물질관리법",
+   "article_no": "제23조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "sealed"
+  },
+  {
+   "id": "W7",
+   "law_name": "식품위생법",
+   "article_no": "제37조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "sealed"
+  }
+ ]
+}

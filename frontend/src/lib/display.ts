@@ -115,3 +115,86 @@ export function effectiveDateNote(dateString: string | null): string | null {
   if (days === 0) return "오늘 시행";
   return `${Math.abs(days)}일 전 시행됨`;
 }
+
+// ── 사내 규정 영향·개정 초안 ─────────────────────────────────────────
+
+export const FINDING_STATUS_META: Record<
+  "ACTIONABLE" | "NEEDS_REVIEW" | "NO_ACTION",
+  { label: string; chip: string; hint: string }
+> = {
+  ACTIONABLE: {
+    label: "개정 대상",
+    chip: "bg-rose-50 text-rose-800 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+    hint: "법령과 사내 규정 양쪽 원문 근거가 확인됐고, 반론 검토도 통과했습니다.",
+  },
+  NEEDS_REVIEW: {
+    label: "사람 검토",
+    chip: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
+    hint: "근거가 부족하거나 반론 검토가 이겼습니다. 자동으로 버리지 않고 사람에게 넘깁니다.",
+  },
+  NO_ACTION: {
+    label: "조치 불필요",
+    chip: "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+    hint: "부합하거나 관련이 없습니다.",
+  },
+};
+
+export const DRAFT_STATE_META: Record<
+  "DRAFTED" | "IN_REVIEW" | "APPROVED" | "REJECTED",
+  { label: string; chip: string }
+> = {
+  DRAFTED: { label: "초안", chip: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" },
+  IN_REVIEW: { label: "검토 중", chip: "bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300" },
+  APPROVED: { label: "승인", chip: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300" },
+  REJECTED: { label: "반려", chip: "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300" },
+};
+
+export const AUDIT_ACTION_LABEL: Record<string, string> = {
+  create: "초안 생성",
+  submit: "검토 요청",
+  approve: "승인",
+  reject: "반려",
+  revise: "수정",
+  comment: "의견",
+};
+
+/**
+ * 어절 단위 비교 (LCS). 현행 조문과 개정안의 차이를 표시한다.
+ * 조문은 수백 자라 O(n·m)으로 충분하다.
+ */
+export type DiffPart = { kind: "same" | "added" | "removed"; text: string };
+
+export function wordDiff(before: string, after: string): DiffPart[] {
+  const a = before.split(/(\s+)/);
+  const b = after.split(/(\s+)/);
+  const dp: number[][] = Array.from({ length: a.length + 1 }, () =>
+    new Array<number>(b.length + 1).fill(0),
+  );
+  for (let i = a.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const out: DiffPart[] = [];
+  const push = (kind: DiffPart["kind"], text: string) => {
+    const last = out[out.length - 1];
+    if (last && last.kind === kind) last.text += text;
+    else out.push({ kind, text });
+  };
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      push("same", a[i]);
+      i++;
+      j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      push("removed", a[i++]);
+    } else {
+      push("added", b[j++]);
+    }
+  }
+  while (i < a.length) push("removed", a[i++]);
+  while (j < b.length) push("added", b[j++]);
+  return out;
+}

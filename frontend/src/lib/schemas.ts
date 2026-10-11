@@ -313,3 +313,77 @@ export const ApiErrorBody = z.object({
     detail: z.string().nullable(),
   }),
 });
+
+// ── 사내 규정 영향 분석·개정 초안 승인 (명세서 §4-7, 문서 12 §4) ─────────
+
+/**
+ * ACTIONABLE: 법령·사내 규정 양쪽 원문 근거가 확인됐고 반론 검토도 통과했다.
+ * NEEDS_REVIEW: 근거가 부족하거나 반론 검토가 이겼다 — 사람이 판단한다.
+ */
+export const FindingStatus = z.enum(["ACTIONABLE", "NEEDS_REVIEW", "NO_ACTION"]);
+export type FindingStatus = z.infer<typeof FindingStatus>;
+
+export const PolicyFinding = z.object({
+  policy_ref: z.string(),
+  relation: z.string().nullable(),
+  status: FindingStatus,
+  reason: z.string(),
+  law_spans: z.array(z.string()),
+  policy_spans: z.array(z.string()),
+  dropped_span_count: z.number(),
+  missing_context: z.array(z.string()),
+  issues: z.array(z.string()),
+  review: z.string().nullable(),
+});
+export type PolicyFinding = z.infer<typeof PolicyFinding>;
+
+export const PolicyImpact = z.object({
+  law_ref: z.string(),
+  corpus_label: z.string(),
+  candidates: z.array(z.string()),
+  findings: z.array(PolicyFinding),
+  issues: z.array(z.string()),
+});
+export type PolicyImpact = z.infer<typeof PolicyImpact>;
+
+export const DraftState = z.enum(["DRAFTED", "IN_REVIEW", "APPROVED", "REJECTED"]);
+export type DraftState = z.infer<typeof DraftState>;
+
+export const PolicyDraft = z.object({
+  draft_id: z.string(),
+  law_ref: z.string(),
+  policy_ref: z.string(),
+  relation: z.string(),
+  state: DraftState,
+  current_text: z.string(),
+  proposed_text: z.string(),
+  issues: z.array(z.string()),
+  created_by: z.string(),
+  submitted_by: z.string().nullable(),
+  decided_by: z.string().nullable(),
+  comments: z.array(z.object({ user_id: z.string(), text: z.string() })),
+});
+export type PolicyDraft = z.infer<typeof PolicyDraft>;
+
+export const AuditEvent = z.object({
+  org_id: z.string(),
+  seq: z.number(),
+  at: z.string(),
+  actor: z.string(),
+  role: z.string(),
+  action: z.string(),
+  draft_id: z.string(),
+  before: z.string().nullable(),
+  after: z.string().nullable(),
+  detail: z.record(z.string(), z.unknown()),
+  prev_hash: z.string(),
+  hash: z.string(),
+});
+export type AuditEvent = z.infer<typeof AuditEvent>;
+
+export const PolicyAudit = z.object({
+  intact: z.boolean(),
+  broken_at: z.number().nullable(),
+  events: z.array(AuditEvent),
+});
+export type PolicyAudit = z.infer<typeof PolicyAudit>;

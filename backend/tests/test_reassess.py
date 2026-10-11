@@ -298,3 +298,53 @@ class TestGuards:
                 payload=ReassessInput(employee_count=80),
                 user_id="u1",
             )
+
+
+class TestReassessDelegated:
+    """재판정도 최초 분석처럼 위임 하위법령 조문을 붙인다 (ADR-025).
+
+    빠져 있던 버그: 최초 분석은 시행령 기준을 읽고 판정했는데, 재판정 packet에는
+    delegated가 비어 "대통령령에 위임되어 알 수 없다"로 돌아갈 수 있었다.
+    """
+
+    async def test_위임_조문이_재판정_packet에_들어간다(self, setup):
+        from app.domain.context import DelegatedContext
+
+        store, original, service, analyzer = await setup()
+        original = original.model_copy(
+            update={"change": original.change.model_copy(
+                update={"delegation_targets": ["대통령령"]}
+            )}
+        )
+        decree = DelegatedContext(
+            law_id="d1", law_name="가상법 시행령", law_type="대통령령", article_no="제3조",
+            original_text="법 제5조에서 대통령령으로 정하는 수란 10명을 말한다.",
+            matched_by="back_reference",
+        )
+        calls = []
+
+        class FakeResolver:
+            async def resolve(self, law_name, article_no, article_title, targets):
+                calls.append((law_name, article_no, list(targets)))
+                return [decree]
+
+        service._decree_resolver = FakeResolver()
+        await service.reassess(
+            original=original, profile=a_profile(None),
+            payload=ReassessInput(employee_count=80), user_id="u1",
+        )
+        assert calls and calls[0][2] == ["대통령령"]
+        assert analyzer.calls[-1].delegated == [decree]
+
+    async def test_위임이_없으면_법제처를_부르지_않는다(self, setup):
+        store, original, service, analyzer = await setup()
+
+        def explode():
+            raise AssertionError("위임 대상이 없는데 법제처 클라이언트를 열었다")
+
+        service._client_factory = explode
+        await service.reassess(
+            original=original, profile=a_profile(None),
+            payload=ReassessInput(employee_count=80), user_id="u1",
+        )
+        assert analyzer.calls[-1].delegated == []

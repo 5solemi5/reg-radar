@@ -15,8 +15,11 @@ from app.domain.enums import Applicability
 
 DATASETS = Path(__file__).parent.parent / "evaluation" / "datasets"
 
-ALL = sorted(p.name for p in DATASETS.glob("*.json"))
-"""디렉터리를 훑는다. 데이터셋을 추가하면 검사도 자동으로 따라붙는다."""
+ALL = sorted(
+    p.name for p in DATASETS.glob("*.json") if not p.name.startswith("policy_impact_")
+)
+"""디렉터리를 훑는다. 데이터셋을 추가하면 검사도 자동으로 따라붙는다.
+policy_impact_*는 판정 데이터셋이 아니라 형식이 다르다(tests/test_policy_eval_replay.py)."""
 
 HOLDOUTS = [name for name in ALL if name.startswith("holdout_")]
 

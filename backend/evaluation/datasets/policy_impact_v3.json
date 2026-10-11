@@ -1,0 +1,328 @@
+{
+ "dataset_id": "policy_impact_v3",
+ "created_at": "2026-10-11",
+ "corpus": "virtual-card-co-v3",
+ "description": "policy_impact_v2 봉인셋 소진 뒤 새로 만든 셋. 남은 과잉 판단 유형(법이 허용만 하는 제도를 규정이 쓰지 않은 것을 '누락'으로 읽음)을 겨눈다.",
+ "rules": [
+  "sealed 11건은 v3 수정(허용 규정 규칙) 전에, 법령 조문 **전문**과 규정 원문을 읽고 라벨을 확정했다. v2 라벨 때 조문 앞부분만 읽어 ⑤항을 놓친 실수(v2 T2)를 반복하지 않기 위해서다.",
+  "dev는 v2 sealed 15건이다(이미 소진). 라벨은 v2 그대로 두고, 재검토 메모는 adjudication에 따로 적는다.",
+  "sealed는 한 번만 돌린다."
+ ],
+ "labeling_policy": [
+  "ACTION: 사내 규정이 법령과 어긋나거나(CONFLICT) 법령이 요구하는 사항을 담지 못해(UPDATE_RECOMMENDED) 개정이 필요하다. 둘의 구분은 채점하지 않는다 — 실무에서 둘 다 '고친다'로 이어진다.",
+  "NO_ACTION: 부합하거나 관련이 없다. 후보로 검색됐지만 gold에 없는 조문은 NO_ACTION으로 본다.",
+  "EITHER: 사람마다 판단이 갈릴 수 있어 채점에서 뺀다. 예: 개인정보 보호법 제31조 ④ 업무 목록 대비 PR-01 제5조(일부 업무만 열거).",
+  "법이 '~할 수 있다'로 허용만 하는 제도·예외를 사내 규정이 두지 않은 것은 NO_ACTION이다. 회사가 쓰지 않기로 할 수 있다."
+ ],
+ "adjudication": {
+  "v2-T2 HR-04 제3조": "v2 라벨은 NO_ACTION이지만 남녀고용평등법 제19조 ⑤(기간제근로자의 육아휴직 기간은 기간제법 제4조 사용기간에서 제외)가 이 조항에 직접 해당한다. 라벨러가 조문 전문을 읽지 않아 놓친 것으로 판단한다. 공식 수치는 라벨대로 두고 이 메모로만 남긴다."
+ },
+ "runs": {
+  "dev": 3,
+  "sealed": 1,
+  "sealed_note": "2026-10-11 1회 실행으로 소진. U2 HR-01 제10조(제74조 ⑦ 임신 중 근로시간 단축)는 판단이 갈릴 수 있어 재검토 메모만 남긴다(라벨 유지)."
+ },
+ "cases": [
+  {
+   "id": "v2-T1",
+   "law_name": "근로기준법",
+   "article_no": "제60조",
+   "gold": {
+    "HR-01 제22조": "ACTION"
+   },
+   "draft_must_contain": {
+    "HR-01 제22조": [
+     "25일"
+    ]
+   },
+   "draft_must_not_contain": {
+    "HR-01 제22조": [
+     "20일"
+    ]
+   },
+   "note": "가산휴가 한도 20일 vs 법 25일 — CONFLICT",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T2",
+   "law_name": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률",
+   "article_no": "제19조",
+   "gold": {
+    "HR-01 제28조": "ACTION"
+   },
+   "note": "임신 중 여성·위험 임신 배우자 돌봄 사유, 6개월 추가 사용이 없다 — UPDATE",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T3",
+   "law_name": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률",
+   "article_no": "제14조",
+   "gold": {
+    "HR-01 제36조": "ACTION"
+   },
+   "note": "조사·징계만 있고 피해근로자등 보호조치·의사 존중이 없다 — UPDATE",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T4",
+   "law_name": "근로기준법",
+   "article_no": "제48조",
+   "gold": {
+    "PY-01 제9조": "ACTION"
+   },
+   "note": "지급 총액만 — 구성항목·계산방법·공제내역이 빠진 임금명세서 — UPDATE",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T5",
+   "law_name": "기간제 및 단시간근로자 보호 등에 관한 법률",
+   "article_no": "제4조",
+   "gold": {
+    "HR-04 제3조": "ACTION"
+   },
+   "draft_must_contain": {
+    "HR-04 제3조": [
+     "2년"
+    ]
+   },
+   "draft_must_not_contain": {
+    "HR-04 제3조": [
+     "3년"
+    ]
+   },
+   "note": "최장 3년 vs 법 2년 — CONFLICT",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T6",
+   "law_name": "산업안전보건법",
+   "article_no": "제14조",
+   "gold": {
+    "SH-01 제4조": "ACTION"
+   },
+   "note": "이사회 보고·승인이 없다(대통령령 기준 해당 여부는 missing_context로 나와도 된다) — UPDATE",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T7",
+   "law_name": "근로기준법",
+   "article_no": "제53조",
+   "gold": {
+    "HR-01 제11조": "NO_ACTION"
+   },
+   "note": "1주 12시간 한도 — 부합",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T8",
+   "law_name": "근로기준법",
+   "article_no": "제17조",
+   "gold": {
+    "HR-01 제8조": "NO_ACTION"
+   },
+   "note": "명시·서면 교부 — 부합",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T9",
+   "law_name": "근로자퇴직급여 보장법",
+   "article_no": "제4조",
+   "gold": {
+    "PY-02 제3조": "NO_ACTION"
+   },
+   "note": "1년 이상 설정·변경 시 근로자대표 동의 — 부합",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T10",
+   "law_name": "근로기준법",
+   "article_no": "제76조의2",
+   "gold": {
+    "HR-01 제35조": "NO_ACTION"
+   },
+   "note": "금지 규정 자체는 부합(조치 의무는 제76조의3이 따로 본다)",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T11",
+   "law_name": "장애인고용촉진 및 직업재활법",
+   "article_no": "제28조",
+   "gold": {
+    "HR-03 제2조": "NO_ACTION"
+   },
+   "note": "의무고용률 이상 고용 — 부합",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T12",
+   "law_name": "근로기준법",
+   "article_no": "제50조",
+   "gold": {
+    "HR-01 제10조": "NO_ACTION"
+   },
+   "note": "1일 8시간·1주 40시간 — 부합",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T13",
+   "law_name": "폐기물관리법",
+   "article_no": "제18조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T14",
+   "law_name": "자동차관리법",
+   "article_no": "제53조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "dev"
+  },
+  {
+   "id": "v2-T15",
+   "law_name": "공인중개사법",
+   "article_no": "제9조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "dev"
+  },
+  {
+   "id": "U1",
+   "law_name": "근로기준법",
+   "article_no": "제26조",
+   "gold": {
+    "HR-01 제32조": "ACTION"
+   },
+   "draft_must_contain": {
+    "HR-01 제32조": [
+     "30일"
+    ]
+   },
+   "draft_must_not_contain": {
+    "HR-01 제32조": [
+     "15일"
+    ]
+   },
+   "note": "예고 15일·15일분 vs 법 30일 — CONFLICT",
+   "split": "sealed"
+  },
+  {
+   "id": "U2",
+   "law_name": "근로기준법",
+   "article_no": "제74조",
+   "gold": {
+    "HR-01 제26조": "ACTION"
+   },
+   "draft_must_contain": {
+    "HR-01 제26조": [
+     "120일"
+    ]
+   },
+   "note": "미숙아 100일·다태아 120일(출산 후 60일, 유급 75일)이 없다 — UPDATE",
+   "split": "sealed"
+  },
+  {
+   "id": "U3",
+   "law_name": "근로기준법",
+   "article_no": "제56조",
+   "gold": {
+    "PY-01 제10조": "ACTION"
+   },
+   "draft_must_contain": {
+    "PY-01 제10조": [
+     "100분의 100"
+    ]
+   },
+   "note": "8시간 초과 휴일근로 100분의 100이 없다 — UPDATE",
+   "split": "sealed"
+  },
+  {
+   "id": "U4",
+   "law_name": "개인정보 보호법",
+   "article_no": "제21조",
+   "gold": {
+    "PR-01 제9조": "ACTION"
+   },
+   "draft_must_contain": {
+    "PR-01 제9조": [
+     "지체 없이"
+    ]
+   },
+   "draft_must_not_contain": {
+    "PR-01 제9조": [
+     "매년 12월"
+    ]
+   },
+   "note": "매년 일괄 파기 vs 지체 없이 파기 — CONFLICT",
+   "split": "sealed"
+  },
+  {
+   "id": "U5",
+   "law_name": "근로기준법",
+   "article_no": "제55조",
+   "gold": {
+    "HR-01 제14조": "NO_ACTION"
+   },
+   "note": "허용 규정 함정: ② 단서 '대체할 수 있다'를 쓰지 않은 것은 누락이 아니다. 유급휴일 보장은 부합",
+   "split": "sealed"
+  },
+  {
+   "id": "U6",
+   "law_name": "근로기준법",
+   "article_no": "제57조",
+   "gold": {
+    "PY-01 제10조": "NO_ACTION",
+    "HR-01 제11조": "NO_ACTION"
+   },
+   "note": "허용 규정 함정: 보상휴가제는 '줄 수 있다'. 규정에 없어도 위반이 아니다. (PY-01 제10조의 휴일근로 가산 결함은 제56조 사안이라 이 조문으로는 짚을 수 없다)",
+   "split": "sealed"
+  },
+  {
+   "id": "U7",
+   "law_name": "근로기준법",
+   "article_no": "제51조",
+   "gold": {
+    "HR-01 제10조": "NO_ACTION",
+    "HR-01 제11조": "NO_ACTION"
+   },
+   "note": "허용 규정 함정: 탄력적 근로시간제는 도입할 수 있다는 규정",
+   "split": "sealed"
+  },
+  {
+   "id": "U8",
+   "law_name": "근로자퇴직급여 보장법",
+   "article_no": "제8조",
+   "gold": {
+    "PY-02 제5조": "NO_ACTION",
+    "PY-02 제3조": "NO_ACTION"
+   },
+   "note": "허용 규정 함정: 중간정산은 '지급할 수 있다'. 하지 않기로 한 것은 위반이 아니다. 30일분은 부합",
+   "split": "sealed"
+  },
+  {
+   "id": "U9",
+   "law_name": "화학물질관리법",
+   "article_no": "제13조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "sealed"
+  },
+  {
+   "id": "U10",
+   "law_name": "화학물질관리법",
+   "article_no": "제28조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "sealed"
+  },
+  {
+   "id": "U11",
+   "law_name": "식품위생법",
+   "article_no": "제44조",
+   "gold": {},
+   "note": "음성 대조군",
+   "split": "sealed"
+  }
+ ]
+}

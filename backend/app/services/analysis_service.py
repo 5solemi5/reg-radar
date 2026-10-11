@@ -6,9 +6,10 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 
-from app.ai.chains.base import ChainExecutionError, ChainRunner
+from app.ai.chains.base import ChainExecutionError, ChainRunner, ChainTrace
 from app.ai.chains.c3_extract import extract_targets
 from app.ai.chains.c4_mapping import (
     apply_hold_policy,
@@ -17,6 +18,7 @@ from app.ai.chains.c4_mapping import (
     unverifiable_target_reason,
 )
 from app.ai.chains.c5_impact import generate_impact
+from app.core.config import get_settings
 from app.domain.context import ContextPacket
 from app.domain.enums import Applicability, ResultStatus
 from app.domain.result import (
@@ -27,7 +29,8 @@ from app.domain.result import (
     LegalEvidence,
     ReferenceEvidence,
 )
-from app.validator.core import validate
+from app.validator.core import CHAIN_NAME as VALIDATOR_CHAIN
+from app.validator.core import ValidationOutcome, validate
 from app.validator.rules import normalize_for_match
 
 logger = logging.getLogger(__name__)
@@ -117,20 +120,22 @@ def _reference_evidence(packet: ContextPacket) -> list[ReferenceEvidence]:
     ]
 
 
-async def analyze_article(
+def _rejection_feedback(outcome: ValidationOutcome) -> list[str]:
+    """되먹일 거부 사유. 탈락한 인용은 문장째 보여 줘야 같은 인용을 반복하지 않는다."""
+    reasons = list(outcome.report.failures)
+    for span in outcome.report.dropped_spans:
+        reasons.append(f"원문에서 찾을 수 없었던 인용: \"{span[:200]}\"")
+    return reasons
+
+
+async def _map_and_validate(
     runner: ChainRunner,
     packet: ContextPacket,
-    *,
-    analysis_id: str | None = None,
-    trace_id: str | None = None,
-) -> AnalysisOutcome:
-    """조문 1건에 대한 전체 AI 판단 파이프라인."""
-
-    # C3. 적용대상 추출
-    extraction = await extract_targets(runner, packet)
-
+    extraction,
+    feedback: list[str],
+) -> ValidationOutcome:
     # C4. 사용자 매핑 판정
-    applicability = await map_applicability(runner, packet, extraction)
+    applicability = await map_applicability(runner, packet, extraction, feedback or None)
 
     # 코드가 확정할 수 있는 HOLD 사유를 LLM 판정 위에 덮어쓴다 (AP-03, AP-04, BR-003).
     hold_reasons = deterministic_hold_reasons(packet)
@@ -145,13 +150,60 @@ async def analyze_article(
     impact = None
     if applicability.applicability is not Applicability.NOT_APPLICABLE:
         try:
-            impact = await generate_impact(runner, packet, applicability)
+            impact = await generate_impact(runner, packet, applicability, feedback or None)
         except ChainExecutionError:
             # 영향 생성 실패는 판정 자체를 무효화하지 않는다. 판정만 살린다 (ER-002).
             logger.warning("C5 실패 — 판정만 유지합니다: law=%s", packet.law.law_id)
 
-    # C6. 검증
+    # C6. 검증 — 규칙이라 토큰은 없지만, 무엇을 왜 막았는지가 운영 지표다(R4).
+    started = time.perf_counter()
     outcome = validate(packet, applicability, impact)
+    runner._record(ChainTrace(
+        VALIDATOR_CHAIN, "rules", int((time.perf_counter() - started) * 1000),
+        ok=outcome.status is not ResultStatus.REJECTED,
+        error="; ".join(outcome.report.failures) or None,
+    ))
+    return outcome
+
+
+async def analyze_article(
+    runner: ChainRunner,
+    packet: ContextPacket,
+    *,
+    analysis_id: str | None = None,
+    trace_id: str | None = None,
+    max_retries: int | None = None,
+) -> AnalysisOutcome:
+    """조문 1건에 대한 전체 AI 판단 파이프라인."""
+
+    # C3. 적용대상 추출
+    extraction = await extract_targets(runner, packet)
+
+    if max_retries is None:
+        max_retries = get_settings().reject_retry_max
+
+    # C4 → C5 → C6. Validator가 REJECT하면 거부 사유를 되먹여 C4부터 다시 만든다
+    # (문서 11 §11-4). 결정적 게이트는 그대로다 — 재생성된 답도 같은 검증을 통과해야 한다.
+    # C3(적용대상 추출)는 다시 부르지 않는다. 거부 사유는 C4·C5 서술에서 나온다.
+    feedback: list[str] = []
+    rejected_failures: list[str] = []
+    retries = 0
+    while True:
+        runner.attempt = retries
+        outcome = await _map_and_validate(runner, packet, extraction, feedback)
+        if outcome.status is not ResultStatus.REJECTED or retries >= max_retries:
+            break
+        feedback = _rejection_feedback(outcome)
+        rejected_failures += feedback
+        retries += 1
+        logger.info(
+            "REJECT 재생성 %d/%d law=%s article=%s 사유=%s",
+            retries, max_retries, packet.law.law_id, packet.law.article_no, feedback,
+        )
+    if retries:
+        outcome.report = outcome.report.model_copy(
+            update={"retries": retries, "rejected_failures": rejected_failures}
+        )
 
     # FR-010: 확정 판정(VALIDATED)일 때만 행동 등급을 부여한다.
     action_grade = None

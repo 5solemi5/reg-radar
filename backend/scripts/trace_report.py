@@ -5,6 +5,8 @@
     .venv/bin/python scripts/trace_report.py            # 최근 분석 10건
     .venv/bin/python scripts/trace_report.py --chains   # 체인별 집계
     .venv/bin/python scripts/trace_report.py --failures # 실패한 호출만
+    .venv/bin/python scripts/trace_report.py --validator  # Validator 거부 사유·재생성 효과
+    .venv/bin/python scripts/trace_report.py --versions   # 프롬프트 버전별 실패율·비용
 """
 
 import asyncio
@@ -39,16 +41,64 @@ async def main() -> int:
                        avg(latency_ms)::int AS avg_ms,
                        max(latency_ms) AS max_ms,
                        sum(input_tokens) AS in_tok,
-                       sum(output_tokens) AS out_tok
-                FROM ai_traces GROUP BY chain, model ORDER BY sum(input_tokens) DESC
+                       sum(output_tokens) AS out_tok,
+                       sum(cost_usd) AS cost
+                FROM ai_traces GROUP BY chain, model ORDER BY sum(cost_usd) DESC NULLS LAST
                 """
             )
             print(f"{'체인':<28}{'모델':<10}{'호출':>6}{'실패':>5}"
-                  f"{'평균ms':>8}{'최대ms':>8}{'입력토큰':>10}{'출력토큰':>9}")
+                  f"{'평균ms':>8}{'최대ms':>8}{'입력토큰':>10}{'출력토큰':>9}{'비용$':>9}")
             for r in rows:
+                cost = "-" if r["cost"] is None else f"{float(r['cost']):.4f}"
                 print(f"{r['chain']:<28}{r['model']:<10}{r['calls']:>6}{r['failures']:>5}"
                       f"{r['avg_ms']:>8,}{r['max_ms']:>8,}"
-                      f"{r['in_tok']:>10,}{r['out_tok']:>9,}")
+                      f"{r['in_tok']:>10,}{r['out_tok']:>9,}{cost:>9}")
+            print("\n※ 비용은 app/core/pricing.py 단가(가정값) 기준."
+                  " 'rules'는 규칙 검증(C6)이라 비용이 없다.")
+            return 0
+
+        if "--validator" in sys.argv:
+            print("=== Validator 거부 사유 (C6) ===")
+            rows = await connection.fetch(
+                """
+                SELECT reason, count(*) AS n FROM (
+                    SELECT unnest(string_to_array(error, '; ')) AS reason
+                    FROM ai_traces WHERE chain = 'C6_validator' AND NOT ok
+                ) t GROUP BY reason ORDER BY n DESC LIMIT 15
+                """
+            )
+            for r in rows:
+                print(f"  {r['n']:>4}  {r['reason'][:100]}")
+            stats = await connection.fetchrow(
+                """
+                SELECT count(*) FILTER (WHERE attempt = 0) AS first,
+                       count(*) FILTER (WHERE attempt = 0 AND NOT ok) AS first_rejected,
+                       count(*) FILTER (WHERE attempt > 0) AS regenerated,
+                       count(*) FILTER (WHERE attempt > 0 AND ok) AS regenerated_ok
+                FROM ai_traces WHERE chain = 'C6_validator'
+                """
+            )
+            print(f"\n첫 시도 {stats['first']:,}건 중 거부 {stats['first_rejected']:,}건 · "
+                  f"재생성 {stats['regenerated']:,}회 중 통과 {stats['regenerated_ok']:,}회")
+            return 0
+
+        if "--versions" in sys.argv:
+            print("=== 프롬프트 버전별 ===")
+            rows = await connection.fetch(
+                """
+                SELECT chain, coalesce(prompt_version, '(기록 전)') AS version,
+                       count(*) AS calls, count(*) FILTER (WHERE NOT ok) AS failures,
+                       avg(input_tokens)::int AS avg_in, sum(cost_usd) AS cost,
+                       min(created_at) AS since
+                FROM ai_traces GROUP BY chain, prompt_version ORDER BY chain, since
+                """
+            )
+            print(f"{'체인':<28}{'버전':<14}{'호출':>6}{'실패율':>8}{'평균입력':>9}{'비용$':>9}")
+            for r in rows:
+                rate = r["failures"] / r["calls"] if r["calls"] else 0
+                cost = "-" if r["cost"] is None else f"{float(r['cost']):.4f}"
+                print(f"{r['chain']:<28}{r['version']:<14}{r['calls']:>6}{rate:>8.1%}"
+                      f"{r['avg_in']:>9,}{cost:>9}")
             return 0
 
         if "--failures" in sys.argv:
@@ -91,10 +141,12 @@ async def main() -> int:
                   f"{r['tokens']:>9,}{r['latency'] / 1000:>8.1f}s")
 
         cost = await connection.fetchrow(
-            "SELECT sum(input_tokens) AS i, sum(output_tokens) AS o FROM ai_traces"
+            "SELECT sum(input_tokens) AS i, sum(output_tokens) AS o, sum(cost_usd) AS c "
+            "FROM ai_traces"
         )
         print(f"\n누적 토큰: 입력 {cost['i']:,} / 출력 {cost['o']:,}")
-        print("(비용은 모델 단가에 따라 다르므로 여기서 계산하지 않는다)")
+        if cost["c"] is not None:
+            print(f"누적 비용(009 이후 기록분, 단가 가정): ${float(cost['c']):.4f}")
         return 0
     finally:
         await connection.close()

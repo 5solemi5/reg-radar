@@ -3,6 +3,8 @@
     .venv/bin/python scripts/run_eval.py
     .venv/bin/python scripts/run_eval.py --offline          # 캐시된 snapshot만 사용
     .venv/bin/python scripts/run_eval.py --model gpt-4o     # 모델 비교
+    .venv/bin/python scripts/run_eval.py --offline --record # 실제 호출하며 응답을 녹화 (과금)
+    .venv/bin/python scripts/run_eval.py --offline --replay # 녹화로 재생 — 키·과금 없음, 결정적
 """
 
 import argparse
@@ -11,12 +13,19 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+from app.ai.cassette import Cassette, CassetteMode
 from app.core.config import get_settings
+from evaluation.provenance import git_state, prompt_version, sha256_file, usage_and_cost
 from evaluation.report import render
-from evaluation.runner import run_dataset
+from evaluation.runner import Dataset, run_dataset
 
 DEFAULT_DATASET = Path(__file__).parent.parent / "evaluation" / "datasets" / "applicability_v1.json"
 RESULTS_DIR = Path(__file__).parent.parent / "evaluation" / "results"
+CASSETTE_DIR = Path(__file__).parent.parent / "evaluation" / "cassettes"
+
+
+def cassette_path(dataset_path: str, model: str) -> Path:
+    return CASSETTE_DIR / f"{Path(dataset_path).stem}__{model}.jsonl"
 
 
 async def main() -> int:
@@ -27,14 +36,33 @@ async def main() -> int:
     parser.add_argument("--concurrency", type=int, default=3)
     parser.add_argument("--save", action="store_true", help="결과를 evaluation/results에 저장")
     parser.add_argument("--rag", action="store_true", help="참고자료를 붙여 측정")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--record", action="store_true", help="실제 호출하며 응답을 cassette에 녹화")
+    mode.add_argument("--replay", action="store_true", help="cassette로 재생 (LLM 호출·키 불필요)")
+    parser.add_argument(
+        "--cassette",
+        default=None,
+        help="cassette 경로 (기본: evaluation/cassettes/<데이터셋>__<모델>.jsonl)",
+    )
     args = parser.parse_args()
 
     settings = get_settings()
     if args.model:
         settings = settings.model_copy(update={"llm_model": args.model})
-    if not settings.llm_enabled:
+    if args.replay and args.rag:
+        print("✗ 재생은 RAG 없이만 지원한다 (임베딩 호출은 녹화하지 않는다).")
+        return 1
+    if not args.replay and not settings.llm_enabled:
         print("✗ OPENAI_API_KEY가 없습니다.")
         return 1
+
+    cassette = None
+    if args.record or args.replay:
+        cassette = Cassette(
+            args.cassette or cassette_path(args.dataset, settings.llm_model),
+            CassetteMode.RECORD if args.record else CassetteMode.REPLAY,
+            settings.llm_model,
+        )
 
     metrics, outcomes = await run_dataset(
         args.dataset,
@@ -42,7 +70,17 @@ async def main() -> int:
         offline=args.offline,
         concurrency=args.concurrency,
         use_rag=args.rag,
+        cassette=cassette,
     )
+    provenance = {
+        "dataset_id": Dataset.load(args.dataset).raw["dataset_id"],
+        "dataset_sha256": sha256_file(Path(args.dataset)),
+        "prompt_version": prompt_version(),
+        "git": git_state(),
+        "cassette": cassette.summary() if cassette else {"mode": "off"},
+        "usage": usage_and_cost(outcomes, settings.llm_model),
+    }
+    print(f"▶ 출처: {json.dumps(provenance, ensure_ascii=False)}")
 
     print()
     report = render(metrics, outcomes, settings.llm_model)
@@ -51,7 +89,7 @@ async def main() -> int:
     if args.save:
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        suffix = "_rag" if args.rag else ""
+        suffix = ("_rag" if args.rag else "") + ("_replay" if args.replay else "")
         base = RESULTS_DIR / f"{stamp}_{settings.llm_model}{suffix}"
         base.with_suffix(".txt").write_text(report, encoding="utf-8")
         base.with_suffix(".json").write_text(
@@ -60,6 +98,7 @@ async def main() -> int:
                     "model": settings.llm_model,
                     "rag": args.rag,
                     "ran_at": stamp,
+                    "provenance": provenance,
                     "metrics": {
                         k: v for k, v in vars(metrics).items() if k != "failures"
                     },

@@ -1,0 +1,38 @@
+name: backend-ci
+# 문서 12 §3-4 — 키·네트워크 없이 도는 검사만 둔다.
+on:
+  push:
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - name: lint
+        run: ruff check .
+      - name: unit · API 테스트 (Postgres 없으면 저장소 테스트 절반은 skip)
+        run: pytest -q
+      - name: 평가 회귀 — 녹화된 응답 재생 (LLM·법제처 호출 없음)
+        env:
+          REG_RADAR_EVAL_SNAPSHOTS: evaluation/ci/snapshots
+        run: |
+          shopt -s nullglob
+          found=0
+          for b in evaluation/baselines/*__*.json; do
+            name=$(basename "$b" .json)
+            dataset="evaluation/datasets/${name%%__*}.json"
+            model="${name##*__}"
+            python scripts/check_eval_regression.py --dataset "$dataset" --model "$model"
+            found=1
+          done
+          if [ "$found" = 0 ]; then echo "기준 파일이 아직 없다 — 녹화 후 추가"; fi

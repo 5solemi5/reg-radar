@@ -169,3 +169,48 @@ def get_reassess_service(
         settings=settings,
         retriever=retriever,
     )
+
+
+# ── 사내 규정 영향 분석 (R3) ─────────────────────────────────────────
+
+
+@lru_cache
+def get_memory_policy_repo():
+    from app.policies.workflow import InMemoryPolicyWorkflowRepository
+
+    return InMemoryPolicyWorkflowRepository()
+
+
+async def get_policy_workflow(settings: Settings = Depends(get_settings)):
+    from app.policies.workflow import ApprovalWorkflow, Role
+
+    if settings.postgres_enabled:
+        from app.policies.postgres import PostgresPolicyWorkflowRepository
+
+        repo = PostgresPolicyWorkflowRepository(_db(settings))
+    else:
+        repo = get_memory_policy_repo()
+        for pair in filter(None, (p.strip() for p in settings.policy_members.split(","))):
+            user_id, _, role = pair.partition(":")
+            await repo.set_member(settings.policy_org_id, user_id.strip(), Role(role.strip()))
+    return ApprovalWorkflow(repo, settings.policy_org_id)
+
+
+@lru_cache
+def _policy_corpus(corpus_id: str):
+    from app.policies.models import PolicyCorpus
+
+    return PolicyCorpus.load(corpus_id)
+
+
+def get_policy_service(settings: Settings = Depends(get_settings)):
+    """C7·C7b·C8을 돌리는 서비스. LLM이 꺼져 있으면 None — 라우터가 503으로 바꾼다."""
+    if not settings.llm_enabled:
+        return None
+    from app.ai.chains.base import ChainRunner
+    from app.ai.llm import LlmGateway
+    from app.policies.service import PolicyImpactService
+
+    return PolicyImpactService(
+        ChainRunner(llm=LlmGateway(settings=settings)), _policy_corpus(settings.policy_corpus)
+    )

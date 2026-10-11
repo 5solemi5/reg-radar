@@ -1,0 +1,1005 @@
+{
+  "provenance": {
+    "dataset_sha256": "3b3a636ad54a5f4525e56ffefa0dccbb7eedf81e3b3a0c0304705ab0b34dd8c9",
+    "policy_files_sha256": {
+      "prompts.py": "ed55a82addc3",
+      "virtual_card_co.json": "97e1e0ebc88e",
+      "virtual_card_co_v2.json": "f2b0fd7ea071"
+    },
+    "split": "sealed",
+    "model": "gpt-4o",
+    "git": {
+      "commit": "659ced6",
+      "dirty": true
+    },
+    "cassette": {
+      "mode": "record",
+      "file": "policy_impact_v2__gpt-4o.jsonl",
+      "entries": 68,
+      "hits": 0,
+      "misses": 0,
+      "recorded": 33
+    }
+  },
+  "metrics": {
+    "cases": 15,
+    "errors": 0,
+    "gold_action": 6,
+    "retrieval_recall": 1.0,
+    "action_recall": 1.0,
+    "surfaced_recall": 1.0,
+    "action_precision": 0.75,
+    "negative_cases": 3,
+    "negative_false_action": 0,
+    "citation_accuracy": 0.9744,
+    "needs_review_rate": 0.0541,
+    "drafts": 6,
+    "drafts_with_issues": 0,
+    "drafts_fix_complete": 6,
+    "input_tokens": 64778,
+    "output_tokens": 9396,
+    "cost_usd_estimate": 0.2559
+  },
+  "cases": [
+    {
+      "case_id": "T1",
+      "split": "sealed",
+      "law_ref": "근로기준법 제60조",
+      "candidates": [
+        "HR-01 제22조",
+        "HR-01 제25조",
+        "HR-01 제8조",
+        "HR-01 제11조",
+        "HR-03 제2조"
+      ],
+      "findings": {
+        "HR-01 제22조": {
+          "relation": "CONFLICT",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 2,
+          "review": "CONFIRM"
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제8조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "NEEDS_REVIEW",
+          "issues": [
+            "검토자 반론: 사내 규정은 근로조건을 명시한 서면을 교부하도록 하고 있으며, 이는 법령의 요구를 포괄적으로 담고 있다. 법령의 구체적인 휴가 청구 시기 관련 요구는 다른 사내 규정에서 다룰 수 있다."
+          ],
+          "dropped": [],
+          "cited": 2,
+          "review": "DISPUTE"
+        },
+        "HR-01 제11조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-03 제2조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "HR-01 제22조": "ACTION"
+      },
+      "drafts": {
+        "HR-01 제22조": {
+          "issues": [],
+          "missing": [],
+          "leftover": [],
+          "proposed_text": "회사는 1년간 80퍼센트 이상 출근한 직원에게 15일의 유급휴가를 준다. 3년 이상 계속 근로한 직원에게는 최초 1년을 초과하는 계속 근로 연수 매 2년에 대하여 1일을 가산하되, 가산휴가를 포함한 총 휴가 일수는 25일을 한도로 한다.",
+          "open_questions": []
+        }
+      },
+      "error": null,
+      "input_tokens": 8021,
+      "output_tokens": 932
+    },
+    {
+      "case_id": "T2",
+      "split": "sealed",
+      "law_ref": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률 제19조",
+      "candidates": [
+        "HR-01 제28조",
+        "HR-01 제27조",
+        "HR-01 제40조",
+        "HR-01 제25조",
+        "HR-04 제3조"
+      ],
+      "findings": {
+        "HR-01 제28조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 2,
+          "review": "CONFIRM"
+        },
+        "HR-01 제27조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-04 제3조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 2,
+          "review": "CONFIRM"
+        }
+      },
+      "gold": {
+        "HR-01 제28조": "ACTION"
+      },
+      "drafts": {
+        "HR-01 제28조": {
+          "issues": [],
+          "missing": [],
+          "leftover": [],
+          "proposed_text": "직원은 만 8세 이하 또는 초등학교 2학년 이하의 자녀를 양육하기 위하여 육아휴직을 신청할 수 있으며, 회사는 이를 허용하여야 한다. 육아휴직의 기간은 1년 이내로 한다. 육아휴직을 마친 후에는 휴직 전과 같은 업무 또는 같은 수준의 임금을 지급하는 직무에 복귀시켜야 한다.",
+          "open_questions": []
+        }
+      },
+      "error": null,
+      "input_tokens": 8803,
+      "output_tokens": 912
+    },
+    {
+      "case_id": "T3",
+      "split": "sealed",
+      "law_ref": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률 제14조",
+      "candidates": [
+        "HR-01 제36조",
+        "HR-01 제35조",
+        "PR-01 제11조",
+        "HR-01 제40조",
+        "HR-01 제8조"
+      ],
+      "findings": {
+        "HR-01 제36조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 3,
+          "review": "CONFIRM"
+        },
+        "HR-01 제35조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "PR-01 제11조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제8조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "HR-01 제36조": "ACTION"
+      },
+      "drafts": {
+        "HR-01 제36조": {
+          "issues": [],
+          "missing": [],
+          "leftover": [],
+          "proposed_text": "회사는 직장 내 성희롱 신고를 받으면 지체 없이 사실 확인을 위한 조사를 하고, 조사 기간 동안 피해근로자를 보호하기 위하여 필요한 경우 근무장소의 변경, 유급휴가 명령 등 적절한 조치를 하여야 한다. 이 경우 피해근로자의 의사에 반하는 조치를 하여서는 아니 된다. 사실이 확인되면 피해근로자가 요청하면 근무장소의 변경, 배치전환, 유급휴가 명령 등 적절한 조치를 하여야 하며, 행위자를 징계한다. 징계 등의 조치를 하기 전에 피해근로자의 의견을 들어야 한다. 성희롱 발생 사실을 신고한 근로자 및 피해근로자에게 불리한 처우를 하여서는 아니 된다.",
+          "open_questions": []
+        }
+      },
+      "error": null,
+      "input_tokens": 6477,
+      "output_tokens": 1303
+    },
+    {
+      "case_id": "T4",
+      "split": "sealed",
+      "law_ref": "근로기준법 제48조",
+      "candidates": [
+        "PY-01 제7조",
+        "HR-01 제8조",
+        "PY-01 제9조",
+        "SH-01 제6조",
+        "SH-01 제9조"
+      ],
+      "findings": {
+        "PY-01 제7조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제8조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "NEEDS_REVIEW",
+          "issues": [
+            "검토자 반론: 사내 규정은 근로계약 체결 시 임금의 구성항목, 계산방법 등을 명시하도록 하고 있으며, 이는 법령의 요구사항을 포괄적으로 반영하고 있다. 법령의 구체적 요구사항은 임금 지급 시 임금명세서에 대한 것이며, 이는 다른 규정에서 다룰 수 있다."
+          ],
+          "dropped": [],
+          "cited": 2,
+          "review": "DISPUTE"
+        },
+        "PY-01 제9조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 2,
+          "review": "CONFIRM"
+        },
+        "SH-01 제6조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "PY-01 제9조": "ACTION"
+      },
+      "drafts": {
+        "PY-01 제9조": {
+          "issues": [],
+          "missing": [],
+          "leftover": [],
+          "proposed_text": "회사는 임금을 지급할 때 지급 총액을 적은 급여 안내를 전자우편으로 직원에게 보낸다. 또한, 임금의 구성항목ㆍ계산방법, 제43조제1항 단서에 따라 임금의 일부를 공제한 경우의 내역 등 대통령령으로 정하는 사항을 적은 임금명세서를 서면(전자문서를 포함한다)으로 교부하여야 한다.",
+          "open_questions": [
+            "임금명세서에 포함될 추가적인 대통령령 사항이 무엇인지 확인이 필요함."
+          ]
+        }
+      },
+      "error": null,
+      "input_tokens": 5950,
+      "output_tokens": 1083
+    },
+    {
+      "case_id": "T5",
+      "split": "sealed",
+      "law_ref": "기간제 및 단시간근로자 보호 등에 관한 법률 제4조",
+      "candidates": [
+        "HR-04 제3조",
+        "HR-01 제22조",
+        "HR-01 제8조",
+        "PY-02 제3조",
+        "HR-01 제25조"
+      ],
+      "findings": {
+        "HR-04 제3조": {
+          "relation": "CONFLICT",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 3,
+          "review": "CONFIRM"
+        },
+        "HR-01 제22조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제8조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "PY-02 제3조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "HR-04 제3조": "ACTION"
+      },
+      "drafts": {
+        "HR-04 제3조": {
+          "issues": [],
+          "missing": [],
+          "leftover": [],
+          "proposed_text": "기간제 직원과의 근로계약은 1년 단위로 체결하며, 갱신하여 최장 2년까지 사용할 수 있다.",
+          "open_questions": []
+        }
+      },
+      "error": null,
+      "input_tokens": 5371,
+      "output_tokens": 727
+    },
+    {
+      "case_id": "T6",
+      "split": "sealed",
+      "law_ref": "산업안전보건법 제14조",
+      "candidates": [
+        "SH-01 제4조",
+        "PR-01 제4조",
+        "SH-01 제9조",
+        "SH-01 제6조",
+        "HR-03 제2조"
+      ],
+      "findings": {
+        "SH-01 제4조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 3,
+          "review": "CONFIRM"
+        },
+        "PR-01 제4조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "SH-01 제9조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "NEEDS_REVIEW",
+          "issues": [
+            "검토자 반론: 사내 규정은 안전관리자 선임 여부를 확인하는 절차를 규정하고 있으며, 이는 법령의 요구와 직접적인 충돌이 없다. 법령의 구체적인 계획 수립 요구는 다른 사내 규정에서 다룰 수 있다."
+          ],
+          "dropped": [],
+          "cited": 3,
+          "review": "DISPUTE"
+        },
+        "SH-01 제6조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-03 제2조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "SH-01 제4조": "ACTION"
+      },
+      "drafts": {
+        "SH-01 제4조": {
+          "issues": [],
+          "missing": [],
+          "leftover": [],
+          "proposed_text": "대표이사는 재해예방에 필요한 인력과 예산을 편성하고, 재해 발생 시 재발방지 대책을 수립·이행하며, 안전·보건 관계 법령에 따른 의무 이행 상황을 반기 1회 점검한다. 또한, 매년 회사의 안전 및 보건에 관한 계획을 수립하여 이사회에 보고하고 승인을 받아야 한다.",
+          "open_questions": []
+        }
+      },
+      "error": null,
+      "input_tokens": 5923,
+      "output_tokens": 955
+    },
+    {
+      "case_id": "T7",
+      "split": "sealed",
+      "law_ref": "근로기준법 제53조",
+      "candidates": [
+        "HR-01 제11조",
+        "HR-01 제40조",
+        "HR-01 제10조",
+        "HR-01 제12조",
+        "HR-01 제22조"
+      ],
+      "findings": {
+        "HR-01 제11조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "ACTIONABLE",
+          "issues": [],
+          "dropped": [],
+          "cited": 2,
+          "review": "CONFIRM"
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제10조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제12조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제22조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "HR-01 제11조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 4176,
+      "output_tokens": 524
+    },
+    {
+      "case_id": "T8",
+      "split": "sealed",
+      "law_ref": "근로기준법 제17조",
+      "candidates": [
+        "HR-01 제8조",
+        "HR-01 제40조",
+        "HR-04 제3조",
+        "HR-01 제22조",
+        "HR-01 제25조"
+      ],
+      "findings": {
+        "HR-01 제8조": {
+          "relation": "ALIGNED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 4,
+          "review": null
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-04 제3조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제22조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "HR-01 제8조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2332,
+      "output_tokens": 460
+    },
+    {
+      "case_id": "T9",
+      "split": "sealed",
+      "law_ref": "근로자퇴직급여 보장법 제4조",
+      "candidates": [
+        "PY-02 제3조",
+        "HR-01 제40조",
+        "HR-01 제8조",
+        "HR-01 제11조",
+        "HR-01 제10조"
+      ],
+      "findings": {
+        "PY-02 제3조": {
+          "relation": "UPDATE_RECOMMENDED",
+          "status": "NEEDS_REVIEW",
+          "issues": [
+            "검토자 반론: 사내 규정은 퇴직급여제도 변경 시 근로자대표의 동의를 받도록 하고 있어, 법령의 요구사항을 충족하고 있다. 법령에서 요구하는 '의견을 들어야 한다'는 부분은 사내 규정에서 동의 절차로 대체되어 있으며, 이는 법령의 최소 요구사항을 초과하는 것으로 볼 수 있다."
+          ],
+          "dropped": [],
+          "cited": 2,
+          "review": "DISPUTE"
+        },
+        "HR-01 제40조": {
+          "relation": "ALIGNED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제8조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제11조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제10조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "PY-02 제3조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 3712,
+      "output_tokens": 498
+    },
+    {
+      "case_id": "T10",
+      "split": "sealed",
+      "law_ref": "근로기준법 제76조의2",
+      "candidates": [
+        "HR-01 제35조",
+        "HR-01 제36조",
+        "IS-01 제15조",
+        "HR-03 제2조"
+      ],
+      "findings": {
+        "HR-01 제35조": {
+          "relation": "ALIGNED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 2,
+          "review": null
+        },
+        "HR-01 제36조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "IS-01 제15조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-03 제2조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "HR-01 제35조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2007,
+      "output_tokens": 397
+    },
+    {
+      "case_id": "T11",
+      "split": "sealed",
+      "law_ref": "장애인고용촉진 및 직업재활법 제28조",
+      "candidates": [
+        "HR-03 제2조",
+        "HR-01 제40조",
+        "SH-01 제9조",
+        "PY-02 제3조",
+        "HR-01 제35조"
+      ],
+      "findings": {
+        "HR-03 제2조": {
+          "relation": "ALIGNED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [
+            "상시 50명 이상의 근로자를 고용하는 사업주...장애인을 고용하여야 한다."
+          ],
+          "cited": 1,
+          "review": null
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "PY-02 제3조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제35조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "HR-03 제2조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2385,
+      "output_tokens": 360
+    },
+    {
+      "case_id": "T12",
+      "split": "sealed",
+      "law_ref": "근로기준법 제50조",
+      "candidates": [
+        "HR-01 제10조",
+        "HR-01 제12조",
+        "HR-01 제11조",
+        "HR-01 제22조",
+        "HR-01 제8조"
+      ],
+      "findings": {
+        "HR-01 제10조": {
+          "relation": "ALIGNED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 3,
+          "review": null
+        },
+        "HR-01 제12조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제11조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제22조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제8조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {
+        "HR-01 제10조": "NO_ACTION"
+      },
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2131,
+      "output_tokens": 356
+    },
+    {
+      "case_id": "T13",
+      "split": "sealed",
+      "law_ref": "폐기물관리법 제18조",
+      "candidates": [
+        "SH-01 제9조",
+        "HR-01 제35조",
+        "LR-01 제3조",
+        "HR-01 제25조",
+        "PR-01 제5조"
+      ],
+      "findings": {
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제35조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "LR-01 제3조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제25조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "PR-01 제5조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {},
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2794,
+      "output_tokens": 327
+    },
+    {
+      "case_id": "T14",
+      "split": "sealed",
+      "law_ref": "자동차관리법 제53조",
+      "candidates": [
+        "SH-01 제9조",
+        "PY-02 제3조",
+        "CP-01 제6조",
+        "HR-01 제40조",
+        "HR-01 제22조"
+      ],
+      "findings": {
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "PY-02 제3조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "CP-01 제6조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제40조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제22조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {},
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2341,
+      "output_tokens": 304
+    },
+    {
+      "case_id": "T15",
+      "split": "sealed",
+      "law_ref": "공인중개사법 제9조",
+      "candidates": [
+        "HR-01 제28조",
+        "SH-01 제9조",
+        "PY-02 제3조",
+        "HR-01 제27조",
+        "HR-01 제22조"
+      ],
+      "findings": {
+        "HR-01 제28조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "SH-01 제9조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "PY-02 제3조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제27조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        },
+        "HR-01 제22조": {
+          "relation": "UNRELATED",
+          "status": "NO_ACTION",
+          "issues": [],
+          "dropped": [],
+          "cited": 0,
+          "review": null
+        }
+      },
+      "gold": {},
+      "drafts": {},
+      "error": null,
+      "input_tokens": 2355,
+      "output_tokens": 258
+    }
+  ]
+}

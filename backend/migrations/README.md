@@ -4,6 +4,8 @@
 |---|---|---|
 | `001_initial_schema.sql` | 로컬 + Supabase | 테이블·인덱스·제약 |
 | `002_rls_policies.sql` | **Supabase 전용** | 행 수준 보안 |
+| `008_policy_workflow.sql` | 로컬 + Supabase | 사내 규정 개정 초안 승인 흐름·감사 로그 (문서 12 §4) |
+| `009_trace_cost.sql` | 로컬 + Supabase | trace에 비용·프롬프트 버전·재생성 회차, Validator 행 (R4) |
 
 `002`는 `auth.uid()`를 쓰므로 로컬 Postgres에서는 적용되지 않는다.
 
@@ -29,6 +31,9 @@ SQL Editor에서 `001` → `002` 순서로 실행한다.
 | `uq_analyses_one_active_per_user` | 사용자당 진행 중인 분석은 하나만 (FR-003) |
 | `analysis_results_ai_confidence_check` | confidence는 0~1 |
 | `profiles` CHECK | 직무·업종에 공백만 넣을 수 없다 |
+| `policy_drafts.four_eyes` | 제출자는 자기 초안을 승인·반려할 수 없다 (008) |
+| `policy_drafts.decided_requires_decider` | 승인·반려 상태에는 결정자가 있어야 한다 (008) |
+| `trg_policy_audit_events_append_only` | 감사 이벤트 UPDATE·DELETE 거부 — 추가 전용 (008). TRUNCATE는 막지 않는다(테스트 정리용, 운영 권한에서 회수) |
 
 ### `cardinality` vs `array_length` — 겪은 함정
 

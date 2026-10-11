@@ -15,6 +15,9 @@ import {
   ApiErrorBody,
   Evidence,
   Health,
+  PolicyAudit,
+  PolicyDraft,
+  PolicyImpact,
   Profile,
   type ProfileInput,
   ProfilePresetList,
@@ -38,7 +41,12 @@ const BASE_URL =
  */
 const DEV_USER_ID_KEY = "reg-radar-user-id";
 
-function devUserId(): string {
+/** 로컬 dev 모드에서만 쓴다. 4-eyes 승인을 시연하려면 두 번째 사용자가 필요하다. */
+export function setDevUserId(id: string): void {
+  if (typeof window !== "undefined") window.localStorage.setItem(DEV_USER_ID_KEY, id);
+}
+
+export function devUserId(): string {
   if (typeof window === "undefined") return "anonymous";
   let id = window.localStorage.getItem(DEV_USER_ID_KEY);
   if (!id) {
@@ -84,6 +92,11 @@ export class ApiError extends Error {
   /** 일일 분석 한도 소진. 공개 배포의 비용 상한이라 오류가 아니라 정상 상태다. */
   get isDailyLimit(): boolean {
     return this.code === "daily_limit_exceeded";
+  }
+
+  /** 사내 규정 조직 구성원이 아니거나 역할·4-eyes 규칙에 막혔다. */
+  get isPolicyForbidden(): boolean {
+    return this.code === "policy_forbidden";
   }
 
   /** 로그인 화면으로 보내야 하는 상태 (ER-007). */
@@ -240,4 +253,29 @@ export const api = {
     request("/saved-regulations", SavedRegulation, { method: "POST", ...json(input) }),
   deleteSaved: (id: string) =>
     request(`/saved-regulations/${id}`, z.undefined(), { method: "DELETE" }),
+
+  // 사내 규정 영향 분석·개정 초안 승인 (명세서 §4-7)
+  assessPolicyImpact: (input: { law_id: string; article_no: string }) =>
+    request("/policy/impact", PolicyImpact, { method: "POST", ...json(input) }),
+  createPolicyDraft: (input: { law_id: string; article_no: string; policy_ref: string }) =>
+    request("/policy/drafts", PolicyDraft, { method: "POST", ...json(input) }),
+  listPolicyDrafts: () => request("/policy/drafts", z.array(PolicyDraft)),
+  getPolicyDraft: (id: string) => request(`/policy/drafts/${id}`, PolicyDraft),
+  submitPolicyDraft: (id: string) =>
+    request(`/policy/drafts/${id}/submit`, PolicyDraft, { method: "POST" }),
+  approvePolicyDraft: (id: string, acknowledged_issues: boolean) =>
+    request(`/policy/drafts/${id}/approve`, PolicyDraft, {
+      method: "POST",
+      ...json({ acknowledged_issues }),
+    }),
+  rejectPolicyDraft: (id: string, reason: string) =>
+    request(`/policy/drafts/${id}/reject`, PolicyDraft, { method: "POST", ...json({ reason }) }),
+  revisePolicyDraft: (id: string, proposed_text: string) =>
+    request(`/policy/drafts/${id}/revise`, PolicyDraft, {
+      method: "POST",
+      ...json({ proposed_text }),
+    }),
+  commentPolicyDraft: (id: string, text: string) =>
+    request(`/policy/drafts/${id}/comments`, PolicyDraft, { method: "POST", ...json({ text }) }),
+  getPolicyAudit: () => request("/policy/audit", PolicyAudit),
 };

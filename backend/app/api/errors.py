@@ -124,6 +124,30 @@ class ValidationRejectedError(ApiError):
     message = "검증을 통과하지 못해 결과를 제공할 수 없습니다."
 
 
+class PolicyForbiddenError(ApiError):
+    """R3. 조직 구성원이 아니거나, 역할·4-eyes 규칙이 허용하지 않는다."""
+
+    status_code = status.HTTP_403_FORBIDDEN
+    code = "policy_forbidden"
+    message = "이 작업을 할 권한이 없습니다."
+
+
+class PolicyConflictError(ApiError):
+    """R3. 지금 상태에서는 할 수 없는 전이이거나, 다른 사람이 먼저 바꿨다."""
+
+    status_code = status.HTTP_409_CONFLICT
+    code = "policy_conflict"
+    message = "초안 상태가 맞지 않습니다. 새로고침 후 다시 시도해 주세요."
+
+
+class PolicyInvalidError(ApiError):
+    """R3. 요청 내용이 규칙에 맞지 않는다(빈 반려 사유, 조치 대상이 아닌 조항 등)."""
+
+    status_code = 422
+    code = "policy_invalid"
+    message = "요청을 처리할 수 없습니다."
+
+
 async def api_error_handler(_: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, ApiError)
     return exc.to_response()

@@ -36,6 +36,10 @@ class CaseOutcome:
     latency_ms: int = 0
     rag_count: int = 0
     delegated_count: int = 0
+    displayed_total: int = 0      # 사용자에게 노출되는 인용 수 (모법 + 하위법령)
+    displayed_verified: int = 0   # 그중 독립 재검증으로 원문에서 찾은 수
+    input_tokens: int = 0
+    output_tokens: int = 0
     error: str | None = None
 
     @property
@@ -55,7 +59,8 @@ class Metrics:
     confusion: dict[str, dict[str, int]]
 
     q1_model_citation_accuracy: float | None   # 모델이 생성한 인용 중 원문과 일치한 비율
-    q1_displayed_citation_accuracy: float       # 사용자에게 노출되는 인용의 정확도
+    # 노출 인용을 독립 구현으로 원문과 재대조한 비율 (1.0이 아니면 Validator 버그)
+    q1_displayed_citation_accuracy: float | None
     q2_false_positive_rate: float | None
     q3_action_conversion_rate: float | None
     q4_recall: float | None
@@ -103,9 +108,12 @@ def compute(outcomes: list[CaseOutcome]) -> Metrics:
     total_spans = sum(o.cited_total for o in executed)
     verified_spans = sum(o.cited_verified for o in executed)
     q1_model = _rate(verified_spans, total_spans)
-    # 노출 인용은 Validator를 통과한 것만 남으므로 구조적으로 1.0이다.
-    # 이 값이 1.0이 아니면 Validator에 구멍이 있다는 뜻이다.
-    q1_displayed = 1.0 if verified_spans or not total_spans else 1.0
+    # 노출 인용은 Validator를 통과한 것만 남으므로 설계상 1.0이어야 한다. 예전에는 이 값을 1.0으로
+    # 적기만 했다(측정이 아니었다). 이제 평가 러너가 노출 인용을 Validator와 다른 구현으로 원문과
+    # 다시 대조한다 — 1.0이 아니면 Validator에 구멍이 있다는 뜻이고, 회귀 검사가 이를 잡는다.
+    q1_displayed = _rate(
+        sum(o.displayed_verified for o in executed), sum(o.displayed_total for o in executed)
+    )
 
     # ── Q2. 적용 판정 오탐률 — '무관인데 해당'이 핵심 위험 ────────────
     gold_not_app = [o for o in executed if o.gold is Applicability.NOT_APPLICABLE]

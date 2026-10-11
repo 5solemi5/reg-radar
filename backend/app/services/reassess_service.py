@@ -13,6 +13,7 @@ BR-008: 기존 결과를 덮어쓰지 않고 새 결과를 만들어 이력으�
 from __future__ import annotations
 
 import logging
+from contextlib import AsyncExitStack
 from dataclasses import dataclass
 
 from app.ai.chains.base import ChainRunner
@@ -23,6 +24,7 @@ from app.domain.entities import HoldRevision, Profile
 from app.domain.enums import Applicability
 from app.domain.result import AnalysisResult
 from app.services.analysis_service import analyze_article
+from app.services.decree_service import DecreeResolver, NullDecreeResolver
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +109,8 @@ class ReassessService:
         settings: Settings | None = None,
         llm_gateway: LlmGateway | None = None,
         retriever=None,
+        decree_resolver=None,
+        client_factory=None,
     ):
         self.snapshot_repo = snapshot_repo
         self.result_repo = result_repo
@@ -114,6 +118,38 @@ class ReassessService:
         self.settings = settings or get_settings()
         self._llm = llm_gateway
         self._retriever = retriever
+        self._decree_resolver = decree_resolver
+        self._client_factory = client_factory
+
+    async def _delegated(self, legal, change):
+        """최초 분석과 같은 방식으로 위임 하위법령 조문을 붙인다 (ADR-025).
+
+        빠뜨리면 최초 분석은 시행령 기준을 읽고 판정했는데 재판정은 "대통령령에
+        위임되어 알 수 없다"로 돌아간다 — 정보를 더 줬는데 근거는 줄어든다.
+        """
+        if self._decree_resolver is not None:
+            return await self._decree_resolver.resolve(
+                legal.law_name, legal.article_no, legal.article_title,
+                change.delegation_targets,
+            )
+        if not self.settings.decree_pairing_enabled or not change.delegation_targets:
+            return await NullDecreeResolver().resolve(
+                legal.law_name, legal.article_no, legal.article_title,
+                change.delegation_targets,
+            )
+        factory = self._client_factory
+        if factory is None:
+            from app.adapters.law.client import LawApiClient
+
+            def factory():
+                return LawApiClient(settings=self.settings)
+        # LawApiClient는 async with 안에서만 쓸 수 있다 (analysis_runner와 같은 이유).
+        async with AsyncExitStack() as stack:
+            client = await stack.enter_async_context(factory())
+            return await DecreeResolver(client).resolve(
+                legal.law_name, legal.article_no, legal.article_title,
+                change.delegation_targets,
+            )
 
     @property
     def llm(self) -> LlmGateway:
@@ -171,6 +207,7 @@ class ReassessService:
             user=user,
             law=legal,
             change=change,
+            delegated=await self._delegated(legal, change),
             rag=await self._retrieve(legal, user),
         )
 
