@@ -30,6 +30,8 @@ jobs:
           found=0
           for b in evaluation/baselines/*__*.json; do
             name=$(basename "$b" .json)
+            # 사내 규정 평가 기준은 형식이 달라 pytest(test_policy_eval_replay.py)가 검사한다
+            case "$name" in policy_impact_*) continue ;; esac
             dataset="evaluation/datasets/${name%%__*}.json"
             model="${name##*__}"
             python scripts/check_eval_regression.py --dataset "$dataset" --model "$model"
