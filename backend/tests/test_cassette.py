@@ -220,3 +220,19 @@ async def test_녹화_때_실패한_호출은_재생에서도_같은_실패다(t
     with pytest.raises(ChainExecutionError, match="rate limited"):
         await runner.invoke(chain="C4", prompt="조문 B", schema=Out)
     assert runner.traces[0].ok is False
+
+
+async def test_키가_없어도_재생과_결과_조립이_된다(tmp_path):
+    # 2026-10-11 CI에서 발견: 로컬은 .env가 키를 채워, 키 없는 재생 실패가 가려져 있었다.
+    # 결과 조립(AiInterpretation.model)이 모델명을 얻으려고 OpenAI 클라이언트를 만들다 실패했다.
+    from app.ai.llm import LlmGateway
+    from app.core.config import Settings
+
+    await ChainRunner(llm=FakeGateway(), cassette=cassette(tmp_path, CassetteMode.RECORD)).invoke(
+        chain="C4", prompt="조문 A", schema=Out
+    )
+    gw = LlmGateway(settings=Settings(openai_api_key="", llm_model="gpt-4o"))
+    runner = ChainRunner(llm=gw, cassette=cassette(tmp_path, CassetteMode.REPLAY))
+    out = await runner.invoke(chain="C4", prompt="조문 A", schema=Out)
+    assert out.answer == "응답1"
+    assert gw.model_name == "gpt-4o"  # 클라이언트를 만들지 않는다

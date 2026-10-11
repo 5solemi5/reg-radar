@@ -68,8 +68,15 @@ class LlmGateway:
 
     @property
     def model_name(self) -> str:
-        """관측성 기록용 모델 식별자 (NFR-009)."""
-        return getattr(self.model, "model_name", None) or self.settings.llm_model
+        """관측성 기록용 모델 식별자 (NFR-009).
+
+        이름을 알려고 클라이언트를 만들지 않는다. 녹화 재생(키 없음)에서도 결과에 모델명을
+        적어야 하는데, 여기서 클라이언트를 만들면 키 검사에 걸려 재생 전체가 실패한다
+        (2026-10-11 CI에서 발견 — 로컬은 .env가 키를 채워 가려졌다).
+        """
+        if self._model is None:
+            return self.settings.llm_model
+        return getattr(self._model, "model_name", None) or self.settings.llm_model
 
     def structured(self, schema: type[T]) -> Runnable:
         """스키마를 강제하는 Runnable을 반환한다.
